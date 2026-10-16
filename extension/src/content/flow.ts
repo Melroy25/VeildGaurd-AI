@@ -359,5 +359,74 @@ export function mountBadge(adapter: SiteAdapter): void {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Engine-backed backstop verdict handler (Part E)
+//
+// Receives VEILGUARD_CHECK_REQUEST from the MAIN-world page-world script,
+// runs engine analysis via the background, and posts VEILGUARD_VERDICT back.
+//
+// The page-world script cannot call chrome.runtime.sendMessage directly
+// (MAIN world restriction), so this content-script bridge is required.
+// ---------------------------------------------------------------------------
+
+interface CheckRequestMessage {
+  type: "VEILGUARD_CHECK_REQUEST";
+  requestId: string;
+  transport: "fetch" | "xhr";
+  text: string;
+  destination: string;
+}
+
+window.addEventListener("message", (event: MessageEvent) => {
+  if (event.source !== window) return;
+  if (!event.data || event.data.type !== "VEILGUARD_CHECK_REQUEST") return;
+
+  const msg = event.data as CheckRequestMessage;
+  const { requestId, text, destination } = msg;
+
+  if (!text || text.trim().length === 0) {
+    // Empty — allow through
+    window.postMessage({ type: "VEILGUARD_VERDICT", requestId, allow: true }, "*");
+    return;
+  }
+
+  // Get stored profile preference
+  chrome.storage.local.get("vg_profile", (profileResult) => {
+    const profile = typeof profileResult["vg_profile"] === "string"
+      ? profileResult["vg_profile"]
+      : "company";
+
+    chrome.runtime.sendMessage(
+      { type: "ANALYZE", text, destination, profile },
+      (response: unknown) => {
+        let allow = false;
+        if (chrome.runtime.lastError || !response) {
+          // Engine unreachable — fail closed
+          allow = false;
+        } else {
+          const r = response as AnalyzeResponse;
+          if (r.ok) {
+            // Only "allow" decisions pass through the backstop.
+            // "redact"/"require_approval"/"block" all result in a block here;
+            // the DOM-layer flow handles those decisions with the review overlay.
+            allow = r.result.decision === "allow";
+          }
+        }
+
+        // Post verdict back to MAIN world
+        window.postMessage(
+          { type: "VEILGUARD_VERDICT", requestId, allow },
+          "*"
+        );
+
+        if (!allow) {
+          // Show overlay notification (avoid double-show if flow already blocked)
+          handleBackstopBlocked(msg.transport);
+        }
+      }
+    );
+  });
+});
+
 // Expose getTabId for vault calls if needed
 export { getTabId };
