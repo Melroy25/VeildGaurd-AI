@@ -1,6 +1,6 @@
 # VeilGuard AI: Context-Aware Privacy Firewall for AI Tools
 
-> **Project Status:** **Phase 1 complete (multi-layer submission interception verified on mock site: 480 trials across 12 cells, with no leaks observed across 240 flagged trials). Phase 2 (detection engine & secured API) in progress.**
+> **Project Status:** **Phase 1 complete (multi-layer submission interception verified on mock site: 480 trials across 12 cells, with no leaks observed across 240 flagged trials). Phase 2 complete (detection engine & secured /scan API verified: 34 tests pass, 3 xfail). Phase 3a (policy engine & sanitizer) in progress.**
 
 VeilGuard AI is a context-aware privacy firewall designed to sit between users and AI interfaces. When users paste sensitive data—such as customer conversations, financial records, medical notes, or system secrets—VeilGuard intercepts submissions, evaluates context and task necessity, enforces configurable privacy policies, produces utility-preserving pseudonymized prompts, and records metadata-only audit logs.
 
