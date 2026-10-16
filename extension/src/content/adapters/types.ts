@@ -1,5 +1,6 @@
 /**
  * Interface and configuration types for site-specific AI interface adapters.
+ * Rule 15: All site-specific DOM details reside here, not scattered across content scripts.
  */
 
 export interface AdapterSelectorConfig {
@@ -21,7 +22,7 @@ export interface SiteAdapter {
 
   /**
    * Locates the active composer element (textarea or contenteditable).
-   * Note: Must NEVER cache element references to handle SPA re-renders.
+   * Must NEVER cache element references to handle SPA re-renders.
    */
   getComposer(): HTMLElement | null;
 
@@ -29,6 +30,25 @@ export interface SiteAdapter {
    * Extracts text from the active composer.
    */
   getText(): string;
+
+  /**
+   * Programmatically sets text in the active composer, then fires a
+   * bubbling "input" event so that React controlled components (or the
+   * mock-site controlled state mode) pick up the new value.
+   *
+   * For textarea: uses the native HTMLInputElement descriptor setter +
+   * bubbling InputEvent to bypass React's synthetic value tracking.
+   *
+   * For contenteditable: uses execCommand("insertText") first (with
+   * selection-all + delete prefix) to fire compositionend-compatible events,
+   * then falls back to direct textContent + input event dispatch.
+   *
+   * After setting, calls verifyText() to confirm the composer reflects
+   * the expected value.
+   *
+   * Returns true when text was verified to have been set; false on failure.
+   */
+  setText(text: string): boolean;
 
   /**
    * Locates the submit or send button.
@@ -44,6 +64,14 @@ export interface SiteAdapter {
    * Locates the enclosing form element if wired via form submit.
    */
   getForm(): HTMLFormElement | null;
+
+  /**
+   * Programmatically triggers a send, simulating the appropriate submission
+   * path (form submit, button click, or Enter keydown depending on wiring).
+   *
+   * Used by the review overlay's "Send Sanitized" path after user approval.
+   */
+  triggerSend(): void;
 
   /**
    * Verifies that the required interface elements are present in the DOM.

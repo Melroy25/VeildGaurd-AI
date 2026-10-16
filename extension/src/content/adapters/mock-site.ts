@@ -23,7 +23,7 @@ export class MockSiteAdapter implements SiteAdapter {
   }
 
   getComposer(): HTMLElement | null {
-    // Dynamic lookup: never cache across events
+    // Dynamic lookup: never cache across events to handle SPA re-renders
     return (
       document.querySelector<HTMLTextAreaElement>(this.selectors.textareaComposer) ||
       document.querySelector<HTMLDivElement>(this.selectors.contenteditableComposer)
@@ -41,6 +41,76 @@ export class MockSiteAdapter implements SiteAdapter {
     return composer.innerText ?? composer.textContent ?? "";
   }
 
+  /**
+   * Sets text in the active composer, firing a real bubbling "input" event
+   * so that React controlled components and mock-site controlled state mode
+   * pick up the new value.
+   *
+   * Textarea: Uses the native HTMLInputElement.value descriptor setter to
+   * bypass React's synthetic event tracking, then dispatches a bubbling
+   * InputEvent. This pattern is required because React caches the previous
+   * value and ignores direct property assignment without native setter invocation.
+   *
+   * Contenteditable: Selects all content and replaces it via execCommand("insertText")
+   * which fires the correct sequence of composition/input events. Falls back to
+   * textContent assignment + manual input event when execCommand is unsupported.
+   *
+   * Returns true if post-set verification confirms the text was applied.
+   */
+  setText(text: string): boolean {
+    const composer = this.getComposer();
+    if (!composer) return false;
+
+    if (composer instanceof HTMLTextAreaElement) {
+      // Use native descriptor setter so React's internal fiber tracking is bypassed
+      const nativeDescriptor = Object.getOwnPropertyDescriptor(
+        HTMLTextAreaElement.prototype,
+        "value"
+      );
+      if (nativeDescriptor?.set) {
+        nativeDescriptor.set.call(composer, text);
+      } else {
+        composer.value = text;
+      }
+      // Dispatch a bubbling InputEvent so controlled components (React/Vue) and
+      // the mock-site controlled state handler receive the update
+      composer.dispatchEvent(new Event("input", { bubbles: true }));
+      return this.verifyText(composer, text);
+    } else {
+      // Contenteditable: select-all then insertText for full event compatibility
+      composer.focus();
+      const selection = window.getSelection();
+      if (selection) {
+        const range = document.createRange();
+        range.selectNodeContents(composer);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+
+      // execCommand fires compositionend, input, and other required events
+      const inserted = document.execCommand("insertText", false, text);
+      if (!inserted) {
+        // Fallback: direct textContent assignment + manual event
+        composer.textContent = text;
+        composer.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+      return this.verifyText(composer, text);
+    }
+  }
+
+  /**
+   * Verifies that the composer element now reflects the expected text.
+   * Used after setText() to confirm the value was accepted.
+   */
+  private verifyText(composer: HTMLElement, expectedText: string): boolean {
+    if (composer instanceof HTMLTextAreaElement) {
+      return composer.value === expectedText;
+    }
+    // For contenteditable, trim whitespace differences from execCommand
+    const actual = (composer.innerText ?? composer.textContent ?? "").trim();
+    return actual === expectedText.trim();
+  }
+
   getSendButton(): HTMLElement | null {
     return document.querySelector<HTMLElement>(this.selectors.sendButton);
   }
@@ -55,6 +125,27 @@ export class MockSiteAdapter implements SiteAdapter {
   getForm(): HTMLFormElement | null {
     if (!this.selectors.form) return null;
     return document.querySelector<HTMLFormElement>(this.selectors.form);
+  }
+
+  /**
+   * Programmatically triggers submission via the appropriate DOM path.
+   *
+   * If a form is present, dispatches a submit event on it (form wiring).
+   * Otherwise clicks the send button (click wiring).
+   *
+   * Used by the review overlay "Send Sanitized" approval path.
+   */
+  triggerSend(): void {
+    const form = this.getForm();
+    if (form) {
+      // Dispatch a real submit event on the form so the page's submit listener fires
+      form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+      return;
+    }
+    const btn = this.getSendButton();
+    if (btn) {
+      btn.click();
+    }
   }
 
   async selfTest(timeoutMs: number = 3000): Promise<boolean> {

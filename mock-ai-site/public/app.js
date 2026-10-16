@@ -4,13 +4,33 @@
   const wiringType = urlParams.get("wiring") === "click" ? "click" : "form";
   const transportType = urlParams.get("transport") === "xhr" ? "xhr" : "fetch";
 
+  /**
+   * State mode:
+   *  "dom"        - (default) text is read directly from the DOM element value/innerText on each getComposerText() call.
+   *  "controlled" - text is maintained in a JS variable (_controlledText) updated strictly on
+   *                 "input" events. The extension's setText() must fire a real "input" event
+   *                 to update this variable; simply setting .value/.innerText without an event
+   *                 leaves _controlledText stale and sendMessage() will send "" or the previous value.
+   *                 This mode simulates React-controlled components that maintain their own state.
+   */
+  const stateMode = urlParams.get("state") === "controlled" ? "controlled" : "dom";
+
   const configBanner = document.getElementById("config-banner");
   if (configBanner) {
-    configBanner.textContent = `Config: composer=${composerType} | wiring=${wiringType} | transport=${transportType}`;
+    configBanner.textContent = `Config: composer=${composerType} | wiring=${wiringType} | transport=${transportType} | state=${stateMode}`;
   }
+
+  // Expose state mode on window for adapter verification
+  window.__vg_state_mode = stateMode;
+  window.__vg_composer_type = composerType;
+  window.__vg_wiring_type = wiringType;
+  window.__vg_transport_type = transportType;
 
   const messageList = document.getElementById("message-list");
   const composerSlot = document.getElementById("composer-slot");
+
+  // ---- Controlled state variable ----
+  let _controlledText = "";
 
   function appendMessage(role, text) {
     if (!messageList) return;
@@ -22,6 +42,9 @@
   }
 
   function getComposerText() {
+    if (stateMode === "controlled") {
+      return _controlledText;
+    }
     if (composerType === "contenteditable") {
       const el = document.getElementById("chat-composer-editable");
       return el ? el.innerText.trim() : "";
@@ -32,12 +55,20 @@
   }
 
   function clearComposer() {
+    _controlledText = "";
     if (composerType === "contenteditable") {
       const el = document.getElementById("chat-composer-editable");
-      if (el) el.innerText = "";
+      if (el) {
+        el.innerText = "";
+        // Dispatch synthetic input event so any external listeners see the clear
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+      }
     } else {
       const el = document.getElementById("chat-composer-textarea");
-      if (el) el.value = "";
+      if (el) {
+        el.value = "";
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+      }
     }
   }
 
@@ -128,6 +159,25 @@
 
   if (composerSlot) {
     composerSlot.innerHTML = containerHtml;
+  }
+
+  // Bind controlled-mode input listener
+  if (stateMode === "controlled") {
+    const composerEl = composerType === "contenteditable"
+      ? document.getElementById("chat-composer-editable")
+      : document.getElementById("chat-composer-textarea");
+
+    if (composerEl) {
+      composerEl.addEventListener("input", () => {
+        if (composerType === "contenteditable") {
+          _controlledText = (composerEl.innerText || "").trim();
+        } else {
+          _controlledText = (composerEl.value || "").trim();
+        }
+        // Expose for test assertions
+        window.__vg_controlled_text = _controlledText;
+      });
+    }
   }
 
   // Bind Listeners
