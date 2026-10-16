@@ -5,9 +5,9 @@
 | Feature Component | Phase | Current Status | Verification / Notes |
 | :--- | :--- | :--- | :--- |
 | **Project Setup & Toolchains** | Phase 0 | **Implemented** | Smoke tests pass (`pytest`, TypeScript build, Playwright smoke) |
-| **Mock AI Chat Testbed** | Phase 1 | **Planned** | Standalone deterministic chat web server for submission tests |
-| **DOM Pre-Submission Interception** | Phase 1 | **Planned** | Interception of button clicks, Enter key, and form submission |
-| **MAIN-World Fetch Backstop** | Phase 1 | **Planned** | Monkey-patched in-page fetch interceptor to prevent direct API bypass |
+| **Mock AI Chat Testbed** | Phase 1 | **Implemented** | Standalone deterministic chat web server (`mock-ai-site/server.mjs`) on port 4310 supporting configurable composer, wiring, and transport modes |
+| **DOM Pre-Submission Interception** | Phase 1 | **Implemented** | Capture-phase listeners on Enter key, submit buttons, and form submit events. Verified 0 leaks across 200 trials (10 matrix cells) in `bench/results/enforcement_mock_site.json` |
+| **MAIN-World Fetch Backstop** | Phase 1 | **Implemented** | Monkey-patched in-page `window.fetch` and `XMLHttpRequest` in host MAIN execution world. Verified 0 leaks across 40 trials (fetch & XHR) in `bench/results/enforcement_mock_site.json` |
 | **Presidio & Custom Recognizers** | Phase 2 | **Planned** | Presidio analyzer with Verhoeff-validated Aadhaar, PAN, UPI, IFSC, secrets |
 | **Local `/scan` Engine API** | Phase 2 | **Planned** | FastAPI endpoint returning entity spans, confidences, and categories |
 | **Task Intent & Necessity Matrix** | Phase 5 | **Planned** | Heuristic/classifier task intent scoring with necessity matrices |

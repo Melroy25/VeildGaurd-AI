@@ -33,3 +33,9 @@
 ## 6. Ephemeral Extension Memory in Manifest V3
 - Under Chrome Manifest V3, background service workers are ephemeral and will be terminated after periods of inactivity.
 - State cannot be maintained in global JavaScript memory. The placeholder pseudonymization vault is restricted to `chrome.storage.session`, which is bounded by browser session lifespan and is cleared upon browser restart.
+
+## 7. Mock-Site Scope Boundary (Phase 1)
+- In Phase 1, enforcement has been verified strictly against the deterministic standalone testbed (`127.0.0.1:4310`).
+- No production third-party AI website adapters (such as ChatGPT or Claude) are implemented or registered in Phase 1; adapter registration is scheduled for Phase 4.
+- Content scripts and host permissions are scoped exclusively to `http://127.0.0.1:4310/*` and `http://localhost:4310/*` per Rule 9 (Least Privilege).
+- Detection logic in Phase 1 utilizes a synchronous regex harness stub (`isFlagged()` in `extension/src/shared/stub-detector.ts`); full Presidio and local engine integration is scoped to Phase 2.

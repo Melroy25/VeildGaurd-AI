@@ -35,3 +35,27 @@ This document records key technical decisions, rationales, and alternatives eval
 - **Context:** Prompt specifies Python 3.11 or 3.12. Host machine environment contains Python 3.14, Python 3.13.5, and Python 3.10. Python 3.11 and 3.12 are not present on the host system.
 - **Decision:** Utilize Python 3.13.5 to create the virtual environment `.venv`. If any package (Presidio, spaCy, PyMuPDF) encounters wheel or build incompatibilities on 3.13, evaluate Python 3.10 or report exact errors as instructed.
 - **Rationale:** Python 3.13 provides modern typing and performance while spaCy v3.8+ and PyMuPDF provide verified pre-built wheels for Python 3.13 on Windows x64.
+
+### 6. Stub Detector for Phase 1 Enforcement Spike
+- **Date:** Phase 1
+- **Context:** Phase 1 requires verifying that pre-submission interception and backstop defense are 100% deterministic and reliable across all DOM paths before introducing the full Presidio/ML pipeline.
+- **Decision:** Implement a lightweight, synchronous regex stub detector (`isFlagged()` in `extension/src/shared/stub-detector.ts`) matching synthetic Indian mobile phone numbers (`/\b[6-9]\d{9}\b/`), clearly marked as testbed-only.
+- **Rationale:** Decouples the physical interception mechanics and backstop defense from local Python engine network latency, server availability, and statistical NER variability.
+
+### 7. Separate Persistent Contexts for Part A and Part B E2E Tests
+- **Date:** Phase 1
+- **Context:** Part A tests DOM capture-phase interception across a 10-cell matrix; Part B tests programmatic API submissions via MAIN-world fetch and XHR backstops.
+- **Decision:** Launch separate persistent contexts with dedicated user data profiles for Part A (`.playwright-enforcement-profile`) and Part B (`.playwright-backstop-profile`).
+- **Rationale:** Chrome MV3 extension service workers and MAIN-world scripts maintain in-page execution states; isolated profiles ensure complete test isolation and eliminate cross-suite state leakage.
+
+### 8. Native `"world": "MAIN"` Registration in `manifest.json`
+- **Date:** Phase 1
+- **Context:** Need to inject `page-world.js` into the host page's MAIN execution context at `document_start` to intercept `window.fetch` and `XMLHttpRequest` before host scripts run.
+- **Decision:** Utilize the native Chrome Manifest V3 `"world": "MAIN"` property in `content_scripts`.
+- **Rationale:** Chrome 111+ natively supports `"world": "MAIN"`, removing the need for DOM `<script>` injection hacks or CSP bypass workarounds.
+
+### 9. Browser-Side Async Response Synchronization in Multi-Trial Harness
+- **Date:** Phase 1
+- **Context:** Rapid consecutive test iterations across 20 trials produced a race condition where the browser's asynchronous fetch callback `clearComposer()` executed immediately after the next trial's input had already been filled, causing the composer to be empty when Enter was pressed.
+- **Decision:** In the automated test harness benign loop, await browser confirmation that the composer has been cleared (`expect(composer).toHaveValue("")` / `expect(composer).toHaveText("")`) before advancing to the subsequent trial.
+- **Rationale:** Guarantees deterministic synchronization between the browser's asynchronous HTTP response lifecycle and the test driver's input generation without arbitrary sleeps.

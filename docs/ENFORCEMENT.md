@@ -1,0 +1,143 @@
+# VeilGuard AI: Multi-Layer Submission Enforcement Spike (Phase 1)
+
+## Executive Summary
+
+Phase 1 establishes and empirically verifies the foundational enforcement mechanism of **VeilGuard AI**: ensuring that sensitive data entered into an AI chat interface is reliably intercepted and prevented from reaching external endpoints, regardless of the submission vector utilized by the host application.
+
+To eliminate testing ambiguity and external network dependencies, Phase 1 evaluates enforcement against a deterministic standalone mock AI chat server (`mock-ai-site/server.mjs`) running locally on `http://127.0.0.1:4310`.
+
+---
+
+## Dual-Layer Defense Architecture
+
+VeilGuard AI implements a defense-in-depth model comprising two distinct, coordinated interception layers:
+
+```
++-------------------------------------------------------------------------------+
+| HOST WEBPAGE                                                                  |
+|                                                                               |
+|   +-----------------------------------------------------------------------+   |
+|   | LAYER 1: DOM Pre-Submission Interception (Isolated Content Script)    |   |
+|   | - Capture-phase window event listeners (keydown, click, submit)       |   |
+|   | - SiteAdapter dynamically inspects DOM composer & buttons             |   |
+|   | - If sensitive: e.preventDefault() + e.stopImmediatePropagation()     |   |
+|   | - Mounts Shadow DOM Blocked Overlay                                   |   |
+|   +-----------------------------------+-----------------------------------+   |
+|                                       | (bypassed by programmatic scripts)    |
+|                                       v                                       |
+|   +-----------------------------------------------------------------------+   |
+|   | LAYER 2: In-Page API Backstop (MAIN Execution World Script)           |   |
+|   | - Injected at document_start in world: "MAIN"                         |   |
+|   | - Monkey-patches window.fetch and XMLHttpRequest.prototype.send       |   |
+|   | - Inspects outgoing request payloads targeting /api/chat              |   |
+|   | - If sensitive: throws TypeError / dispatches ProgressEvent("error")  |   |
+|   | - Sends window.postMessage notification to Content Script overlay     |   |
+|   +-----------------------------------+-----------------------------------+   |
+|                                       | (normal benign payload)               |
++---------------------------------------|---------------------------------------+
+                                        v
+                            +-----------------------+
+                            | Remote / Mock AI Host |
+                            | POST /api/chat        |
+                            +-----------------------+
+```
+
+---
+
+## Interception Mechanism Details
+
+### Layer 1: DOM Pre-Submission Traps (`extension/src/content/index.ts`)
+1. **Window-Level Capture Phase:** Listeners are registered with `{ capture: true }` on `window`. Because the capture phase executes top-down before target element listeners or bubbling handlers fire, VeilGuard halts the event before the host application's scripts receive it.
+2. **Enter Key Trap:**
+   - Detects `e.key === "Enter"`.
+   - Explicitly bypasses Shift+Enter (`e.shiftKey === true`) to allow multi-line text composition.
+   - Detects IME (Input Method Editor) composition state (`e.isComposing || e.keyCode === 229`) to prevent premature interruption during multilingual typing.
+3. **Send Button Click Trap:**
+   - Uses `adapter.isSendButton(e.target)` using `element.closest()` to catch clicks on nested icons, spans, or SVGs inside the send button.
+4. **Form Submit Trap:**
+   - Intercepts synthetic `form.requestSubmit()` or default form submissions.
+5. **DOM Adapter Contract (`MockSiteAdapter`):**
+   - Selectors are centralized in `extension/src/content/adapters/mock-site.ts` (Rule 15).
+   - DOM lookups are dynamic and never cached across events to guarantee resilience against virtual DOM re-renders.
+
+### Layer 2: In-Page MAIN-World Backstop (`extension/src/page-world/index.ts`)
+1. **Execution Scope:** Registered in `extension/manifest.json` under `content_scripts` with `"world": "MAIN"` and `"run_at": "document_start"`. This ensures the script executes within the webpage's true global JavaScript execution context before any page scripts load.
+2. **Fetch Monkey-Patching:**
+   - Wraps `window.fetch`.
+   - Inspects URL targets matching `/api/chat`.
+   - Inspects stringified JSON, form payloads, or cloned `Request` bodies.
+   - If sensitive content is detected, aborts dispatch immediately by throwing `new TypeError("Failed to fetch: request blocked by VeilGuard AI backstop.")`.
+3. **XMLHttpRequest Monkey-Patching:**
+   - Wraps `XMLHttpRequest.prototype.open` to associate target URLs with instances via a private `WeakMap`.
+   - Wraps `XMLHttpRequest.prototype.send` to inspect outbound payload buffers.
+   - If sensitive content is detected, aborts the send and dispatches `new ProgressEvent("error")`.
+4. **PostMessage Coordination:**
+   - On backstop block, sends `{ type: "VEILGUARD_BACKSTOP_BLOCKED", transport }` via `window.postMessage`.
+   - The isolated content script listens for this message and raises the isolated Shadow DOM overlay.
+
+---
+
+## UI Components
+
+### 1. Shadow DOM Blocked Overlay (`extension/src/content/ui/overlay.ts`)
+- Injected into `#veilguard-overlay-host` attached to the host DOM.
+- Uses Shadow DOM (`mode: "open"`) with an embedded isolated stylesheet.
+- Completely immune to host page CSS cascades, resets, or z-index collisions.
+- Displays risk details and a Dismiss button that tears down the modal while preserving the composer contents for user revision.
+
+### 2. Protection State Badge (`extension/src/content/ui/badge.ts`)
+- Injected into `#veilguard-badge-host` in top-right screen space.
+- Configured with `pointer-events: none` to prevent interfering with host buttons or menus.
+- Executes `adapter.selfTest()` using `MutationObserver` to verify DOM composer and button presence before declaring `"VeilGuard: protection active"`.
+
+---
+
+## Empirical Benchmark Results
+
+Execution results are recorded in `bench/results/enforcement_mock_site.json` across 12 distinct configuration cells:
+- **Matrix Dimensions:**
+  - 2 Composer types: `<textarea>` and `contenteditable="true"`
+  - 2 Wiring architectures: HTML `<form>` and direct click listeners
+  - 3 Submission paths: Button click, Enter key, Form submit
+  - 2 Programmatic backstop transports: direct `fetch()` and `XMLHttpRequest`
+- **Total Trials:** 240 trials (120 flagged, 120 benign controls)
+- **Flagged Prompt Leaks:** **0 / 120 (0.00% leakage)**
+- **Benign Prompts Correctly Delivered:** **120 / 120 (100.00% delivery rate)**
+
+| Cell Configuration | Submission Path | Transport | Flagged Trials | Flagged Leaked | Benign Trials | Benign Delivered |
+| :--- | :--- | :--- | :---: | :---: | :---: | :---: |
+| `textarea` + `form` | click | fetch | 20 | **0** | 20 | **20** |
+| `textarea` + `form` | enter | fetch | 20 | **0** | 20 | **20** |
+| `textarea` + `form` | submit | fetch | 20 | **0** | 20 | **20** |
+| `textarea` + `click` | click | fetch | 20 | **0** | 20 | **20** |
+| `textarea` + `click` | enter | fetch | 20 | **0** | 20 | **20** |
+| `contenteditable` + `form` | click | fetch | 20 | **0** | 20 | **20** |
+| `contenteditable` + `form` | enter | fetch | 20 | **0** | 20 | **20** |
+| `contenteditable` + `form` | submit | fetch | 20 | **0** | 20 | **20** |
+| `contenteditable` + `click` | click | fetch | 20 | **0** | 20 | **20** |
+| `contenteditable` + `click` | enter | fetch | 20 | **0** | 20 | **20** |
+| `textarea` + `click` (Backstop) | programmatic | fetch | 20 | **0** | 20 | **20** |
+| `textarea` + `click` (Backstop) | programmatic | xhr | 20 | **0** | 20 | **20** |
+
+---
+
+## Security & Privacy Invariants
+
+1. **Rule 7 (No Raw Content Persistence or Logging):**
+   - Content script and backstop console logs output strictly metadata:
+     `{ path: "enter", length: text.length, blocked: true }`.
+   - Verified via automated test `Console privacy check: flagged prompt attempts never log phone number to console`.
+2. **Rule 9 (Least Privilege Permissions):**
+   - Manifest permissions do not include `<all_urls>` or wide host permissions.
+   - Content scripts are strictly scoped to `http://127.0.0.1:4310/*` and `http://localhost:4310/*`.
+3. **Rule 10 (Synthetic Data Exclusively):**
+   - All tests use fabricated mock numbers (`9876543210`) and synthetic prompts.
+
+---
+
+## Known Boundaries & What is NOT Protected
+
+In compliance with Rule 3 (Honesty Invariant):
+1. **Mock-Site Scope:** Phase 1 verification applies strictly to the mock testbed (`127.0.0.1:4310`). No production AI adapters (ChatGPT, Claude) are included in this phase.
+2. **Alternative Protocols:** Interception covers DOM events, `window.fetch`, and `XMLHttpRequest`. Exotic protocols (WebSockets, WebRTC data channels, WebTransport, background Service Worker sync) are not intercepted by this layer. See [docs/LIMITATIONS.md](./LIMITATIONS.md) for full details.
+3. **Harness Stub Detector:** Phase 1 utilizes a synchronous regex detector stub (`isFlagged()`). Full integration with the Presidio analyzer and local FastAPI engine (`/scan`) is scheduled for Phase 2.
