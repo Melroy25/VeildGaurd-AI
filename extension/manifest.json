@@ -6,6 +6,19 @@
   "permissions": [
     "storage"
   ],
+  "content_scripts": [
+    {
+      "matches": [
+        "http://127.0.0.1:4310/*",
+        "http://localhost:4310/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_title": "VeilGuard AI"

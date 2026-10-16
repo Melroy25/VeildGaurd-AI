@@ -6,7 +6,8 @@
   "scripts": {
     "build": "node scripts/build-extension.mjs",
     "typecheck": "tsc --noEmit",
-    "test:e2e": "playwright test"
+    "test:e2e": "npm run build && playwright test",
+    "mock-site": "node mock-ai-site/server.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.50.1",

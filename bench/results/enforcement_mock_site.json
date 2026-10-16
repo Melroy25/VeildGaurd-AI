@@ -1,0 +1,109 @@
+{
+  "timestamp": "2026-10-16T09:01:29.816Z",
+  "playwright_version": "1.50.1",
+  "chromium_version": "156.0.8078.4",
+  "trials_per_cell": 20,
+  "note": "These measurements apply strictly to the deterministic mock AI chat site and do not represent pass rates on any production third-party AI website.",
+  "cells": [
+    {
+      "composer": "textarea",
+      "wiring": "form",
+      "path": "click",
+      "transport": "fetch",
+      "flagged_trials": 20,
+      "flagged_leaked": 0,
+      "benign_trials": 20,
+      "benign_delivered_correctly": 20
+    },
+    {
+      "composer": "textarea",
+      "wiring": "form",
+      "path": "enter",
+      "transport": "fetch",
+      "flagged_trials": 20,
+      "flagged_leaked": 0,
+      "benign_trials": 20,
+      "benign_delivered_correctly": 20
+    },
+    {
+      "composer": "textarea",
+      "wiring": "form",
+      "path": "submit",
+      "transport": "fetch",
+      "flagged_trials": 20,
+      "flagged_leaked": 0,
+      "benign_trials": 20,
+      "benign_delivered_correctly": 20
+    },
+    {
+      "composer": "textarea",
+      "wiring": "click",
+      "path": "click",
+      "transport": "fetch",
+      "flagged_trials": 20,
+      "flagged_leaked": 0,
+      "benign_trials": 20,
+      "benign_delivered_correctly": 20
+    },
+    {
+      "composer": "textarea",
+      "wiring": "click",
+      "path": "enter",
+      "transport": "fetch",
+      "flagged_trials": 20,
+      "flagged_leaked": 0,
+      "benign_trials": 20,
+      "benign_delivered_correctly": 20
+    },
+    {
+      "composer": "contenteditable",
+      "wiring": "form",
+      "path": "click",
+      "transport": "fetch",
+      "flagged_trials": 20,
+      "flagged_leaked": 0,
+      "benign_trials": 20,
+      "benign_delivered_correctly": 20
+    },
+    {
+      "composer": "contenteditable",
+      "wiring": "form",
+      "path": "enter",
+      "transport": "fetch",
+      "flagged_trials": 20,
+      "flagged_leaked": 0,
+      "benign_trials": 20,
+      "benign_delivered_correctly": 20
+    },
+    {
+      "composer": "contenteditable",
+      "wiring": "form",
+      "path": "submit",
+      "transport": "fetch",
+      "flagged_trials": 20,
+      "flagged_leaked": 0,
+      "benign_trials": 20,
+      "benign_delivered_correctly": 20
+    },
+    {
+      "composer": "contenteditable",
+      "wiring": "click",
+      "path": "click",
+      "transport": "fetch",
+      "flagged_trials": 20,
+      "flagged_leaked": 0,
+      "benign_trials": 20,
+      "benign_delivered_correctly": 20
+    },
+    {
+      "composer": "contenteditable",
+      "wiring": "click",
+      "path": "enter",
+      "transport": "fetch",
+      "flagged_trials": 20,
+      "flagged_leaked": 0,
+      "benign_trials": 20,
+      "benign_delivered_correctly": 20
+    }
+  ]
+}
