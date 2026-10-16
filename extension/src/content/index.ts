@@ -1,14 +1,16 @@
-import { getAdapterForLocation } from "./adapters";
-import { isFlagged } from "../shared/stub-detector";
-import { showBlockedOverlay } from "./ui/overlay";
-import { renderProtectionBadge } from "./ui/badge";
-
 /**
  * VeilGuard AI - Content Script (DOM-level interception)
  *
- * Intercepts user submissions in the capture phase before host page event listeners fire.
- * Rule 7: Never log or persist prompt text. Only metadata is logged.
+ * Intercepts user submissions in the capture phase before host page event
+ * listeners fire. All interception logic is delegated to flow.ts (state
+ * machine), which handles engine analysis, overlay display, and audit logging.
+ *
+ * Rule 7: Never log or persist raw prompt text. Only metadata is logged.
+ * Rule 6: Fail closed — if the engine is unreachable, submissions are blocked.
  */
+
+import { getAdapterForLocation } from "./adapters";
+import { handleInterception, handleBackstopBlocked, mountBadge } from "./flow";
 
 (() => {
   const adapter = getAdapterForLocation(window.location);
@@ -30,20 +32,7 @@ import { renderProtectionBadge } from "./ui/badge";
         const target = e.target as Node | null;
 
         if (composer && target && (composer === target || composer.contains(target))) {
-          const text = adapter.getText();
-          if (isFlagged(text)) {
-            e.preventDefault();
-            e.stopImmediatePropagation();
-
-            // Metadata-only logging (Rule 7)
-            console.log("[VeilGuard AI] Submission blocked", {
-              path: "enter",
-              length: text.length,
-              blocked: true,
-            });
-
-            showBlockedOverlay();
-          }
+          handleInterception(adapter, e, "enter");
         }
       }
     },
@@ -55,20 +44,7 @@ import { renderProtectionBadge } from "./ui/badge";
     "click",
     (e: MouseEvent) => {
       if (adapter.isSendButton(e.target)) {
-        const text = adapter.getText();
-        if (isFlagged(text)) {
-          e.preventDefault();
-          e.stopImmediatePropagation();
-
-          // Metadata-only logging (Rule 7)
-          console.log("[VeilGuard AI] Submission blocked", {
-            path: "click",
-            length: text.length,
-            blocked: true,
-          });
-
-          showBlockedOverlay();
-        }
+        handleInterception(adapter, e, "click");
       }
     },
     { capture: true }
@@ -82,39 +58,23 @@ import { renderProtectionBadge } from "./ui/badge";
       const target = e.target as Node | null;
 
       if (form && target && (form === target || form.contains(target))) {
-        const text = adapter.getText();
-        if (isFlagged(text)) {
-          e.preventDefault();
-          e.stopImmediatePropagation();
-
-          // Metadata-only logging (Rule 7)
-          console.log("[VeilGuard AI] Submission blocked", {
-            path: "submit",
-            length: text.length,
-            blocked: true,
-          });
-
-          showBlockedOverlay();
-        }
+        handleInterception(adapter, e, "submit");
       }
     },
     { capture: true }
   );
 
-  // 4. Backstop Notification Listener (from MAIN-world page-world script)
+  // 4. Backstop Notification Listener (from MAIN-world page-world script via postMessage)
   window.addEventListener("message", (event: MessageEvent) => {
+    // Only accept messages from our own frame — never from cross-origin frames
     if (event.source !== window) return;
+
     if (event.data && event.data.type === "VEILGUARD_BACKSTOP_BLOCKED") {
-      console.log("[VeilGuard AI] Submission blocked by MAIN-world backstop", {
-        path: event.data.transport || "backstop",
-        blocked: true,
-      });
-      showBlockedOverlay();
+      const transport = event.data.transport === "xhr" ? "xhr" : "fetch";
+      handleBackstopBlocked(transport);
     }
   });
 
-  // 5. Run Adapter Self-Test & Mount Protection Badge
-  adapter.selfTest().then((passed) => {
-    renderProtectionBadge(passed);
-  });
+  // 5. Mount adapter self-test and protection badge
+  mountBadge(adapter);
 })();
