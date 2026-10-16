@@ -1,0 +1,14 @@
+# VeilGuard AI: Example Watchlist Configuration
+#
+# List of proprietary, confidential, or sensitive terms (e.g. internal code names,
+# partner names, restricted project keywords) to detect under Category: CONFIDENTIAL.
+#
+# Matching is whole-word and case-insensitive.
+# Copy this file to policies/watchlist.yaml to activate locally.
+
+terms:
+  - "Project Titan"
+  - "Project Manhattan"
+  - "VexoraInternalSecret"
+  - "AcmeCorpAcquisition"
+  - "Falcon9000"

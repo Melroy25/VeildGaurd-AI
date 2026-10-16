@@ -18,6 +18,9 @@ htmlcov/
 .env
 .env.*
 !.env.example
+.veilguard/
+policies/watchlist.yaml
+!policies/watchlist.example.yaml
 
 # Databases
 *.db

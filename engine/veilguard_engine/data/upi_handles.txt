@@ -1,0 +1,37 @@
+# VeilGuard AI: Common UPI VPA (Virtual Payment Address) Handles
+# Note: This list is representative of major Indian banking PSP handles and is not exhaustive.
+okhdfcbank
+okaxis
+oksbi
+okicici
+paytm
+ybl
+ibl
+axl
+apl
+upi
+barodampay
+aubank
+fbl
+federal
+icici
+kotak
+sbi
+hdfcbank
+pnb
+axisbank
+idfcbank
+indus
+postbank
+rbl
+yesbank
+freecharge
+airtel
+amazonpay
+slice
+mobikwik
+jupiteraxis
+naviaxis
+timecosmos
+superyes
+popclub
