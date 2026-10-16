@@ -1,0 +1,34 @@
+# Node
+node_modules/
+dist/
+extension/dist/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Databases
+*.db
+*.sqlite3
+
+# Playwright & Testing
+playwright-report/
+test-results/
+.playwright/
+
+# OS and IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
