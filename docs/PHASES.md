@@ -2,15 +2,15 @@
 
 ---
 
-## Phase 0: Setup (Current Phase)
+## Phase 0: Setup (Complete)
 - **Scope:** Repository structure, project rules (`AGENTS.md`), documentation, Python environment, FastAPI skeleton with `/health` endpoint, TypeScript extension scaffold that builds, Playwright smoke test, CI configuration.
 - **Done When:** `pytest` passes smoke tests, the extension builds with Vite, and Playwright loads the extension and verifies the popup.
 
 ---
 
-## Phase 1: Enforcement Spike
-- **Scope:** Standalone mock AI chat web application + extension content script that intercepts and blocks "Send" button clicks and "Enter" key submissions.
-- **Done When:** Playwright automated test proves that sensitive original prompt text never reaches the mock server.
+## Phase 1: Enforcement Spike (Complete)
+- **Scope:** Standalone mock AI chat web application + extension content script that intercepts and blocks "Send" button clicks and "Enter" key submissions + MAIN-world fetch/XHR backstop.
+- **Done When:** Playwright automated test proves that sensitive original prompt text never reaches the mock server across DOM and programmatic paths. (Verified: 240 trials in `bench/results/enforcement_mock_site.json`, 0 leaked).
 
 ---
 
