@@ -79,6 +79,19 @@ async function triggerSubmission(page: Page, pathType: "click" | "enter" | "subm
   if (pathType === "click") {
     await page.locator("#send-btn").click();
   } else if (pathType === "enter") {
+    // Ensure focus is on the active composer before pressing Enter so that the
+    // content script capture-phase listener sees the correct target
+    const focused = await page.evaluate(() => {
+      const ta = document.querySelector<HTMLTextAreaElement>("#chat-composer-textarea");
+      const ce = document.querySelector<HTMLDivElement>("#chat-composer-editable");
+      const active = ta || ce;
+      if (active) {
+        active.focus();
+        return true;
+      }
+      return false;
+    });
+    if (!focused) throw new Error("No composer found to focus before Enter press");
     await page.keyboard.press("Enter");
   } else if (pathType === "submit") {
     await page.evaluate(() => {
@@ -243,6 +256,13 @@ test.describe("Phase 1: Enforcement Spike (Part A)", () => {
           await expect(overlayTitle).not.toBeVisible();
         }
 
+        // Reload for the benign control phase: ensures app.js state is clean
+        // after N dismiss cycles (no stale event listeners or focus state)
+        await page.goto(
+          `http://127.0.0.1:4310/?composer=${config.composer}&wiring=${config.wiring}&transport=fetch`
+        );
+        await expect(page.locator("#veilguard-badge")).toBeVisible({ timeout: 5000 });
+
         // Run N trials for benign control
         for (let i = 0; i < N_TRIALS; i++) {
           await resetServer(page.request);
@@ -267,6 +287,14 @@ test.describe("Phase 1: Enforcement Spike (Part A)", () => {
           if (received.length === 1 && received[0].message === BENIGN_PROMPT) {
             benignDelivered++;
           }
+
+          // Ensure browser has finished response handling and cleared the composer
+          // before the next iteration sets new text
+          if (config.composer === "textarea") {
+            await expect(page.locator("#chat-composer-textarea")).toHaveValue("", { timeout: 3000 });
+          } else {
+            await expect(page.locator("#chat-composer-editable")).toHaveText("", { timeout: 3000 });
+          }
         }
 
         benchmarkResults.push({
@@ -286,3 +314,143 @@ test.describe("Phase 1: Enforcement Spike (Part A)", () => {
     }
   }
 });
+
+// ────────────────────────────────────────────────────────────────────────────
+// Part B: MAIN-World Fetch / XHR Backstop
+// ────────────────────────────────────────────────────────────────────────────
+
+test.describe("Phase 1: Enforcement Spike (Part B - MAIN-World Backstop)", () => {
+  let context: BrowserContext;
+  let page: Page;
+
+  const N_TRIALS = process.env.VG_TRIALS ? parseInt(process.env.VG_TRIALS, 10) : 20;
+
+  test.beforeAll(async () => {
+    const profileDir = path.resolve(ROOT_DIR, "test-results/.playwright-backstop-profile");
+    context = await chromium.launchPersistentContext(profileDir, {
+      headless: false,
+      args: [
+        `--disable-extensions-except=${EXTENSION_DIST}`,
+        `--load-extension=${EXTENSION_DIST}`,
+      ],
+    });
+
+    let [sw] = context.serviceWorkers();
+    if (!sw) {
+      await context.waitForEvent("serviceworker", { timeout: 10000 });
+    }
+
+    page = await context.newPage();
+  });
+
+  test.afterAll(async () => {
+    // Read existing Part A results, append Part B cells, then rewrite
+    let existing: { cells: ResultCell[]; [key: string]: unknown } = { cells: [] };
+    try {
+      existing = JSON.parse(fs.readFileSync(RESULTS_PATH, "utf-8"));
+    } catch {
+      // Fresh
+    }
+
+    const partBCells = benchmarkResults.filter(
+      (c) => c.path === "programmatic_fetch" || c.path === "programmatic_xhr"
+    );
+    existing.cells = [...(existing.cells || []), ...partBCells];
+
+    fs.writeFileSync(RESULTS_PATH, JSON.stringify(existing, null, 2), "utf-8");
+
+    await page.close();
+    await context.close();
+  });
+
+  for (const transport of ["fetch", "xhr"] as const) {
+    test(`Backstop: programmatic ${transport.toUpperCase()} submission is blocked when flagged [N=${20}]`, async () => {
+      let flaggedLeaked = 0;
+      let benignDelivered = 0;
+
+      const url = `http://127.0.0.1:4310/?composer=textarea&wiring=click&transport=${transport}`;
+      await page.goto(url);
+
+      // Wait for extension service worker and content script to settle
+      await page.waitForLoadState("domcontentloaded");
+      await expect(page.locator("#veilguard-badge")).toBeVisible({ timeout: 5000 });
+      await expect(page.locator("#veilguard-badge-text")).toHaveText(
+        "VeilGuard: protection active"
+      );
+
+      // Flagged trials: click #send-programmatic with a flagged payload
+      for (let i = 0; i < N_TRIALS; i++) {
+        await resetServer(page.request);
+        await setComposerText(page, "textarea", FLAGGED_PROMPT);
+
+        // Click the programmatic button — triggers sendMessage() bypassing
+        // DOM-level click/form submit listeners, goes direct to fetch/XHR
+        await page.locator("#send-programmatic").click();
+
+        // Backstop must have blocked: overlay appears via postMessage notification
+        const overlayTitle = page.locator("#veilguard-title");
+        await expect(overlayTitle).toBeVisible({ timeout: 3000 });
+
+        // Server must have 0 messages
+        const received = await getReceivedMessages(page.request);
+        if (received.length > 0) {
+          flaggedLeaked++;
+        }
+
+        // Dismiss
+        await page.locator("#veilguard-dismiss-btn").click();
+        await expect(overlayTitle).not.toBeVisible();
+      }
+
+      // Reload page before benign phase to reset app.js event listener state
+      // accumulated across the 20 flagged+dismiss cycles above
+      await page.goto(url);
+      await page.waitForLoadState("domcontentloaded");
+      await expect(page.locator("#veilguard-badge")).toBeVisible({ timeout: 5000 });
+
+      // Benign trials: same programmatic path, benign text should deliver normally
+      for (let i = 0; i < N_TRIALS; i++) {
+        await resetServer(page.request);
+        await setComposerText(page, "textarea", BENIGN_PROMPT);
+
+        await page.locator("#send-programmatic").click();
+
+        // Overlay must NOT appear
+        const overlayTitle = page.locator("#veilguard-title");
+        await expect(overlayTitle).not.toBeVisible();
+
+        // Server must receive exactly one message
+        await expect.poll(
+          async () => {
+            const received = await getReceivedMessages(page.request);
+            return received.length;
+          },
+          { timeout: 4000, intervals: [20, 50, 100] }
+        ).toBe(1);
+
+        const received = await getReceivedMessages(page.request);
+        if (received.length === 1 && received[0].message === BENIGN_PROMPT) {
+          benignDelivered++;
+        }
+
+        // Wait for browser response handling to complete and clear composer
+        await expect(page.locator("#chat-composer-textarea")).toHaveValue("", { timeout: 3000 });
+      }
+
+      benchmarkResults.push({
+        composer: "textarea",
+        wiring: "click",
+        path: `programmatic_${transport}`,
+        transport,
+        flagged_trials: N_TRIALS,
+        flagged_leaked: flaggedLeaked,
+        benign_trials: N_TRIALS,
+        benign_delivered_correctly: benignDelivered,
+      });
+
+      expect(flaggedLeaked).toBe(0);
+      expect(benignDelivered).toBe(N_TRIALS);
+    });
+  }
+});
+

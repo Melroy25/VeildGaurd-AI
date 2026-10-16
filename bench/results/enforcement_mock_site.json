@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-16T09:01:29.816Z",
+  "timestamp": "2026-10-16T09:16:55.795Z",
   "playwright_version": "1.50.1",
   "chromium_version": "156.0.8078.4",
   "trials_per_cell": 20,
@@ -100,6 +100,26 @@
       "wiring": "click",
       "path": "enter",
       "transport": "fetch",
+      "flagged_trials": 20,
+      "flagged_leaked": 0,
+      "benign_trials": 20,
+      "benign_delivered_correctly": 20
+    },
+    {
+      "composer": "textarea",
+      "wiring": "click",
+      "path": "programmatic_fetch",
+      "transport": "fetch",
+      "flagged_trials": 20,
+      "flagged_leaked": 0,
+      "benign_trials": 20,
+      "benign_delivered_correctly": 20
+    },
+    {
+      "composer": "textarea",
+      "wiring": "click",
+      "path": "programmatic_xhr",
+      "transport": "xhr",
       "flagged_trials": 20,
       "flagged_leaked": 0,
       "benign_trials": 20,

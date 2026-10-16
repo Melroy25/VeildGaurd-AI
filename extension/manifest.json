@@ -13,6 +13,18 @@
         "http://localhost:4310/*"
       ],
       "js": [
+        "page-world.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "http://127.0.0.1:4310/*",
+        "http://localhost:4310/*"
+      ],
+      "js": [
         "content.js"
       ],
       "run_at": "document_start",
