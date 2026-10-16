@@ -1,0 +1,10 @@
+version: 1
+default_trust: standard
+destinations:
+  "127.0.0.1": standard
+  "localhost": standard
+  "api.openai.com": standard
+  "claude.ai": standard
+  "chatgpt.com": standard
+  "internal.corp.local": trusted
+  "untrusted-ai.example.com": untrusted

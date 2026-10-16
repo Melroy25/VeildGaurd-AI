@@ -123,5 +123,82 @@ class ScanStats(BaseModel):
 
 class ScanResponse(BaseModel):
     """Response returned by POST /scan endpoint."""
+    offset_unit: Literal["utf16"] = Field(
+        default="utf16",
+        description="Unit for start/end offsets in findings: utf16 code units for JavaScript string compatibility",
+    )
     findings: List[Finding] = Field(description="List of detected findings sorted by start offset")
     stats: ScanStats = Field(description="Scan execution statistics")
+
+
+from veilguard_engine.policy.models import AppliedRule, Decision, DestinationTrust
+from veilguard_engine.sanitizer.models import KnownPlaceholder, SanitizeResult
+
+
+class AnalyzeRequest(BaseModel):
+    """Payload for POST /analyze endpoint."""
+    text: str = Field(
+        ...,
+        min_length=1,
+        max_length=200_000,
+        description="Input text content to be inspected and analyzed for policy enforcement",
+    )
+    source: Literal["prompt", "document"] = Field(
+        default="prompt",
+        description="Source of input text: prompt submission or document extraction",
+    )
+    destination: str = Field(
+        default="127.0.0.1",
+        description="Target destination hostname (e.g. chatgpt.com, api.openai.com, 127.0.0.1)",
+    )
+    profile: Optional[str] = Field(
+        default=None,
+        description="Policy profile to evaluate against (defaults to 'company')",
+    )
+    known_placeholders: Optional[List[KnownPlaceholder]] = Field(
+        default=None,
+        description="Optional seed list of previously assigned placeholders for session consistency",
+    )
+
+
+class AnalyzeStats(BaseModel):
+    """Execution metadata and performance metrics for an analyze request."""
+    latency_ms: float = Field(ge=0.0, description="Total pipeline processing latency in milliseconds")
+    profile: str = Field(description="Policy profile applied")
+    destination_trust: DestinationTrust = Field(description="Resolved destination trust level")
+    scan_stats: ScanStats = Field(description="Underlying scan performance metrics")
+
+
+class AnalyzeResponse(BaseModel):
+    """Response returned by POST /analyze endpoint."""
+    offset_unit: Literal["utf16"] = Field(
+        default="utf16",
+        description="Unit for start/end offsets in findings and replacements: utf16 code units",
+    )
+    decision: Decision = Field(description="Strongest policy decision: allow, redact, require_approval, block")
+    options: List[str] = Field(description="Valid user actions based on decision")
+    summary: str = Field(description="Plain-language decision explanation without sensitive content")
+    applied_rules: List[AppliedRule] = Field(description="List of policy rules that triggered")
+    findings: List[Finding] = Field(description="Detected findings with UTF-16 offsets")
+    sanitization: Optional[SanitizeResult] = Field(
+        default=None,
+        description="Sanitization results including sanitized text and replacements (null if decision is allow)",
+    )
+    notices: List[str] = Field(
+        default_factory=lambda: ["Detection is not exhaustive. Review the text before sending."],
+        description="Important safety notices and user disclosures",
+    )
+    stats: AnalyzeStats = Field(description="Performance and pipeline execution statistics")
+
+
+class RuleInfo(BaseModel):
+    rule_id: str
+    reason: str
+
+
+class ProfileInfo(BaseModel):
+    profile: str
+    description: str
+    rules: List[RuleInfo]
+
+

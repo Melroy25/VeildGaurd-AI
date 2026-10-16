@@ -1,0 +1,122 @@
+version: 1
+profile: company
+description: "Default corporate policy for employees using external AI tools"
+defaults:
+  min_score: 0.4
+rules:
+  - id: BLOCK_SECRETS
+    description: "Secrets and credentials must never be sent to external AI services."
+    when:
+      categories: [SECRET]
+      min_score: 0.5
+    min_count: 1
+    then:
+      decision: block
+      action: remove
+    reason: "API keys, tokens, credentials and passwords must not be shared with external AI tools."
+
+  - id: REDACT_PAYMENT_INSTRUMENTS
+    description: "Credit cards and bank accounts must be masked."
+    when:
+      entity_types: [CREDIT_CARD, IN_BANK_ACCOUNT]
+      min_score: 0.4
+    min_count: 1
+    then:
+      decision: redact
+      action: mask
+    reason: "Financial payment instruments and bank accounts must be masked before sharing."
+
+  - id: REDACT_GOVERNMENT_ID_VALIDATED
+    description: "Validated national identifiers must be pseudonymized."
+    when:
+      categories: [GOVERNMENT_ID]
+      validated: true
+      min_score: 0.5
+    min_count: 1
+    then:
+      decision: redact
+      action: pseudonymize
+    reason: "Checksum-verified government identifiers (Aadhaar, PAN, GSTIN) must be pseudonymized."
+
+  - id: APPROVE_GOVERNMENT_ID_UNVALIDATED
+    description: "Unverified government identifier patterns require confirmation."
+    when:
+      categories: [GOVERNMENT_ID]
+      validated: false
+      min_score: 0.6
+    min_count: 1
+    then:
+      decision: require_approval
+      action: pseudonymize
+    reason: "Unverified government identifier pattern detected; manual confirmation required."
+
+  - id: REDACT_UPI
+    description: "UPI virtual payment addresses must be pseudonymized."
+    when:
+      entity_types: [UPI_ID]
+      min_score: 0.5
+    min_count: 1
+    then:
+      decision: redact
+      action: pseudonymize
+    reason: "UPI Virtual Payment Addresses must be pseudonymized before external submission."
+
+  - id: REDACT_DIRECT_CONTACT
+    description: "Direct contact info (phone, mobile, email) must be pseudonymized."
+    when:
+      entity_types: [PHONE_NUMBER, IN_MOBILE, EMAIL, EMAIL_ADDRESS]
+      min_score: 0.4
+    min_count: 1
+    then:
+      decision: redact
+      action: pseudonymize
+    reason: "Direct personal contact details (phone, email) must be pseudonymized."
+
+  - id: PII_COMBINATION_PERSON
+    description: "A person's name combined with direct contact or financial identifiers must be pseudonymized together."
+    when:
+      entity_types: [PERSON]
+      min_score: 0.4
+    requires_any:
+      - entity_types: [PHONE_NUMBER, IN_MOBILE, EMAIL, EMAIL_ADDRESS, IN_AADHAAR, IN_PAN, IN_GSTIN, US_SSN, CREDIT_CARD, IN_BANK_ACCOUNT, UPI_ID]
+    min_count: 1
+    then:
+      decision: redact
+      action: pseudonymize
+      also_apply_to_requires: true
+    reason: "A person's name combined with contact, ID, or financial details poses re-identification risk; both must be pseudonymized."
+
+  - id: ALLOW_PERSON_ALONE
+    description: "An isolated person name without other identifying information is allowed."
+    when:
+      entity_types: [PERSON]
+      min_score: 0.4
+    min_count: 1
+    then:
+      decision: allow
+      action: keep
+    reason: "Isolated personal name without linked identifying attributes is permitted."
+
+  - id: BLOCK_CONFIDENTIAL_UNTRUSTED
+    description: "Confidential watchlist terms are blocked on untrusted destinations."
+    when:
+      categories: [CONFIDENTIAL]
+      destination_trust: [untrusted]
+      min_score: 0.5
+    min_count: 1
+    then:
+      decision: block
+      action: remove
+    reason: "Confidential proprietary terms cannot be sent to untrusted AI services."
+
+  - id: APPROVE_CONFIDENTIAL_STANDARD
+    description: "Confidential watchlist terms require user approval on standard or trusted destinations."
+    when:
+      categories: [CONFIDENTIAL]
+      destination_trust: [trusted, standard]
+      min_score: 0.5
+    min_count: 1
+    then:
+      decision: require_approval
+      action: pseudonymize
+    reason: "Confidential proprietary watchlist terms detected; explicit review and approval required."
