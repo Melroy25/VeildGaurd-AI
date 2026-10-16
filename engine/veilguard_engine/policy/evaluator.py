@@ -165,13 +165,17 @@ class PolicyEvaluator:
                 )
             )
 
-            # 4. Update overall decision (strongest wins)
+            # 4. Update overall decision (strongest wins, with combination rule specificity preference)
             rule_decision = rule.then.decision
+            rule_specificity = 2 if rule.requires_any else 1
+
             if DECISION_RANKS[rule_decision] > DECISION_RANKS[current_decision]:
                 current_decision = rule_decision
-                strongest_rule_info = (rule_decision, rule.id, rule.reason)
-            elif strongest_rule_info is None and rule_decision == current_decision:
-                strongest_rule_info = (rule_decision, rule.id, rule.reason)
+                strongest_rule_info = (rule_decision, rule.id, rule.reason, rule_specificity)
+            elif rule_decision == current_decision:
+                prev_specificity = strongest_rule_info[3] if strongest_rule_info else 0
+                if rule_specificity > prev_specificity or strongest_rule_info is None:
+                    strongest_rule_info = (rule_decision, rule.id, rule.reason, rule_specificity)
 
             # 5. Update per-finding actions (strongest wins)
             for f in matching_findings:
@@ -198,9 +202,15 @@ class PolicyEvaluator:
                 Decision.REQUIRE_APPROVAL: "Approval required",
             }
             prefix = prefix_map.get(current_decision, "Review required")
-            rule_id = strongest_rule_info[1] if strongest_rule_info else "POLICY"
+            primary_rule_id = strongest_rule_info[1] if strongest_rule_info else "POLICY"
             reason = strongest_rule_info[2] if strongest_rule_info else "Policy match"
-            summary = f"{prefix}: {reason} (rule {rule_id})."
+
+            other_rule_ids = [ar.rule_id for ar in applied_rules if ar.rule_id != primary_rule_id]
+            if other_rule_ids:
+                summary = f"{prefix}: {reason} (rule {primary_rule_id}; also matched {', '.join(other_rule_ids)})."
+            else:
+                summary = f"{prefix}: {reason} (rule {primary_rule_id})."
+
 
         options = DECISION_OPTIONS_MAP.get(current_decision, ["edit", "cancel"])
 

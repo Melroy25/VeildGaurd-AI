@@ -55,5 +55,10 @@
 - **No coreference resolution:** The engine does not perform entity coreference. It will not link an isolated first name (`Rahul`) to a full name (`Rahul Sharma`) appearing in the same text.
 - **Partial masking information disclosure:** Masking keeps the last 4 digits (e.g. `XXXX XXXX 3456`), which intentionally reveals partial information for user readability but may not satisfy strict zero-disclosure requirements.
 - **Non-exhaustive detection notice:** Sanitized text may still contain undetected sensitive entities if novel, obfuscated, or unmodeled patterns were present in the prompt. Users must review sanitized text before sending.
+ 
++## 10. Presidio Country-Specific Recognizer Dormancy
++- Microsoft Presidio includes country-specific recognizer classes (e.g. `InPanRecognizer`, `InAadhaarRecognizer`) within its codebase, but excludes them from its standard `AnalyzerEngine` default registry.
++- Deploying standard stock Presidio out-of-the-box yields near-zero recall for Indian identifiers unless explicit custom registry assembly is performed.
++- VeilGuard addresses this by providing dedicated, algorithmically validated detectors (Verhoeff checksum for Aadhaar, mod-36 for GSTIN, PAN character verification, context-window gated bank accounts) integrated natively into the scanner.
 
 

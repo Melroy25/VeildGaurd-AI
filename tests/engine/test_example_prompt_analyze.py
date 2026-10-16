@@ -36,10 +36,9 @@ def test_canonical_example_prompt_analyze() -> None:
     assert "9876543210" not in sanitized
     assert "[PHONE_1]" in sanitized
 
-    # Notice: Rahul Sharma's is detected by spaCy en_core_web_sm with 's
-    # and pseudonymized together with mobile number under PII_COMBINATION_PERSON
-    assert "Rahul Sharma" not in sanitized
-    assert "[PERSON_1]" in sanitized
+    # With span normalization, the trailing 's is preserved in the sanitized output:
+    assert "[PERSON_1]'s account" in sanitized
+
 
     # Verification must report zero residuals
     assert data["sanitization"]["verification"]["residual_findings"] == 0

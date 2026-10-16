@@ -20,3 +20,7 @@ WATCHLIST_PATH: str = os.getenv("VEILGUARD_WATCHLIST", "policies/watchlist.yaml"
 # Authentication token configuration
 TOKEN_ENV_VAR: str = "VEILGUARD_TOKEN"
 TOKEN_FILE_PATH: str = os.getenv("VEILGUARD_TOKEN_FILE", ".veilguard/token")
+
+# Span normalization configuration (trims possessives and punctuation from PERSON/LOCATION spans)
+NORMALIZE_SPANS: bool = os.getenv("VEILGUARD_NORMALIZE_SPANS", "true").lower() in ("true", "1", "yes")
+

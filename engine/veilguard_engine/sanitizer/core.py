@@ -65,8 +65,20 @@ MASKABLE_ENTITY_TYPES: Set[str] = {
     "IN_AADHAAR",
 }
 
-# Regex identifying generated placeholders to avoid false positive residual detections
-PLACEHOLDER_TOKEN_REGEX = re.compile(r"^\[[A-Z0-9_]+\]$")
+# Known canonical placeholder labels
+KNOWN_PLACEHOLDER_LABELS: Set[str] = set(ENTITY_LABEL_MAP.values())
+PLACEHOLDER_TOKEN_PATTERN = re.compile(r"^\[([A-Z0-9_]+)_(\d+)\]$")
+
+
+def is_generated_placeholder(token: str) -> bool:
+    """Check if token is an exact generated placeholder [LABEL_N] or [SECRET_REMOVED]."""
+    if token == "[SECRET_REMOVED]":
+        return True
+    m = PLACEHOLDER_TOKEN_PATTERN.match(token)
+    if m and m.group(1) in KNOWN_PLACEHOLDER_LABELS:
+        return True
+    return False
+
 
 
 def mask_value(val: str) -> str:
@@ -286,10 +298,11 @@ class Sanitizer:
 
         for f in rescan_resp.findings:
             matched_span = sanitized_text[f.start : f.end]
-            # Ignore false positive detections that hit generated placeholder tokens
-            if PLACEHOLDER_TOKEN_REGEX.match(matched_span):
+            # Ignore false positive detections that hit exact generated placeholder tokens
+            if is_generated_placeholder(matched_span):
                 continue
             residual_types.append(f.entity_type)
+
 
         return SanitizeVerification(
             rescanned=True,

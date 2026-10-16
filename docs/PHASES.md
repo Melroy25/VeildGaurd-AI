@@ -22,16 +22,21 @@
 ---
 
 ## Phase 3a: Policy Engine & Sanitizer (Complete)
-- **Scope:** Declarative YAML policy engine with schema validation, destination trust mapping (`policies/destinations.yaml`), 3 default profiles (`personal`, `company`, `finance`), deterministic decision precedence (`allow` < `redact` < `require_approval` < `block`), type-based utility-preserving sanitizer with consistent placeholders (`[PERSON_1]`, `[PHONE_1]`), mask, remove, `known_placeholders` seeding, post-sanitization re-scan verification, UTF-16 code unit offset alignment, `POST /analyze` and `GET /policy/profiles` endpoints.
+- **Scope:** Declarative YAML policy engine with schema validation, destination trust mapping (`policies/destinations.yaml`), 3 default profiles (`personal`, `company`, `finance`), deterministic decision precedence (`allow` < `redact` < `require_approval` < `block`), type-based sanitizer with consistent placeholders (`[PERSON_1]`, `[PHONE_1]`), mask, remove, `known_placeholders` seeding, post-sanitization re-scan verification, UTF-16 code unit offset alignment, `POST /analyze` and `GET /policy/profiles` endpoints.
 - **Done When:** Automated test suite asserts policy decision matrix across all profiles, all 10 sanitizer invariants (including reversible round-trip rehydration, separator-preserving masking, Unicode/emoji safety), fail-closed schema validation on invalid policies, strong logging privacy (zero submitted text in logs), and manual `/analyze` on canonical example and secret prompts.
-- **Verification:** 69 engine tests pass, 3 xfail (known spaCy limitations). Zero unhandled exceptions. Fail-closed on invalid policy verified. UTF-16 code-unit offsets slice exact characters in JS encoding.
+- **Verification:** 74 engine tests pass, 3 xfail (known spaCy limitations). Zero unhandled exceptions. Fail-closed on invalid policy verified. UTF-16 code-unit offsets slice exact characters in JS encoding.
 
 ---
 
-## Phase 3b: Extension Integration, Review UI & Dashboard (Planned)
-- **Scope:** Extension background service worker calls `/analyze`, in-DOM isolated Shadow DOM review overlay visualizing original vs sanitized diff, explicit human confirmation for `require_approval` or `redact`, session placeholder vault in `chrome.storage.session`, options page token entry, and metadata-only React audit dashboard.
-- **Done When:** End-to-end browser flow allows user review, manual approval/override, and records strictly metadata-only logs to dashboard storage without storing raw prompt content.
+## Phase 3b: Extension + Engine Integration & Review Flow (In Progress)
+- **Scope:** Extension background service worker calls engine `/analyze`, in-DOM isolated Shadow DOM review overlay visualizing original vs sanitized diff, explicit human confirmation for `require_approval` or `redact`, session placeholder vault in `chrome.storage.session`, options page token entry, metadata-only event recording ring buffer, and engine-backed MAIN-world backstop.
+- **Done When:** Automated Playwright end-to-end tests verify pre-submission hold, review overlay interaction, sanitized delivery, and engine-backed backstop across DOM and programmatic paths on the mock site with zero leaks.
 
+---
+
+## Phase 3c: Dashboard UI & Statistics (Planned)
+- **Scope:** React options page dashboard visualizing recorded metadata events (risk categories, entity counts, decision trends) and popup statistics without exposing raw prompt content.
+- **Done When:** Automated tests verify dashboard rendering, filtering, and export using strictly synthetic metadata event logs.
 
 ---
 
@@ -48,8 +53,9 @@
 ---
 
 ## Phase 6: Benchmark
-- **Scope:** Synthetic benchmark dataset with rigorous dev/test split, comparing VeilGuard against a keyword-matching baseline and vanilla Presidio across precision, recall, latency, and utility retention.
+- **Scope:** Synthetic benchmark dataset with rigorous dev/test split, comparing VeilGuard against a keyword-matching baseline, vanilla Presidio default, and Presidio with all stock predefined recognizers enabled across precision, recall, latency, and utility retention.
 - **Done When:** Fully reproducible benchmark script outputs verifiable metrics JSON and latency tables in `bench/results/`.
+
 
 ---
 

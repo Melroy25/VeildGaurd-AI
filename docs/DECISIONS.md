@@ -134,4 +134,18 @@ This document records key technical decisions, rationales, and alternatives eval
 - **Decision:** `PolicyRegistry` validates all profiles on engine initialization. If any profile has invalid syntax, unknown fields, unknown decisions, or if the default `company` profile is missing, the engine raises an unhandled exception and halts startup.
 - **Rationale:** Enforces Security Rule 6 (Fail closed). The engine never serves traffic under invalid or corrupt policy configurations.
 
+### 22. Presidio Predefined Recognizers Fact-Check and Dual Baseline Strategy
+- **Date:** Phase 3b (Task 0)
+- **Context:** An architectural assumption was that Microsoft Presidio has zero built-in Indian entity recognizers. Codebase verification revealed that Presidio does provide country-specific predefined recognizers (`InPanRecognizer`, `InAadhaarRecognizer`, `InGstinRecognizer`, `InPassportRecognizer`, `InVehicleRegistrationRecognizer`, `InVoterRecognizer` under `presidio_analyzer.predefined_recognizers.country_specific.india.*`). However, `AnalyzerEngine().registry` only instantiates US and global recognizers by default; country-specific recognizers are dormant and disabled unless explicitly registered.
+- **Decision:** Document this distinction transparently. In Phase 6 benchmarks, VeilGuard will be evaluated against two distinct baselines:
+  1. *Presidio Out-of-the-Box:* Standard default `AnalyzerEngine()` registry without customization.
+  2. *Presidio Full-Stock:* `AnalyzerEngine()` with its built-in Indian recognizers explicitly registered.
+- **Rationale:** Adheres to Honesty Rule 1. VeilGuard introduces checksum verification (Verhoeff algorithm for Aadhaar, mod-36 for GSTIN, PAN 4th character structure), context-window gating for bank accounts, and unified overlap resolution that Presidio's standalone pattern recognizers do not provide.
+
+### 23. Entity Span Normalization for Possessives and Boundary Punctuation
+- **Date:** Phase 3b (Task 0)
+- **Context:** spaCy's statistical NER model tokenizes possessives into entity spans (e.g., `Rahul Sharma's` is tagged as a single `PERSON` entity). Replacing the span directly results in `[PERSON_1]` replacing the whole possessive token rather than preserving the possessive `'s` (destroying grammar to `Analyze customer [PERSON_1] account...`), and creates mismatching placeholders between `Rahul Sharma` and `Rahul Sharma's`.
+- **Decision:** Implement `normalize_finding_span()` in `engine/veilguard_engine/scanner.py` controlled by `NORMALIZE_SPANS = True`. For `PERSON` and `LOCATION` findings, trim trailing possessives (`'s`, `’s`, `'`) and surrounding punctuation, adjusting `start` and `end` offsets before overlap resolution, policy evaluation, and API serialization.
+- **Rationale:** Preserves natural language grammar in sanitized prompts (`Analyze customer [PERSON_1]'s account...`), guarantees consistent entity values for session-vault placeholder hashing, and maintains exact character slice bounds.
+
 

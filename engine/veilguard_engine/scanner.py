@@ -98,6 +98,47 @@ def resolve_overlaps(findings: List[Finding]) -> List[Finding]:
     return resolved
 
 
+def normalize_finding_span(finding: Finding, text: str) -> Finding:
+    """Normalize finding span boundaries by trimming leading/trailing punctuation and possessives.
+
+    Trims trailing possessives ('s, ’s, trailing ') and punctuation from PERSON and LOCATION spans,
+    as well as leading opening punctuation brackets and quotes.
+    PresidioDetector remains unmodified as a stock baseline.
+    """
+    if finding.entity_type not in ("PERSON", "LOCATION"):
+        return finding
+
+    start = finding.start
+    end = finding.end
+
+    # Trim leading opening punctuation and whitespace
+    while start < end and text[start] in "([{<\"'“‘« ":
+        start += 1
+
+    # Trim trailing punctuation and whitespace
+    while end > start and text[end - 1] in ",.;:!?)]}>\"'”’» ":
+        end -= 1
+
+    # Trim possessive suffixes ('s or curly ’s)
+    span_sub = text[start:end]
+    if span_sub.endswith(("'s", "’s")):
+        end -= 2
+    elif span_sub.endswith(("'", "’")) and len(span_sub) > 2:
+        end -= 1
+
+    # Trim any remaining trailing punctuation after possessive strip
+    while end > start and text[end - 1] in ",.;:!?)]}>\"'”’» ":
+        end -= 1
+
+    if start != finding.start or end != finding.end:
+        f_copy = finding.model_copy()
+        f_copy.start = start
+        f_copy.end = end
+        return f_copy
+
+    return finding
+
+
 class Scanner:
     """Coordinates detection modules and produces resolved findings."""
 
@@ -134,7 +175,11 @@ class Scanner:
                 # In production, continue running other detectors rather than failing silently
                 continue
 
+        if getattr(config, "NORMALIZE_SPANS", True):
+            raw_findings = [normalize_finding_span(f, text) for f in raw_findings]
+
         resolved = resolve_overlaps(raw_findings)
+
         elapsed_ms = (time.perf_counter() - t_start) * 1000.0
 
         return ScanResponse(
