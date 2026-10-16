@@ -89,6 +89,7 @@ Origin: chrome-extension://<extension-id>   (or omitted for local clients)
 
 | Field | Type | Description |
 | :--- | :--- | :--- |
+| `offset_unit` | `string` | Always `"utf16"`. Character indexing unit for all offsets in response. |
 | `findings` | `Finding[]` | Ordered list of detected sensitive entities (non-overlapping). |
 | `stats` | `ScanStats` | Summary metadata about the scan. |
 
@@ -96,67 +97,118 @@ Origin: chrome-extension://<extension-id>   (or omitted for local clients)
 
 | Field | Type | Description |
 | :--- | :--- | :--- |
-| `id` | `string` | Unique finding identifier within the response (e.g., `"F001"`). |
-| `category` | `string` | High-level risk category. One of: `IDENTITY`, `FINANCIAL`, `HEALTH`, `CREDENTIAL`, `CONTACT`, `WATCHLIST`, `OTHER`. |
+| `id` | `string` | Unique finding identifier within the response (e.g., `"f1"`, `"f2"`). |
+| `category` | `string` | High-level risk category (`PII`, `FINANCIAL`, `GOVERNMENT_ID`, `SECRET`, `CONFIDENTIAL`). |
 | `entity_type` | `string` | Specific entity type (e.g., `IN_AADHAAR`, `IN_PAN`, `PERSON`, `AWS_ACCESS_KEY`). |
-| `start` | `integer` | Zero-indexed start character offset in the submitted text. |
-| `end` | `integer` | Zero-indexed exclusive end character offset (Python slice convention). |
+| `start` | `integer` | Start offset in input text (indexed by UTF-16 code units for JavaScript string compatibility). |
+| `end` | `integer` | Exclusive end offset in input text (indexed by UTF-16 code units). |
 | `score` | `number` | Confidence score in range `[0.0, 1.0]`. |
-| `detector` | `string` | Name of the detector that produced the finding (e.g., `"india"`, `"presidio"`, `"secrets"`, `"watchlist"`). |
-| `rule_id` | `string` | Machine-readable rule identifier (e.g., `"VG-IN-002"`, `"VG-SEC-001"`). |
-| `validated` | `boolean` | `true` if the match was verified by a deterministic checksum (e.g., Verhoeff for Aadhaar, modular check for PAN/GSTIN). |
+| `detector` | `string` | Name of the detector module that identified the finding. |
+| `rule_id` | `string` | Machine-readable rule identifier. |
+| `validated` | `boolean | null` | Checksum verification outcome if applicable. |
 | `reason` | `string` | Generic human-readable explanation using entity type and count only — **never contains matched text**. |
-| `also_detected_as` | `string[]` | Other entity types that overlapped with this finding and were de-prioritized by overlap resolution. Empty if no overlap. |
-
-**`ScanStats` Object:**
-
-| Field | Type | Description |
-| :--- | :--- | :--- |
-| `total_findings` | `integer` | Total number of non-overlapping findings returned. |
-| `categories` | `object` | Mapping of `category → count` for all findings. |
-| `validated_count` | `integer` | Number of findings where `validated = true`. |
-| `scan_time_ms` | `number` | Wall-clock scan duration in milliseconds. |
+| `also_detected_as` | `string[]` | Other entity types that overlapped with this finding and were de-prioritized by overlap resolution. |
 
 **Example Response:**
 ```json
 {
+  "offset_unit": "utf16",
   "findings": [
     {
-      "id": "F001",
-      "category": "IDENTITY",
+      "id": "f1",
+      "category": "PII",
       "entity_type": "PERSON",
       "start": 23,
       "end": 35,
       "score": 0.85,
       "detector": "presidio",
-      "rule_id": "VG-NER-001",
-      "validated": false,
-      "reason": "Detected 1 PERSON entity.",
-      "also_detected_as": []
-    },
-    {
-      "id": "F002",
-      "category": "IDENTITY",
-      "entity_type": "IN_AADHAAR",
-      "start": 45,
-      "end": 59,
-      "score": 1.0,
-      "detector": "india",
-      "rule_id": "VG-IN-001",
-      "validated": true,
-      "reason": "Detected 1 IN_AADHAAR entity (checksum verified).",
+      "rule_id": "presidio.person",
+      "validated": null,
+      "reason": "Identified potential PERSON via Presidio statistical/pattern analyzer.",
       "also_detected_as": []
     }
   ],
   "stats": {
-    "total_findings": 2,
-    "categories": {
-      "IDENTITY": 2
-    },
-    "validated_count": 1,
-    "scan_time_ms": 42.7
+    "text_length": 118,
+    "latency_ms": 42.7,
+    "detectors": ["india_detector", "secrets_detector", "watchlist_detector", "presidio"],
+    "spacy_model": "en_core_web_sm"
   }
 }
+```
+
+---
+
+### `POST /analyze`
+
+Performs full privacy analysis, evaluates declarative YAML policy rules, and produces a sanitized prompt version with consistent type-based placeholders, masks, or removals.
+
+**Request Headers:**
+```
+Content-Type: application/json
+Authorization: Bearer <token>
+Origin: chrome-extension://<extension-id>   (or omitted for local clients)
+```
+
+**Request Body (`AnalyzeRequest`):**
+
+| Field | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `text` | `string` | Yes | The prompt or document text to analyze. Max 200,000 characters. |
+| `source` | `string` | No | `"prompt"` (default) or `"document"`. |
+| `destination` | `string` | No | Destination hostname string (e.g. `"127.0.0.1"`, `"chatgpt.com"`). Defaults to `"127.0.0.1"`. |
+| `profile` | `string` | No | Policy profile name (`"company"`, `"personal"`, `"finance"`). Defaults to `"company"`. |
+| `known_placeholders`| `array` | No | Optional seed list of `[{"entity_type": "...", "value": "...", "placeholder": "..."}]` for cross-turn chat session consistency. |
+
+**Response Body (`AnalyzeResponse`):**
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `offset_unit` | `string` | Always `"utf16"`. Offset unit for all finding and replacement coordinates. |
+| `decision` | `string` | Strongest policy decision: `"allow"`, `"redact"`, `"require_approval"`, `"block"`. |
+| `options` | `string[]` | Allowed user workflow choices: `["send_original"]`, `["send_sanitized", "edit", "cancel"]`, etc. |
+| `summary` | `string` | Plain-language decision explanation without any sensitive content. |
+| `applied_rules`| `AppliedRule[]` | Policy rules that matched and fired (`rule_id`, `reason`, `finding_ids`). |
+| `findings` | `Finding[]` | Non-overlapping detected findings with UTF-16 offsets. |
+| `sanitization` | `SanitizeResult | null` | Sanitized text and replacement mapping. `null` if decision is `"allow"`. |
+| `notices` | `string[]` | Safety notices, always including `"Detection is not exhaustive. Review the text before sending."` |
+| `stats` | `AnalyzeStats` | Execution statistics (latency, resolved trust tier, profile). |
+
+**`SanitizeResult` Object:**
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `sanitized_text` | `string` | Utility-preserving prompt with sensitive entities replaced by placeholders or masks. |
+| `replacements` | `ReplacementItem[]` | Mapping of changes made. **Strictly contains offsets, actions, and placeholders; NEVER contains original sensitive values.** |
+| `explanations` | `SanitizeExplanation[]` | Per-finding action explanations. |
+| `utility` | `UtilityNotice` | `{ basis: "type_only", may_change_result: "possible" | "low", notes: [...] }`. |
+| `verification` | `SanitizeVerification` | Post-sanitization re-scan verification proving 0 residual entities. |
+
+---
+
+### `GET /policy/profiles`
+
+Returns all registered policy profiles and their rules for UI configuration.
+
+**Request Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Response `200 OK`:**
+```json
+[
+  {
+    "profile": "company",
+    "description": "Default corporate policy for employees using external AI tools",
+    "rules": [
+      {
+        "rule_id": "BLOCK_SECRETS",
+        "reason": "API keys, tokens, credentials and passwords must not be shared with external AI tools."
+      }
+    ]
+  }
+]
 ```
 
 ---
@@ -165,10 +217,11 @@ Origin: chrome-extension://<extension-id>   (or omitted for local clients)
 
 | Status | Condition |
 | :--- | :--- |
+| `400 Bad Request` | Unknown policy profile requested. Generic error that **never echoes user input**. |
 | `401 Unauthorized` | Missing or invalid `Authorization` header |
 | `403 Forbidden` | Non-loopback `Host` header or disallowed `Origin` |
-| `422 Unprocessable Content` | Request body validation failure (field missing, text exceeds limit). **Error detail does not echo submitted text.** |
-| `429 Too Many Requests` | *(Reserved for future rate limiting)* |
+| `422 Unprocessable Content` | Request validation failure (field missing, text exceeds limit). Error detail does not echo submitted text. |
+
 
 ---
 

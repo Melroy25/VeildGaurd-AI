@@ -84,3 +84,54 @@ This document records key technical decisions, rationales, and alternatives eval
 - **Decision:** Implement `SensitiveLogFilter` in `security.py` that drops all log records from the `presidio-analyzer` logger hierarchy at DEBUG level, and additionally drops any log message containing the string `"Context list is"`. Call `configure_privacy_logging()` both at module import time (for engine startup) and inside the pytest `caplog.at_level()` context in `test_privacy_invariants.py` (to attach to pytest's dynamic handler).
 - **Rationale:** A filter on the logger hierarchy is more maintainable than patching Presidio internals. Double-calling `configure_privacy_logging()` is guarded with `if log_filter not in log.filters` to prevent duplicate filter accumulation.
 
+### 14. UTF-16 Code-Unit Offset Conversion in API Layer
+- **Date:** Phase 3a
+- **Context:** JavaScript strings index by UTF-16 code units, whereas Python strings index by Unicode code points. Characters outside the Basic Multilingual Plane (e.g., emojis `U+1F600` 😀) take 1 code point in Python but 2 code units in JavaScript. Directly using Python offsets caused incorrect substring slicing in Chrome extension content scripts.
+- **Decision:** Retain Unicode code point indexing internally for detector and sanitizer string operations, but convert all finding and replacement start/end offsets to UTF-16 code units in the API serialization layer (`convert_findings_to_utf16()`). Add explicit `"offset_unit": "utf16"` property to API responses.
+- **Rationale:** Eliminates slice offset desynchronization across the Python/TypeScript boundary without compromising Python standard library string slice ergonomics.
+
+### 15. Declarative YAML Policy DSL Scope
+- **Date:** Phase 3a
+- **Context:** Policy rules need to map sensitive finding classifications to actionable privacy decisions (`allow`, `redact`, `require_approval`, `block`). Using Python code or `eval()` in policy files introduces code execution vulnerabilities.
+- **Decision:** Implement a strictly declarative YAML schema validated by Pydantic with `extra="forbid"`. Rules specify structured conditions (`when`), combination requirements (`requires_any`), exclusions (`requires_none`), and actions (`then`).
+- **Rationale:** Guarantees zero code execution risk, enables auditing by security teams, and allows straightforward UI rendering in dashboard settings.
+
+### 16. Combination Requirements (`requires_any` and `requires_none`)
+- **Date:** Phase 3a
+- **Context:** Some entities (like personal names) are benign in isolation, but pose critical re-identification risks when combined with identifiers (phone, email, ID). Additionally, personal profiles may require approval for isolated phone numbers but mandate redaction when linked with a name.
+- **Decision:** Implement `requires_any` (fires only if another finding matches a selector) and `requires_none` (rule does not fire if a forbidden finding exists). Support `also_apply_to_requires` to apply identical actions to both entities.
+- **Rationale:** Enables fine-grained contextual combination policies without requiring complex graph queries or full syntactic parsers.
+
+### 17. Strongest-Wins Resolution for Decisions and Actions
+- **Date:** Phase 3a
+- **Context:** When multiple policy rules match a single text submission or finding, conflicting decisions and actions must be resolved deterministically.
+- **Decision:** Enforce fixed numeric precedence:
+  - Decisions: `allow` (1) < `redact` (2) < `require_approval` (3) < `block` (4).
+  - Actions: `keep` (1) < `pseudonymize` (2) < `mask` (3) < `remove` (4).
+- **Rationale:** Safety invariant. The most restrictive security posture always wins, ensuring a permissive rule cannot accidentally downgrade a critical block or redaction directive.
+
+### 18. Default Destination Trust Tiering
+- **Date:** Phase 3a
+- **Context:** Policies must vary based on where prompt submissions are directed (e.g. internal enterprise endpoint vs unverified external AI).
+- **Decision:** Map hostnames to three tiers (`trusted`, `standard`, `untrusted`) in `policies/destinations.yaml`. Map `127.0.0.1` and `localhost` to `standard` (mirroring public AI chat behavior during testing), and default unknown destinations to `standard`.
+- **Rationale:** Realistic local testing environment that mirrors commercial cloud chat interfaces without special-casing loopback traffic.
+
+### 19. Stateless Engine with `known_placeholders` Seeding
+- **Date:** Phase 3a
+- **Context:** Multi-turn conversations require consistent pseudonymization across turns (e.g., `Rahul Sharma` should remain `[PERSON_1]` in message 2). However, maintaining state inside the local Python engine complicates scalability and lifecycle recovery.
+- **Decision:** Keep the Python engine strictly stateless. The browser extension maintains the session vault and passes previously assigned mappings via `known_placeholders: [{entity_type, value, placeholder}]` in `POST /analyze`. The engine reuses existing placeholders and increments counters past the highest existing index.
+- **Rationale:** Keeps engine architecture purely functional and deterministic, eliminating memory leaks and session persistence bugs across engine restarts.
+
+### 20. Post-Sanitization Re-Scan Verification
+- **Date:** Phase 3a
+- **Context:** To verify that sanitization was effective and did not leave residual sensitive entities or introduce malformed tokens, verification is necessary.
+- **Decision:** Re-scan the output `sanitized_text` with the engine detector suite, filter out known generated placeholders (`[PERSON_1]`, `[SECRET_REMOVED]`), and report residual counts and types in `verification: SanitizeVerification`.
+- **Rationale:** Provides tangible automated verification that sanitization succeeded before data is transmitted.
+
+### 21. Fail-Closed Policy Loading
+- **Date:** Phase 3a
+- **Context:** If a policy configuration contains errors, falling back to a default permissive state could leak uninspected sensitive data.
+- **Decision:** `PolicyRegistry` validates all profiles on engine initialization. If any profile has invalid syntax, unknown fields, unknown decisions, or if the default `company` profile is missing, the engine raises an unhandled exception and halts startup.
+- **Rationale:** Enforces Security Rule 6 (Fail closed). The engine never serves traffic under invalid or corrupt policy configurations.
+
+

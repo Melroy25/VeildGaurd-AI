@@ -48,3 +48,12 @@
 - **Mitigation path:** Upgrading to `en_core_web_lg` or a domain-adapted NER model would improve recall on these cases. This is noted as a **Future** improvement; the current baseline uses `en_core_web_sm` per the original Phase 2 spec.
 - These limitations are explicitly documented as `xfail(strict=True)` tests in `tests/engine/test_known_limitations.py`.
 
+## 9. Type-Based Sanitization & Task-Agnostic Boundaries (Phase 3a)
+- **Not task-aware:** Phase 3a sanitization operates strictly on entity types and declarative policy rules; it does not yet infer user task intent or determine task-necessity (scheduled for Phase 5).
+- **Type-based placeholders:** Placeholders are strictly categorical (`[PERSON_1]`, `[PHONE_1]`), not semantic or role-based (e.g. `[CUSTOMER_1]`, `[MERCHANT_1]`).
+- **Conservative utility notices:** The `may_change_result` notice is purely type-based (`possible` whenever an entity is replaced, masked, or removed) and cannot yet evaluate whether the replacement will realistically degrade model output.
+- **No coreference resolution:** The engine does not perform entity coreference. It will not link an isolated first name (`Rahul`) to a full name (`Rahul Sharma`) appearing in the same text.
+- **Partial masking information disclosure:** Masking keeps the last 4 digits (e.g. `XXXX XXXX 3456`), which intentionally reveals partial information for user readability but may not satisfy strict zero-disclosure requirements.
+- **Non-exhaustive detection notice:** Sanitized text may still contain undetected sensitive entities if novel, obfuscated, or unmodeled patterns were present in the prompt. Users must review sanitized text before sending.
+
+

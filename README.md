@@ -91,8 +91,32 @@ Verify the engine health endpoint:
 - **macOS / Linux / bash:**
   ```bash
   curl http://127.0.0.1:8765/health
-  # Returns: {"status":"ok","version":"0.0.1"}
+  # Returns: {"status":"ok","version":"0.1.0"}
   ```
+
+Verify authenticated `/analyze` endpoint:
+- **Windows PowerShell:**
+  ```powershell
+  $token = Get-Content .veilguard/token
+  $headers = @{
+      "Authorization" = "Bearer $token"
+      "Content-Type" = "application/json"
+  }
+  $body = @{
+      text = "Analyze customer Rahul Sharma's account, phone number 9876543210."
+      profile = "company"
+  } | ConvertTo-Json
+  Invoke-RestMethod -Uri http://127.0.0.1:8765/analyze -Method Post -Headers $headers -Body $body
+  ```
+- **macOS / Linux / bash:**
+  ```bash
+  TOKEN=$(cat .veilguard/token)
+  curl -X POST http://127.0.0.1:8765/analyze \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"text": "Analyze customer Rahul Sharma'\''s account, phone number 9876543210.", "profile": "company"}'
+  ```
+
 
 ### 2. Build the Extension
 ```bash

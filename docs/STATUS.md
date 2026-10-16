@@ -12,10 +12,11 @@
 | **Local `/scan` Engine API** | Phase 2 | **Implemented** | `POST /scan` FastAPI endpoint with Bearer token auth, loopback-only host check, Origin header enforcement, overlap-resolving scanner with 5-tier priority, metadata-only response (no raw text). 9 API security tests pass (`tests/engine/test_api_security.py`). Privacy invariant (Rule 7) verified in `test_privacy_invariants.py`. |
 | **Task Intent & Necessity Matrix** | Phase 5 | **Planned** | Heuristic/classifier task intent scoring with necessity matrices |
 | **Quasi-Identifier & Re-ID Scorer**| Phase 5 | **Planned** | Multi-attribute correlation and combination re-identification risk scoring |
-| **Declarative YAML Policy Engine** | Phase 3 | **Planned** | Rule engine matching conditions to decisions (ALLOW, REDACT, APPROVE, BLOCK) |
-| **Utility-Preserving Sanitizer**   | Phase 3 | **Planned** | Consistent pseudonym substitution, generalization, and diff generation |
-| **Shadow DOM Review Overlay**     | Phase 3 | **Planned** | In-browser approval modal showing detected risks and sanitized diffs |
-| **Metadata-Only Audit Dashboard**  | Phase 3 | **Planned** | Options page React dashboard tracking risks and decisions without prompt text |
+| **Declarative YAML Policy Engine** | Phase 3a | **Implemented** | Declarative YAML policy engine with fail-closed schema validation, destination trust tiers (`policies/destinations.yaml`), 3 default profiles (`personal`, `company`, `finance`), deterministic decision precedence (`allow` < `redact` < `require_approval` < `block`), and explainable summaries. Verified in `tests/engine/test_policy_loader.py` and `test_policy_evaluator.py`. |
+| **Sanitizer (type-based, engine side)** | Phase 3a | **Implemented** | Engine-side sanitizer supporting type-based pseudonymization (`[PERSON_1]`, `[PHONE_1]`), separator-preserving masking (`XXXX XXXX 1234`), removal (`[SECRET_REMOVED]`), `known_placeholders` seeding, UTF-16 offset indexing, and post-sanitization re-scan verification. Exposed via `POST /analyze`. Verified in `tests/engine/test_sanitizer.py`, `test_api_analyze.py`, and `test_privacy_invariants_strong.py`. |
+| **Utility-Preserving Sanitizer (task-aware)** | Phase 5 | **Planned** | Task-dependent necessity preservation and role-based placeholder generation |
+| **Shadow DOM Review Overlay**     | Phase 3b | **Planned** | In-browser approval modal showing detected risks and sanitized diffs |
+| **Metadata-Only Audit Dashboard**  | Phase 3b | **Planned** | Options page React dashboard tracking risks and decisions without prompt text |
 | **Target AI Site Adapter**         | Phase 4 | **Planned** | Dedicated adapter with robust selectors for one target AI chat interface |
 | **Protection State Badge**        | Phase 4 | **Planned** | Visual indicator displaying "Protection Active" or "Protection Inactive" |
 | **Reproducible Benchmark Suite**   | Phase 6 | **Planned** | Comparison between keyword baseline, default Presidio, and VeilGuard |

@@ -31,15 +31,15 @@ VeilGuard AI operates as a split-architecture system:
 |                                                                         |
 |  Pipeline:                                                              |
 |  1. Presidio + Custom Recognizers (Aadhaar, PAN, UPI, IFSC, Secrets)    |
-|  2. Context Feature Extraction (Window, Role, Co-occurrence)            |
-|  3. Task Profile Inference (Code, Writing, Analysis, Math)              |
-|  4. Task-Necessity Matrix Scoring (e.g. amounts needed, names not)      |
-|  5. Re-identification Risk Scoring (k-anonymity / quasi-identifiers)    |
-|  6. YAML Policy Engine Evaluation (Allow, Redact, Approve, Block)       |
-|  7. Utility-Preserving Sanitizer (Pseudonymize, Generalize, Suppress)   |
+|  2. Overlap Resolution (Deterministic 5-tier priority hierarchy)        |
+|  3. YAML Policy Engine Evaluation (Allow, Redact, Approve, Block)       |
+|  4. Utility-Preserving Sanitizer (Consistent placeholders, Mask, Remove)|
+|  5. Post-Sanitization Re-Scan Verification (Proof of 0 residual PII)    |
+|  [Future Phase 5]: Context Extraction, Task Profiling, Necessity Matrix |
 |        |                                                                |
-|        | 3. Scan Response: { decision, entities, sanitized, diff, risk } |
+|        | 3. Response: { decision, options, findings, sanitization, ... } |
 |        +----------------------------------------------------------------+
+
          |
          v
 +-------------------------------------------------------------------------+
