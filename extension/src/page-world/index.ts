@@ -120,14 +120,27 @@
   // Listen for verdict responses from content script
   // ---------------------------------------------------------------------------
 
+  window.addEventListener("veilguard_pre_approve", ((event: CustomEvent<{ text?: string }>) => {
+    if (event.detail && typeof event.detail.text === "string") {
+      approvedFingerprints.set(fingerprintText(event.detail.text), Date.now());
+    }
+  }) as EventListener);
+
   window.addEventListener("message", (event: MessageEvent) => {
     if (event.source !== window) return;
-    if (!event.data || event.data.type !== "VEILGUARD_VERDICT") return;
+    if (!event.data) return;
 
-    const { requestId, allow } = event.data as { requestId: string; allow: boolean };
-    const callback = pendingVerdicts.get(requestId);
-    if (callback) {
-      callback(Boolean(allow));
+    if (event.data.type === "VEILGUARD_PRE_APPROVE" && typeof event.data.text === "string") {
+      approvedFingerprints.set(fingerprintText(event.data.text), Date.now());
+      return;
+    }
+
+    if (event.data.type === "VEILGUARD_VERDICT") {
+      const { requestId, allow } = event.data as { requestId: string; allow: boolean };
+      const callback = pendingVerdicts.get(requestId);
+      if (callback) {
+        callback(Boolean(allow));
+      }
     }
   });
 
@@ -203,8 +216,8 @@
         }
 
         if (messageText) {
-          // Check if this is an already-approved re-triggered submission
-          if (isApproved(messageText)) {
+          const approved = isApproved(messageText);
+          if (approved) {
             return originalFetch.apply(window, [input, init]);
           }
 

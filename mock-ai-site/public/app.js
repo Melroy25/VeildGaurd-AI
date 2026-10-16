@@ -95,6 +95,7 @@
         appendMessage("assistant", data.reply || "Message received");
         clearComposer();
       } catch (err) {
+        console.error("[MOCK_APP] Send Error:", err);
         appendMessage("assistant", `[Send Error] ${err.message}`);
       }
     } else {
@@ -137,7 +138,7 @@
   let containerHtml = "";
   if (wiringType === "form") {
     containerHtml = `
-      <form id="chat-form" class="composer-container">
+      <form id="chat-form" class="composer-container" onsubmit="event.preventDefault(); return false;">
         ${composerHtml}
         <div class="controls">
           ${programmaticBtnHtml}

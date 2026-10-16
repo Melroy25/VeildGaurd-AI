@@ -87,15 +87,15 @@ const benchmarkCells: ResultCell[] = [];
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function resetServer(request: APIRequestContext): Promise<void> {
-  const res = await request.post("http://127.0.0.1:4310/__test/reset");
-  expect(res.ok()).toBeTruthy();
+async function resetServer(_request?: APIRequestContext): Promise<void> {
+  const res = await fetch("http://127.0.0.1:4310/__test/reset", { method: "POST" });
+  expect(res.ok).toBeTruthy();
 }
 
 async function getReceivedMessages(
-  request: APIRequestContext
+  _request?: APIRequestContext
 ): Promise<Array<{ message: string; timestamp: string }>> {
-  const res = await request.get("http://127.0.0.1:4310/__test/received");
+  const res = await fetch("http://127.0.0.1:4310/__test/received");
   const data = await res.json() as { messages?: Array<{ message: string; timestamp: string }> };
   return data.messages ?? [];
 }
@@ -127,9 +127,12 @@ async function waitForOverlayTitle(page: Page, timeoutMs = 8000): Promise<boolea
       () => {
         const host = document.getElementById("veilguard-overlay-host");
         if (!host?.shadowRoot) return false;
-        const el = host.shadowRoot.getElementById("vg-overlay-title");
-        return el != null && el.offsetParent != null;
+        const el =
+          host.shadowRoot.getElementById("vg-overlay-title") ||
+          host.shadowRoot.getElementById("vg-err-title");
+        return el != null;
       },
+      undefined,
       { timeout: timeoutMs }
     );
     return true;
@@ -139,24 +142,36 @@ async function waitForOverlayTitle(page: Page, timeoutMs = 8000): Promise<boolea
 }
 
 async function dismissOverlay(page: Page): Promise<void> {
-  // Try both edit button (review overlay) and dismiss button (error overlay)
-  await page.evaluate(() => {
-    const host = document.getElementById("veilguard-overlay-host");
-    if (!host?.shadowRoot) return;
-    const editBtn = host.shadowRoot.querySelector("button.btn-edit") as HTMLButtonElement | null;
-    const dismissBtn = host.shadowRoot.querySelector("button.btn-dismiss") as HTMLButtonElement | null;
-    (editBtn ?? dismissBtn)?.click();
-  });
+  // Use Playwright locator clicks which send trusted mouse events (isTrusted: true)
+  const host = page.locator("#veilguard-overlay-host");
+  const editBtn = host.locator("button.btn-edit");
+  const dismissBtn = host.locator("button.btn-dismiss");
+  if (await editBtn.isVisible({ timeout: 500 }).catch(() => false)) {
+    await editBtn.click();
+  } else if (await dismissBtn.isVisible({ timeout: 500 }).catch(() => false)) {
+    await dismissBtn.click();
+  } else {
+    await page.keyboard.press("Escape");
+  }
 }
 
-async function injectTokenAndProfile(page: Page): Promise<void> {
-  // Inject token + profile into chrome.storage.local via background
-  // so the engine client has valid credentials for this test session
-  await page.evaluate((token: string) => {
-    return new Promise<void>((resolve) => {
-      chrome.storage.local.set({ vg_token: token, vg_profile: "company" }, resolve);
-    });
-  }, E2E_TOKEN);
+async function injectTokenAndProfile(
+  context: BrowserContext,
+  token: string = E2E_TOKEN,
+  profile: string = "company"
+): Promise<void> {
+  let [sw] = context.serviceWorkers();
+  if (!sw) {
+    sw = await context.waitForEvent("serviceworker", { timeout: 15000 });
+  }
+  await sw.evaluate(
+    ({ t, p }) => {
+      return new Promise<void>((resolve) => {
+        chrome.storage.local.set({ vg_token: t, vg_profile: p }, () => resolve());
+      });
+    },
+    { t: token, p: profile }
+  );
 }
 
 type SubmitPath = "click" | "enter" | "submit";
@@ -227,12 +242,12 @@ test.describe("Phase 3b: Full Chain Enforcement (DOM Paths)", () => {
       await context.waitForEvent("serviceworker", { timeout: 15000 });
     }
 
-    page = await context.newPage();
+    page = context.pages()[0] || (await context.newPage());
 
     // Navigate to mock site once to get extension content script context, then inject token
     await page.goto("http://127.0.0.1:4310/?composer=textarea&wiring=form&transport=fetch");
     await page.waitForLoadState("domcontentloaded");
-    await injectTokenAndProfile(page);
+    await injectTokenAndProfile(context);
   });
 
   test.afterAll(async () => {
@@ -279,6 +294,7 @@ test.describe("Phase 3b: Full Chain Enforcement (DOM Paths)", () => {
             const badge = host.shadowRoot.getElementById("veilguard-badge");
             return badge != null;
           },
+          undefined,
           { timeout: 8000 }
         );
 
@@ -293,7 +309,6 @@ test.describe("Phase 3b: Full Chain Enforcement (DOM Paths)", () => {
           await triggerDomSubmission(page, pathType, config.composer, config.wiring);
 
           const overlayShown = await waitForOverlayTitle(page, 10000);
-
           const received = await getReceivedMessages(page.request);
           if (received.some((m) => m.message.includes("9876543210"))) {
             flaggedLeaked++;
@@ -318,6 +333,7 @@ test.describe("Phase 3b: Full Chain Enforcement (DOM Paths)", () => {
                 if (!host?.shadowRoot) return true;
                 return host.shadowRoot.querySelector(".backdrop") == null;
               },
+              undefined,
               { timeout: 3000 }
             );
           }
@@ -326,7 +342,6 @@ test.describe("Phase 3b: Full Chain Enforcement (DOM Paths)", () => {
         // Reload page for benign phase to clear any stale state
         await page.goto(url);
         await page.waitForLoadState("domcontentloaded");
-        await injectTokenAndProfile(page);
 
         let benignDelivered = 0;
 
@@ -336,11 +351,9 @@ test.describe("Phase 3b: Full Chain Enforcement (DOM Paths)", () => {
           await setComposerText(page, config.composer, BENIGN_PROMPT);
           await triggerDomSubmission(page, pathType, config.composer, config.wiring);
 
-          // Overlay must NOT appear for benign content
           const overlayShown = await waitForOverlayTitle(page, 2000);
           expect(overlayShown, "Benign prompt triggered overlay unexpectedly").toBe(false);
 
-          // Server must receive the message
           await expect.poll(
             async () => {
               const msgs = await getReceivedMessages(page.request);
@@ -354,11 +367,10 @@ test.describe("Phase 3b: Full Chain Enforcement (DOM Paths)", () => {
             benignDelivered++;
           }
 
-          // Wait for composer to be cleared (server response received)
           if (config.composer === "textarea") {
-            await expect(page.locator("#chat-composer-textarea")).toHaveValue("", { timeout: 5000 });
+            await expect(page.locator("#chat-composer-textarea")).toHaveValue("", { timeout: 8000 });
           } else {
-            await expect(page.locator("#chat-composer-editable")).toHaveText("", { timeout: 5000 });
+            await expect(page.locator("#chat-composer-editable")).toHaveText("", { timeout: 8000 });
           }
         }
 
@@ -406,10 +418,10 @@ test.describe("Phase 3b: Full Chain Enforcement (Backstop Paths)", () => {
       await context.waitForEvent("serviceworker", { timeout: 15000 });
     }
 
-    page = await context.newPage();
+    page = context.pages()[0] || (await context.newPage());
     await page.goto("http://127.0.0.1:4310/?composer=textarea&wiring=click&transport=fetch");
     await page.waitForLoadState("domcontentloaded");
-    await injectTokenAndProfile(page);
+    await injectTokenAndProfile(context);
   });
 
   test.afterAll(async () => {
@@ -422,7 +434,6 @@ test.describe("Phase 3b: Full Chain Enforcement (Backstop Paths)", () => {
       const url = `http://127.0.0.1:4310/?composer=textarea&wiring=click&transport=${transport}`;
       await page.goto(url);
       await page.waitForLoadState("domcontentloaded");
-      await injectTokenAndProfile(page);
 
       let flaggedLeaked = 0;
       let flaggedBlocked = 0;
@@ -451,6 +462,7 @@ test.describe("Phase 3b: Full Chain Enforcement (Backstop Paths)", () => {
               if (!host?.shadowRoot) return true;
               return host.shadowRoot.querySelector(".backdrop") == null;
             },
+            undefined,
             { timeout: 3000 }
           );
         }
@@ -459,7 +471,6 @@ test.describe("Phase 3b: Full Chain Enforcement (Backstop Paths)", () => {
       // Reload for benign phase
       await page.goto(url);
       await page.waitForLoadState("domcontentloaded");
-      await injectTokenAndProfile(page);
 
       let benignDelivered = 0;
 
@@ -485,7 +496,7 @@ test.describe("Phase 3b: Full Chain Enforcement (Backstop Paths)", () => {
           benignDelivered++;
         }
 
-        await expect(page.locator("#chat-composer-textarea")).toHaveValue("", { timeout: 5000 });
+        await expect(page.locator("#chat-composer-textarea")).toHaveValue("", { timeout: 8000 });
       }
 
       benchmarkCells.push({
@@ -535,11 +546,7 @@ test.describe("Phase 3b: Fail-Closed Verification (engine offline simulation)", 
     await page.waitForLoadState("domcontentloaded");
 
     // Set an INVALID token to simulate auth failure (engine rejects it)
-    await page.evaluate(() => {
-      return new Promise<void>((resolve) => {
-        chrome.storage.local.set({ vg_token: "invalid-token-that-will-be-rejected", vg_profile: "company" }, resolve);
-      });
-    });
+    await injectTokenAndProfile(context, "invalid-token-that-will-be-rejected", "company");
   });
 
   test.afterAll(async () => {

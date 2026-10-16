@@ -41,6 +41,7 @@ type FlowState = "idle" | "analyzing" | "blocked";
 let flowState: FlowState = "idle";
 let analyzeDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const DEBOUNCE_MS = 80; // Prevents double-fire on Enter + form submit
+let isReTriggering = false; // Prevents extension from intercepting its own re-triggered submissions
 
 // ---------------------------------------------------------------------------
 // Vault helpers (via background messages)
@@ -68,6 +69,14 @@ export function handleInterception(
   event: Event,
   path: "enter" | "click" | "submit"
 ): void {
+  // If this event was dispatched by VeilGuard itself to re-trigger an allowed submission,
+  // let it pass directly to the host page's event listener.
+  if (isReTriggering) {
+    return;
+  }
+
+  const text = adapter.getText();
+
   if (flowState !== "idle") {
     // Already analyzing or blocked — cancel the re-entrancy
     event.preventDefault();
@@ -75,7 +84,6 @@ export function handleInterception(
     return;
   }
 
-  const text = adapter.getText();
   if (!text || text.trim().length === 0) {
     // Empty submission — allow through (no content to inspect)
     return;
@@ -110,10 +118,15 @@ async function runAnalysis(
   const destination = window.location.hostname;
 
   // Retrieve currently stored profile preference
-  const profileResult = await chrome.storage.local.get("vg_profile");
-  const profile = typeof profileResult["vg_profile"] === "string"
-    ? profileResult["vg_profile"]
-    : "company";
+  let profile = "company";
+  try {
+    const profileResult = await chrome.storage.local.get("vg_profile");
+    if (typeof profileResult["vg_profile"] === "string") {
+      profile = profileResult["vg_profile"];
+    }
+  } catch (err) {
+    console.warn("[VG_FLOW] Error getting vg_profile:", err);
+  }
 
   // Build ANALYZE request — background handles token and vault merging
   const response = await new Promise<AnalyzeResponse>((resolve) => {
@@ -144,6 +157,7 @@ async function runAnalysis(
     flowState = "blocked";
     updateBadgeState("error");
     showEngineErrorOverlay(response.errorKind, response.errorMessage, () => {
+      hideOverlay();
       flowState = "idle";
       updateBadgeState("active");
     });
@@ -168,17 +182,13 @@ async function runAnalysis(
       // Clean — allow the original submission through
       flowState = "idle";
       updateBadgeState("active");
-      retriggerSubmission(adapter, path);
+      retriggerSubmission(adapter, text);
       break;
 
     case "redact":
-      // Auto-redact: replace composer text with sanitized version then re-submit
-      await handleRedactAndSend(adapter, engineResult, path, destination);
-      break;
-
     case "require_approval":
     case "block":
-      // Show review overlay for user decision
+      // Show review overlay for user decision (Phase 3b human confirmation)
       flowState = "blocked";
       updateBadgeState("review");
       showReviewOverlay({
@@ -222,63 +232,26 @@ async function runAnalysis(
  */
 function retriggerSubmission(
   adapter: SiteAdapter,
-  _path: string
+  text: string
 ): void {
-  // Use a microtask to yield so the current event stack fully unwinds
-  // before re-triggering, preventing re-entrant interception
+  // Pre-approve the text for the MAIN-world backstop so it doesn't re-query
+  window.postMessage({ type: "VEILGUARD_PRE_APPROVE", text }, "*");
+  try {
+    window.dispatchEvent(new CustomEvent("veilguard_pre_approve", { detail: { text } }));
+  } catch {}
+
   setTimeout(() => {
-    adapter.triggerSend();
-  }, 0);
+    isReTriggering = true;
+    try {
+      adapter.triggerSend();
+    } finally {
+      setTimeout(() => {
+        isReTriggering = false;
+      }, 150);
+    }
+  }, 25);
 }
 
-// ---------------------------------------------------------------------------
-// Redact and send (auto-redact path)
-// ---------------------------------------------------------------------------
-
-async function handleRedactAndSend(
-  adapter: SiteAdapter,
-  engineResult: EngineAnalyzeResponse,
-  path: "enter" | "click" | "submit" | "backstop_fetch" | "backstop_xhr",
-  destination: string
-): Promise<void> {
-  const set = adapter.setText(engineResult.sanitized_text);
-  if (!set) {
-    // setText verification failed — show review overlay instead (fail safe)
-    flowState = "blocked";
-    updateBadgeState("review");
-    showReviewOverlay({
-      engineResult,
-      originalText: engineResult.sanitized_text,
-      isBlockDecision: false,
-      onSendSanitized: async () => {
-        hideOverlay();
-        flowState = "idle";
-        updateBadgeState("active");
-        await handleSendSanitized(adapter, engineResult, path, destination);
-      },
-      onEdit: () => {
-        hideOverlay();
-        flowState = "idle";
-        updateBadgeState("active");
-      },
-    });
-    return;
-  }
-
-  flowState = "idle";
-  updateBadgeState("active");
-  retriggerSubmission(adapter, path);
-  recordEvent({
-    timestamp: new Date().toISOString(),
-    category: engineResult.primary_rule_id ?? "UNKNOWN",
-    entityCount: engineResult.findings.length,
-    riskScore: engineResult.findings.reduce((max, f) => Math.max(max, f.score), 0),
-    decision: engineResult.decision,
-    ruleIds: engineResult.matched_rule_ids,
-    outcome: "redacted_and_sent",
-    destination,
-  });
-}
 
 // ---------------------------------------------------------------------------
 // Send sanitized (after user approval in overlay)
@@ -287,11 +260,11 @@ async function handleRedactAndSend(
 async function handleSendSanitized(
   adapter: SiteAdapter,
   engineResult: EngineAnalyzeResponse,
-  path: "enter" | "click" | "submit" | "backstop_fetch" | "backstop_xhr",
+  _path: "enter" | "click" | "submit" | "backstop_fetch" | "backstop_xhr",
   destination: string
 ): Promise<void> {
   adapter.setText(engineResult.sanitized_text);
-  retriggerSubmission(adapter, path);
+  retriggerSubmission(adapter, engineResult.sanitized_text);
   recordEvent({
     timestamp: new Date().toISOString(),
     category: engineResult.primary_rule_id ?? "UNKNOWN",
@@ -333,6 +306,7 @@ export function handleBackstopBlocked(transport: "fetch" | "xhr"): void {
     "backstop",
     "A programmatic API submission was intercepted and blocked. No content was transmitted.",
     () => {
+      hideOverlay();
       flowState = "idle";
       updateBadgeState("active");
     }

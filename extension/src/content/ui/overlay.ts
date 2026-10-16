@@ -497,10 +497,15 @@ export function showEngineErrorOverlay(
   const dismissBtn = document.createElement("button");
   dismissBtn.type = "button";
   dismissBtn.className = "btn-dismiss";
+  const handleDismiss = () => {
+    clearOverlay();
+    onDismiss();
+  };
+
   dismissBtn.textContent = "Dismiss";
   dismissBtn.addEventListener("click", (e) => {
     if (!e.isTrusted) return;
-    onDismiss();
+    handleDismiss();
   });
   actions.appendChild(dismissBtn);
   modal.appendChild(actions);
@@ -510,7 +515,7 @@ export function showEngineErrorOverlay(
   root.appendChild(backdrop);
 
   focusTrapCleanup = trapFocus(modal, root);
-  escapeCleanup = attachEscapeHandler(onDismiss);
+  escapeCleanup = attachEscapeHandler(handleDismiss);
 }
 
 /**

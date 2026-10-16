@@ -232,7 +232,7 @@ export async function analyze(
     throw new EngineError("parse_error", "Engine response was not valid JSON");
   }
 
-  // Minimal shape validation — we trust the engine's Pydantic serialization
+  // Minimal shape validation — verify engine returned an object with decision
   if (
     typeof data !== "object" ||
     data === null ||
@@ -241,7 +241,58 @@ export async function analyze(
     throw new EngineError("parse_error", "Engine response missing required 'decision' field");
   }
 
-  return data as EngineAnalyzeResponse;
+  const raw = data as Record<string, unknown>;
+  const sanitization = raw["sanitization"] as Record<string, unknown> | null | undefined;
+  const appliedRules = (raw["applied_rules"] as Array<{ rule_id: string; reason: string }>) || [];
+  const rawFindings = (raw["findings"] as Array<Record<string, unknown>>) || [];
+  const replacements = (sanitization?.["replacements"] as Array<Record<string, unknown>>) || [];
+
+  // Map replacement details (action, placeholder) onto findings by finding_id
+  const replacementMap = new Map<string, { action: string; placeholder?: string }>();
+  for (const rep of replacements) {
+    if (typeof rep["finding_id"] === "string") {
+      replacementMap.set(rep["finding_id"], {
+        action: String(rep["action"] ?? "keep"),
+        placeholder: typeof rep["placeholder"] === "string" ? rep["placeholder"] : undefined,
+      });
+    }
+  }
+
+  const findings: EngineFinding[] = rawFindings.map((f) => {
+    const rep = replacementMap.get(String(f["id"] ?? ""));
+    return {
+      id: String(f["id"] ?? ""),
+      entity_type: String(f["entity_type"] ?? ""),
+      value: String(f["value"] ?? ""),
+      start: Number(f["start"] ?? 0),
+      end: Number(f["end"] ?? 0),
+      score: Number(f["score"] ?? 0),
+      detector: String(f["detector"] ?? ""),
+      action: rep?.action ?? "keep",
+      placeholder: rep?.placeholder,
+    };
+  });
+
+  const utility = sanitization?.["utility"] as Record<string, unknown> | undefined;
+  const verification = sanitization?.["verification"] as Record<string, unknown> | undefined;
+
+  const result: EngineAnalyzeResponse = {
+    decision: (raw["decision"] as EngineAnalyzeResponse["decision"]) ?? "allow",
+    sanitized_text:
+      typeof sanitization?.["sanitized_text"] === "string" ? sanitization["sanitized_text"] : text,
+    findings,
+    summary: typeof raw["summary"] === "string" ? raw["summary"] : "",
+    primary_rule_id: appliedRules[0]?.rule_id ?? null,
+    matched_rule_ids: appliedRules.map((r) => r.rule_id),
+    may_change_result: utility?.["may_change_result"] === "possible",
+    offset_unit: "utf16",
+    verification: {
+      residual_count: Number(verification?.["residual_findings"] ?? 0),
+      residual_findings: [],
+    },
+  };
+
+  return result;
 }
 
 /**
@@ -272,7 +323,7 @@ export async function ping(): Promise<EngineHealthResponse> {
  */
 export async function fetchProfiles(): Promise<EngineProfilesResponse> {
   const token = await getStoredToken();
-  const response = await engineFetch("/analyze/profiles", { method: "GET" }, token);
+  const response = await engineFetch("/policy/profiles", { method: "GET" }, token);
 
   if (response.status === 401) {
     throw new EngineError("auth_error", "Engine rejected token fetching profiles (401).", 401);
@@ -282,7 +333,11 @@ export async function fetchProfiles(): Promise<EngineProfilesResponse> {
   }
 
   try {
-    return (await response.json()) as EngineProfilesResponse;
+    const data = await response.json();
+    if (Array.isArray(data)) {
+      return { profiles: data.map((p: { profile: string }) => p.profile) };
+    }
+    return { profiles: ["company", "personal", "finance"] };
   } catch {
     throw new EngineError("parse_error", "Engine profiles response was not valid JSON");
   }

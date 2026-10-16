@@ -72,17 +72,19 @@ chrome.runtime.onMessage.addListener(
     // Sender validation: only accept messages from this extension's own scripts.
     // Reject any message originating from a web page or external context.
     if (!sender.id || sender.id !== chrome.runtime.id) {
-      // Silent reject — do not ack or respond
+      console.warn("[VG_BG] Rejected message due to sender ID mismatch:", sender.id, "vs", chrome.runtime.id);
       return false;
     }
 
     if (!isVeilGuardRequest(message)) {
-      // Malformed message — ignore
+      console.warn("[VG_BG] Rejected message as not a valid VeilGuardRequest:", message);
       return false;
     }
 
     // Handle asynchronously and return true to keep the message channel open
-    handleRequest(message, sender).then(sendResponse).catch((err: unknown) => {
+    handleRequest(message, sender).then((res) => {
+      sendResponse(res);
+    }).catch((err: unknown) => {
       console.error("[VeilGuard AI] Unhandled background error:", err);
     });
 
