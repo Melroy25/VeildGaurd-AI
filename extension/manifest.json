@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "VeilGuard AI",
+  "version": "0.0.1",
+  "description": "Context-aware privacy firewall for AI tools.",
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "VeilGuard AI"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  }
+}
