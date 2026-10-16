@@ -39,3 +39,12 @@
 - No production third-party AI website adapters (such as ChatGPT or Claude) are implemented or registered in Phase 1; adapter registration is scheduled for Phase 4.
 - Content scripts and host permissions are scoped exclusively to `http://127.0.0.1:4310/*` and `http://localhost:4310/*` per Rule 9 (Least Privilege).
 - Detection logic in Phase 1 utilizes a synchronous regex harness stub (`isFlagged()` in `extension/src/shared/stub-detector.ts`); full Presidio and local engine integration is scoped to Phase 2.
+
+## 8. spaCy `en_core_web_sm` NER Recall Boundaries (Phase 2)
+- The statistical named entity recognizer in `en_core_web_sm` relies on capitalization, grammatical sentence structure, and sufficient surrounding context tokens.
+- **Lowercase names:** Submitting a name entirely in lowercase (e.g., `"patient john doe"`) will not be recognized as a PERSON entity. The model requires standard title-case input.
+- **Short fragments without context:** Isolated name strings in non-sentence fragments (e.g., `"name: subramanian"`) lack the grammatical context cues the statistical model requires and will be missed.
+- **Transliterated Indian regional names:** Uncommon transliterated South Indian names (e.g., `"Subramanian"`) without surrounding sentence context may be missed by `en_core_web_sm` because they are underrepresented in the English training corpus.
+- **Mitigation path:** Upgrading to `en_core_web_lg` or a domain-adapted NER model would improve recall on these cases. This is noted as a **Future** improvement; the current baseline uses `en_core_web_sm` per the original Phase 2 spec.
+- These limitations are explicitly documented as `xfail(strict=True)` tests in `tests/engine/test_known_limitations.py`.
+

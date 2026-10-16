@@ -59,3 +59,28 @@ This document records key technical decisions, rationales, and alternatives eval
 - **Context:** Rapid consecutive test iterations across 20 trials produced a race condition where the browser's asynchronous fetch callback `clearComposer()` executed immediately after the next trial's input had already been filled, causing the composer to be empty when Enter was pressed.
 - **Decision:** In the automated test harness benign loop, await browser confirmation that the composer has been cleared (`expect(composer).toHaveValue("")` / `expect(composer).toHaveText("")`) before advancing to the subsequent trial.
 - **Rationale:** Guarantees deterministic synchronization between the browser's asynchronous HTTP response lifecycle and the test driver's input generation without arbitrary sleeps.
+
+### 10. Verhoeff Algorithm for Aadhaar Checksum Validation
+- **Date:** Phase 2
+- **Context:** Aadhaar numbers use the Verhoeff algorithm (published by J. Verhoeff, 1969) for their check digit. Multiple alternative check digit schemes (Luhn, Damm, ISBN-10) were considered.
+- **Decision:** Implement the Verhoeff algorithm using the three published lookup tables (`d_table`, `p_table`, `inv_table`) in `engine/veilguard_engine/detectors/validators.py`.
+- **Rationale:** Verhoeff is the official UIDAI-mandated algorithm for Aadhaar validation. It detects all single transposition and single digit errors. The tables are published in the original Verhoeff paper and are deterministic — no external library dependency required, satisfying Rule 14 (deterministic detection core).
+
+### 11. Context-Keyword Requirement for IN_BANK_ACCOUNT Detection
+- **Date:** Phase 2
+- **Context:** Indian bank account numbers are 9–18 digit strings, overlapping heavily with phone numbers, order numbers, transaction IDs, and other numeric sequences. A raw regex without context generates excessive false positives.
+- **Decision:** `IndiaDetector` requires at least one contextual keyword (e.g., "account", "acct", "bank", "savings", "current") within a ±60 character window around any `IN_BANK_ACCOUNT` match. Without a context keyword, the match is suppressed.
+- **Rationale:** Context-gating dramatically reduces false positive rate on numeric strings without impacting recall on actual banking contexts, which always include account-related language. Alternative (raising score threshold alone) was insufficient because digit-count overlap is deterministic, not probabilistic.
+
+### 12. Bearer Token Persistence Strategy
+- **Date:** Phase 2
+- **Context:** The `/scan` API must be authenticated to prevent other processes on the local machine from submitting arbitrary text to the privacy engine. Tokens need to persist across engine restarts so the extension does not need to be updated with new token values.
+- **Decision:** Generate a 32-byte `secrets.token_urlsafe()` token on first startup, persist it to `.veilguard/token` (gitignored via `.gitignore`). Allow override via `VEILGUARD_TOKEN` environment variable. Verify with `secrets.compare_digest()` for constant-time comparison. Cache in module-level `ACTIVE_API_TOKEN` constant loaded once at import.
+- **Rationale:** File persistence allows restarts without reconfiguration. Gitignore ensures no token is ever committed (Rule 11). Environment variable override supports CI and Docker deployments. `compare_digest` prevents timing-oracle attacks on token comparison.
+
+### 13. Privacy Logging Filter Architecture
+- **Date:** Phase 2
+- **Context:** Presidio's `SpacyRecognizer` logs tokenized context words at DEBUG level, which can include fragments of the submitted prompt text. This violates Rule 7 (no raw content in logs).
+- **Decision:** Implement `SensitiveLogFilter` in `security.py` that drops all log records from the `presidio-analyzer` logger hierarchy at DEBUG level, and additionally drops any log message containing the string `"Context list is"`. Call `configure_privacy_logging()` both at module import time (for engine startup) and inside the pytest `caplog.at_level()` context in `test_privacy_invariants.py` (to attach to pytest's dynamic handler).
+- **Rationale:** A filter on the logger hierarchy is more maintainable than patching Presidio internals. Double-calling `configure_privacy_logging()` is guarded with `if log_filter not in log.filters` to prevent duplicate filter accumulation.
+

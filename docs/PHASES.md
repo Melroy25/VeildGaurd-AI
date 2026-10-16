@@ -14,9 +14,10 @@
 
 ---
 
-## Phase 2: Detection Engine
+## Phase 2: Detection Engine (Complete)
 - **Scope:** Python engine `/scan` endpoint integrating Microsoft Presidio, spaCy `en_core_web_sm`, custom Indian recognizers with checksums (Aadhaar with Verhoeff, PAN, UPI, IFSC, GSTIN), API secrets detector, and synthetic unit test suites.
 - **Done When:** Automated tests verify detection of both standard and regional identifiers with zero unhandled exceptions on edge cases.
+- **Verification:** 34 tests pass, 3 xfail (documenting known `en_core_web_sm` limitations). Zero unhandled exceptions. Privacy invariant (Rule 7 — no raw text in responses or logs) verified by dedicated test. API security invariants (loopback binding, Bearer token auth, Origin enforcement, 422 error sanitization) all verified.
 
 ---
 
