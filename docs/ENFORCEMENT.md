@@ -100,9 +100,9 @@ Execution results are recorded in `bench/results/enforcement_mock_site.json` acr
   - 2 Wiring architectures: HTML `<form>` and direct click listeners
   - 3 Submission paths: Button click, Enter key, Form submit
   - 2 Programmatic backstop transports: direct `fetch()` and `XMLHttpRequest`
-- **Total Trials:** 240 trials (120 flagged, 120 benign controls)
-- **Flagged Prompt Leaks:** **0 / 120 (0.00% leakage)**
-- **Benign Prompts Correctly Delivered:** **120 / 120 (100.00% delivery rate)**
+- **Total Trials:** 480 trials across 12 cells (240 flagged prompt trials and 240 benign control trials; N=20 per cell)
+- **Flagged Prompt Leaks:** No leaks observed across 240 flagged trials (0 / 240 leaked)
+- **Benign Prompts Delivered:** 240 / 240 correctly delivered (100% delivery rate)
 
 | Cell Configuration | Submission Path | Transport | Flagged Trials | Flagged Leaked | Benign Trials | Benign Delivered |
 | :--- | :--- | :--- | :---: | :---: | :---: | :---: |
