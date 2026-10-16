@@ -207,3 +207,33 @@ def test_invariant_10_rescan_verification_and_placeholder_immunity(sanitizer: Sa
     # Generated placeholders [PERSON_1] and [PHONE_1] should not be re-detected as residuals
     assert res.verification.residual_findings == 0
     assert res.verification.residual_finding_types == []
+
+
+def test_spending_patterns_utility_preservation(sanitizer: Sanitizer) -> None:
+    """Utility preservation: amounts (₹500, ₹1,200) and categories (groceries, transport) must survive."""
+    from veilguard_engine.scanner import Scanner
+    scanner = Scanner()
+    text = "Rahul Sharma, phone number 9876543210, has transactions of ₹500 on groceries and ₹1,200 on transport. Identify spending patterns."
+    scan_res = scanner.scan(text)
+
+    # Policy: company profile
+    from veilguard_engine.policy.evaluator import PolicyEvaluator
+    from veilguard_engine.policy.loader import PolicyRegistry
+    from veilguard_engine.policy.models import DestinationTrust
+    registry = PolicyRegistry()
+    profile = registry.get_profile("company")
+    eval_res = PolicyEvaluator.evaluate(scan_res.findings, text, DestinationTrust.STANDARD, profile)
+
+    san_res = sanitizer.sanitize(text, scan_res.findings, eval_res)
+    # Amounts and spending categories must survive
+    assert "₹500" in san_res.sanitized_text
+    assert "₹1,200" in san_res.sanitized_text
+    assert "groceries" in san_res.sanitized_text
+    assert "transport" in san_res.sanitized_text
+    assert "Identify spending patterns" in san_res.sanitized_text
+    # Direct identifiers must be pseudonymized
+    assert "[PERSON_1]" in san_res.sanitized_text
+    assert "[PHONE_1]" in san_res.sanitized_text
+    assert "Rahul Sharma" not in san_res.sanitized_text
+    assert "9876543210" not in san_res.sanitized_text
+

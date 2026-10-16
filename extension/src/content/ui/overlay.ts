@@ -122,6 +122,10 @@ function buildStyleEl(): HTMLStyleElement {
     }
     .btn-edit     { background: #334155; color: #f8fafc; }
     .btn-edit:hover { background: #475569; }
+    .btn-cancel   { background: #1e293b; color: #94a3b8; border: 1px solid #475569; }
+    .btn-cancel:hover { background: #334155; color: #f8fafc; }
+    .btn-send-original { background: #dc2626; color: #fff; }
+    .btn-send-original:hover { background: #b91c1c; }
     .btn-send     { background: #0284c7; color: #fff; }
     .btn-send:hover { background: #0369a1; }
     .btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -279,7 +283,9 @@ export interface ReviewOverlayOptions {
   originalText: string;
   isBlockDecision: boolean;
   onSendSanitized: () => void;
+  onSendOriginalConfirmed?: () => void;
   onEdit: () => void;
+  onCancel?: () => void;
 }
 
 /**
@@ -384,18 +390,88 @@ export function showReviewOverlay(opts: ReviewOverlayOptions): void {
   const actions = document.createElement("div");
   actions.className = "actions";
 
-  const editBtn = document.createElement("button");
-  editBtn.type = "button";
-  editBtn.className = "btn-edit";
-  editBtn.textContent = "← Edit Original";
-  editBtn.addEventListener("click", (e) => {
-    // Reject synthetic / programmatic clicks (isTrusted guard)
-    if (!e.isTrusted) return;
-    onEdit();
-  });
-  actions.appendChild(editBtn);
+  const allowedOptions = engineResult.options && engineResult.options.length > 0
+    ? engineResult.options
+    : isBlockDecision
+    ? ["edit", "cancel"]
+    : ["send_sanitized", "edit", "cancel"];
 
-  if (!isBlockDecision) {
+  // 1. Cancel button
+  if (allowedOptions.includes("cancel")) {
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "btn-cancel";
+    cancelBtn.textContent = "Cancel";
+    cancelBtn.addEventListener("click", (e) => {
+      if (!e.isTrusted) return;
+      if (opts.onCancel) {
+        opts.onCancel();
+      } else {
+        onEdit();
+      }
+    });
+    actions.appendChild(cancelBtn);
+  }
+
+  // 2. Edit Original button
+  if (allowedOptions.includes("edit")) {
+    const editBtn = document.createElement("button");
+    editBtn.type = "button";
+    editBtn.className = "btn-edit";
+    editBtn.textContent = "← Edit Original";
+    editBtn.addEventListener("click", (e) => {
+      // Reject synthetic / programmatic clicks (isTrusted guard)
+      if (!e.isTrusted) return;
+      onEdit();
+    });
+    actions.appendChild(editBtn);
+  }
+
+  // 3. Send Original (with secondary confirmation step for require_approval)
+  if (allowedOptions.includes("send_original_confirmed") && opts.onSendOriginalConfirmed) {
+    const sendOrigBtn = document.createElement("button");
+    sendOrigBtn.type = "button";
+    sendOrigBtn.className = "btn-send-original";
+    sendOrigBtn.textContent = "Send Original (Unsanitized)";
+    sendOrigBtn.addEventListener("click", (e) => {
+      if (!e.isTrusted) return;
+      // Secondary confirmation
+      actions.innerHTML = "";
+      const confirmWarning = document.createElement("p");
+      confirmWarning.id = "vg-confirm-warning";
+      confirmWarning.style.cssText = "color:#f87171;font-weight:600;font-size:0.85rem;margin-bottom:8px;";
+      confirmWarning.textContent = "⚠ Are you sure? This will transmit raw sensitive data without pseudonymization.";
+      modal.insertBefore(confirmWarning, actions);
+
+      const confirmBtn = document.createElement("button");
+      confirmBtn.type = "button";
+      confirmBtn.className = "btn-send-original";
+      confirmBtn.id = "vg-btn-confirm-send";
+      confirmBtn.textContent = "Yes, Send Original Unsanitized";
+      confirmBtn.addEventListener("click", (ev) => {
+        if (!ev.isTrusted) return;
+        confirmBtn.disabled = true;
+        opts.onSendOriginalConfirmed!();
+      });
+
+      const backBtn = document.createElement("button");
+      backBtn.type = "button";
+      backBtn.className = "btn-edit";
+      backBtn.textContent = "No, Go Back";
+      backBtn.addEventListener("click", (ev) => {
+        if (!ev.isTrusted) return;
+        confirmWarning.remove();
+        showReviewOverlay(opts);
+      });
+
+      actions.appendChild(backBtn);
+      actions.appendChild(confirmBtn);
+    });
+    actions.appendChild(sendOrigBtn);
+  }
+
+  // 4. Send Sanitized button (if allowed and not block)
+  if (!isBlockDecision && allowedOptions.includes("send_sanitized")) {
     const sendBtn = document.createElement("button");
     sendBtn.type = "button";
     sendBtn.className = "btn-send";
@@ -420,7 +496,11 @@ export function showReviewOverlay(opts: ReviewOverlayOptions): void {
   // Focus trap and Escape handler
   focusTrapCleanup = trapFocus(modal, root);
   escapeCleanup = attachEscapeHandler(() => {
-    onEdit();
+    if (opts.onCancel) {
+      opts.onCancel();
+    } else {
+      onEdit();
+    }
   });
 }
 

@@ -41,3 +41,15 @@ def test_limitation_names_in_short_fragments_missed(scanner):
     text = "rahul sharma"
     response = scanner.scan(text)
     assert any(f.entity_type == "PERSON" for f in response.findings)
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="Known limitation: Medical conditions, diagnoses (e.g. diabetes), and medications are not detected by general PII/NER models.",
+)
+def test_limitation_medical_conditions_undetected(scanner):
+    text = "My patient John Doe has diabetes and takes medication daily. Their phone number is 9876543210."
+    response = scanner.scan(text)
+    # This should fail because 'diabetes' or 'medication' is not detected as MEDICAL or HEALTH finding
+    assert any(f.entity_type in {"MEDICAL_CONDITION", "DIAGNOSIS", "MEDICATION"} for f in response.findings)
+

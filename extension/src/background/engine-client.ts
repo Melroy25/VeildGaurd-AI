@@ -60,6 +60,7 @@ export interface KnownPlaceholder {
 /** Full /analyze response from the engine. */
 export interface EngineAnalyzeResponse {
   decision: "allow" | "redact" | "require_approval" | "block";
+  options: string[];
   sanitized_text: string;
   findings: EngineFinding[];
   summary: string;
@@ -278,6 +279,7 @@ export async function analyze(
 
   const result: EngineAnalyzeResponse = {
     decision: (raw["decision"] as EngineAnalyzeResponse["decision"]) ?? "allow",
+    options: Array.isArray(raw["options"]) ? (raw["options"] as string[]) : [],
     sanitized_text:
       typeof sanitization?.["sanitized_text"] === "string" ? sanitization["sanitized_text"] : text,
     findings,

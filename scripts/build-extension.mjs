@@ -18,6 +18,7 @@ async function buildExtension() {
   console.log("[Build] Step 1: Building HTML pages and service worker...");
   await build({
     root: extensionDir,
+    base: "./",
     plugins: [react(), tailwindcss()],
     configFile: false,
     build: {

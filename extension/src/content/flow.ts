@@ -216,6 +216,37 @@ async function runAnalysis(
             destination,
           });
         },
+        onCancel: () => {
+          hideOverlay();
+          flowState = "idle";
+          updateBadgeState("active");
+          recordEvent({
+            timestamp: new Date().toISOString(),
+            category: engineResult.primary_rule_id ?? "UNKNOWN",
+            entityCount: engineResult.findings.length,
+            riskScore: engineResult.findings.reduce((max, f) => Math.max(max, f.score), 0),
+            decision: engineResult.decision,
+            ruleIds: engineResult.matched_rule_ids,
+            outcome: "user_cancelled",
+            destination,
+          });
+        },
+        onSendOriginalConfirmed: () => {
+          hideOverlay();
+          flowState = "idle";
+          updateBadgeState("active");
+          retriggerSubmission(adapter, text);
+          recordEvent({
+            timestamp: new Date().toISOString(),
+            category: engineResult.primary_rule_id ?? "UNKNOWN",
+            entityCount: engineResult.findings.length,
+            riskScore: engineResult.findings.reduce((max, f) => Math.max(max, f.score), 0),
+            decision: engineResult.decision,
+            ruleIds: engineResult.matched_rule_ids,
+            outcome: "user_overrode",
+            destination,
+          });
+        },
       });
       break;
   }

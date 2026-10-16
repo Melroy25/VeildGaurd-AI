@@ -1,7 +1,5 @@
-"""Core Sanitizer module performing consistent pseudonymization, masking, and removal."""
-
 import re
-from typing import Dict, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple
 
 from veilguard_engine.models import Finding
 from veilguard_engine.policy.models import Action, PolicyResult
@@ -13,8 +11,10 @@ from veilguard_engine.sanitizer.models import (
     SanitizeVerification,
     UtilityNotice,
 )
-from veilguard_engine.scanner import Scanner
 from veilguard_engine.utils import codepoint_to_utf16_offset
+
+if TYPE_CHECKING:
+    from veilguard_engine.scanner import Scanner
 
 # Canonical label mapping for type-based pseudonymization
 ENTITY_LABEL_MAP: Dict[str, str] = {
@@ -106,8 +106,12 @@ def mask_value(val: str) -> str:
 class Sanitizer:
     """Utility-preserving prompt sanitizer producing consistent placeholders, masks, or removals."""
 
-    def __init__(self, scanner: Optional[Scanner] = None):
-        self.scanner = scanner or Scanner()
+    def __init__(self, scanner: Optional["Scanner"] = None):
+        if scanner is None:
+            from veilguard_engine.scanner import Scanner
+            self.scanner = Scanner()
+        else:
+            self.scanner = scanner
 
     def sanitize(
         self,

@@ -2,29 +2,29 @@
 
 > **Single Source of Truth:** Per Rule 2 of `AGENTS.md`, every feature is in exactly one of three states: **Implemented** (verified with passing tests or recorded manual run), **Planned**, or **Future**. This table is updated in the same commit that changes a status.
 
-| Feature Component | Phase | Current Status | Verification / Notes |
+| Feature Component | Phase | Current Status | Evidence |
 | :--- | :--- | :--- | :--- |
-| **Project Setup & Toolchains** | Phase 0 | **Implemented** | Smoke tests pass (`pytest`, TypeScript build, Playwright smoke) |
-| **Mock AI Chat Testbed** | Phase 1 | **Implemented** | Standalone deterministic chat web server (`mock-ai-site/server.mjs`) on port 4310 supporting configurable composer, wiring, and transport modes |
-| **DOM Pre-Submission Interception** | Phase 1 | **Implemented** | Capture-phase listeners on Enter key, submit buttons, and form submit events. Verified no leaks observed across 200 flagged trials and 200 benign delivered correctly (10 matrix cells, 400 total trials) in `bench/results/enforcement_mock_site.json` |
-| **MAIN-World Fetch Backstop** | Phase 1 | **Implemented** | Monkey-patched in-page `window.fetch` and `XMLHttpRequest` in host MAIN execution world. Verified no leaks observed across 40 flagged trials and 40 benign delivered correctly (2 cells, 80 total trials) in `bench/results/enforcement_mock_site.json` |
-| **Presidio & Custom Recognizers** | Phase 2 | **Implemented** | Presidio 2.2 + spaCy `en_core_web_sm` + `IndiaDetector` (Aadhaar/Verhoeff, PAN, GSTIN, IFSC, Mobile, UPI) + `SecretsDetector` (AWS, GitHub, Slack, Google, JWT, connection strings) + `WatchlistDetector`. 34 tests pass, 3 xfail document known spaCy `en_core_web_sm` limitations (`tests/engine/test_india_detectors.py`, `test_presidio_detector.py`, `test_secrets_detector.py`, `test_validators.py`, `test_known_limitations.py`). |
-| **Local `/scan` Engine API** | Phase 2 | **Implemented** | `POST /scan` FastAPI endpoint with Bearer token auth, loopback-only host check, Origin header enforcement, overlap-resolving scanner with 5-tier priority, metadata-only response (no raw text). 9 API security tests pass (`tests/engine/test_api_security.py`). Privacy invariant (Rule 7) verified in `test_privacy_invariants.py`. |
-| **Task Intent & Necessity Matrix** | Phase 5 | **Planned** | Heuristic/classifier task intent scoring with necessity matrices |
-| **Quasi-Identifier & Re-ID Scorer**| Phase 5 | **Planned** | Multi-attribute correlation and combination re-identification risk scoring |
-| **Declarative YAML Policy Engine** | Phase 3a | **Implemented** | Declarative YAML policy engine with fail-closed schema validation, destination trust tiers (`policies/destinations.yaml`), 3 default profiles (`personal`, `company`, `finance`), deterministic decision precedence (`allow` < `redact` < `require_approval` < `block`), and explainable summaries. Verified in `tests/engine/test_policy_loader.py` and `test_policy_evaluator.py`. |
-| **Sanitizer (type-based, engine side)** | Phase 3a | **Implemented** | Engine-side sanitizer supporting type-based pseudonymization (`[PERSON_1]`, `[PHONE_1]`), separator-preserving masking (`XXXX XXXX 1234`), removal (`[SECRET_REMOVED]`), `known_placeholders` seeding, UTF-16 offset indexing, and post-sanitization re-scan verification. Exposed via `POST /analyze`. Verified in `tests/engine/test_sanitizer.py`, `test_api_analyze.py`, and `test_privacy_invariants_strong.py`. |
-| **Utility-Preserving Sanitizer (task-aware)** | Phase 5 | **Planned** | Task-dependent necessity preservation and role-based placeholder generation |
-| **Extension–Engine Integration**   | Phase 3b | **Implemented** | Background service worker fetches `POST /analyze` at `127.0.0.1:8765` with Bearer token auth, 5 s timeout, typed errors, fail-closed. `engine-client.ts`, `vault.ts`, `audit.ts` all committed. |
-| **Shadow DOM Review Overlay**     | Phase 3b | **Implemented** | Accessible Shadow DOM modal with original-vs-sanitized diff, finding chips, ARIA roles, `isTrusted` click guards, focus trap, and Escape handler. Overlay shown for `redact`/`require_approval`/`block` decisions requiring explicit human confirmation. |
-| **Pre-Submission Approval Flow**  | Phase 3b | **Implemented** | Content-script state machine routes decisions to review overlay or re-triggers via `adapter.triggerSend()`. Pre-approval handshake via `CustomEvent("veilguard_pre_approve")` + 25 ms delay eliminates race condition. `onsubmit="event.preventDefault()"` in mock site prevents form navigation. |
-| **Session Vault**                 | Phase 3b | **Implemented** | Per-tab placeholder session vault in `chrome.storage.session`. Placeholder mappings auto-merged by background on every ANALYZE response and cleared on tab close. |
-| **Metadata-Only Audit Log**       | Phase 3b | **Implemented** | Ring buffer (max 200) in `chrome.storage.local`. Stores category, entity count, risk score, decision, rule IDs, outcome, destination, and timestamp only — no raw text (Rule 7 compliant). |
-| **Engine-Backed MAIN Backstop**   | Phase 3b | **Implemented** | MAIN-world fetch/XHR monkey-patch sends `VEILGUARD_CHECK_REQUEST` to isolated content-script bridge which queries the real engine. Fail-closed on timeout. Pre-approved re-triggered requests pass through via `approvedFingerprints`. |
-| **Full-Chain E2E Benchmark**      | Phase 3b | **Implemented** | Playwright benchmark `enforcement_full_chain_mock_site.json` — **0 leaks across 200 flagged trials, 200 benign delivered correctly** (10 cells × 20 trials: 7 DOM-path cells + 2 backstop cells + 1 fail-closed cell). Engine-observed decision: `redact` (PII_COMBINATION_PERSON rule). |
-| **Options Page & Token Entry**    | Phase 3b | **Implemented** | React options page with Bearer token input, profile dropdown, engine connection ping, and vault clear. Token stored in `chrome.storage.local`, never forwarded to content scripts. |
-| **Protection State Badge**        | Phase 3b | **Implemented** | Shadow DOM badge injected by content script. Shows "Protection Active" (blue shield) or "Protection Inactive" (red) based on adapter self-test. Transitions to "Analyzing" and "Review Required" states during flow. |
-| **Target AI Site Adapter**         | Phase 4 | **Planned** | Dedicated adapter with robust selectors for one target AI chat interface |
-| **Reproducible Benchmark Suite**   | Phase 6 | **Planned** | Comparison between keyword baseline, default Presidio, and VeilGuard |
-| **PyMuPDF Document Redaction**     | Phase 7 | **Planned** | True vector/raster redaction with post-sanitization extraction verification |
-| **Vault & Response Rehydration**   | Phase 8 | **Planned** | Session-scoped token vault mapping AI outputs back to original identifiers |
+| **Project Setup & Toolchains** | Phase 0 | **Implemented** | `tests/engine/test_smoke.py` (5 tests pass) |
+| **Mock AI Chat Testbed** | Phase 1 | **Implemented** | `mock-ai-site/server.mjs`; `bench/results/enforcement_mock_site.json` |
+| **DOM Pre-Submission Interception** | Phase 1 | **Implemented** | `tests/e2e/enforcement-spike.spec.ts` — 0 leaks across 200 flagged trials, 200 benign delivered correctly (10 cells × 20 trials in `bench/results/enforcement_mock_site.json`) |
+| **MAIN-World Fetch Backstop** | Phase 1 | **Implemented** | `tests/e2e/enforcement-spike.spec.ts` Part B — 0 leaks across 40 flagged trials (2 cells × 20 trials in `bench/results/enforcement_mock_site.json`) |
+| **Presidio & Custom Recognizers** | Phase 2 | **Implemented** | `tests/engine/test_india_detectors.py`, `test_presidio_detector.py`, `test_secrets_detector.py`, `test_validators.py` — 34 tests pass, 3 xfail documenting known spaCy `en_core_web_sm` limits |
+| **Local `/scan` Engine API** | Phase 2 | **Implemented** | `tests/engine/test_api_security.py` (9 tests), `test_privacy_invariants.py` — loopback binding, Bearer token auth, Origin enforcement, Rule 7 compliance verified |
+| **Declarative YAML Policy Engine** | Phase 3a | **Implemented** | `tests/engine/test_policy_loader.py` (7 tests), `test_policy_evaluator.py` (11 tests including `test_allow_person_alone_not_applied_when_combined`) |
+| **Sanitizer (type-based, engine side)** | Phase 3a | **Implemented** | `tests/engine/test_sanitizer.py` (9 tests including `test_spending_patterns_utility_preservation`), `test_api_analyze.py`, `test_privacy_invariants_strong.py` |
+| **Extension–Engine Integration** | Phase 3b | **Implemented** | `tests/e2e/enforcement-full-chain.spec.ts` — engine at `127.0.0.1:8765` with Bearer token; fail-closed on 401 verified in Part C |
+| **Shadow DOM Review Overlay** | Phase 3b | **Implemented** | `tests/e2e/scenarios.spec.ts` (scenario:block, scenario:xss, scenario:emoji, scenario:untrusted-click); `tests/e2e/enforcement-full-chain.spec.ts` Part A |
+| **Pre-Submission Approval Flow** | Phase 3b | **Implemented** | `tests/e2e/scenarios.spec.ts` (scenario:sent-text-click, scenario:sent-text-enter, scenario:edit-sends-nothing, scenario:cancel-sends-nothing, scenario:double-enter) |
+| **Session Vault** | Phase 3b | **Implemented** | `tests/e2e/scenarios.spec.ts` (scenario:vault-consistency) |
+| **Metadata-Only Audit Log** | Phase 3b | **Implemented** | `tests/e2e/scenarios.spec.ts` (scenario:metadata-events, scenario:storage-privacy) — raw text absent from `chrome.storage.local` |
+| **Engine-Backed MAIN Backstop** | Phase 3b | **Implemented** | `tests/e2e/enforcement-full-chain.spec.ts` Part B — 0 leaks across fetch/xhr backstop cells (20 trials each) |
+| **Full-Chain E2E Benchmark** | Phase 3b | **Implemented** | `bench/results/enforcement_full_chain_mock_site.json` — 0 leaks across 200 flagged trials (7 DOM + 2 backstop cells × 20 trials), engine decision: `redact` |
+| **Options Page & Token Entry** | Phase 3b | **Implemented** | `extension/src/options/Options.tsx` — Bearer token password input, profile selector, Test Connection, Clear All Vaults confirmed present in source; token sourced from `chrome.storage.local.get("vg_token")` (no hardcoded tokens) |
+| **Protection State Badge** | Phase 3b | **Implemented** | `tests/e2e/enforcement-full-chain.spec.ts` — badge element `#veilguard-badge-host` verified present in all DOM cells |
+| **Task Intent & Necessity Matrix** | Phase 5 | **Planned** | — |
+| **Quasi-Identifier & Re-ID Scorer** | Phase 5 | **Planned** | — |
+| **Utility-Preserving Sanitizer (task-aware)** | Phase 5 | **Planned** | — |
+| **Target AI Site Adapter** | Phase 4 | **Planned** | — |
+| **Reproducible Benchmark Suite** | Phase 6 | **Planned** | — |
+| **PyMuPDF Document Redaction** | Phase 7 | **Planned** | — |
+| **Vault & Response Rehydration** | Phase 8 | **Planned** | — |

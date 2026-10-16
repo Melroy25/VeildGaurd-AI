@@ -56,9 +56,14 @@
 - **Partial masking information disclosure:** Masking keeps the last 4 digits (e.g. `XXXX XXXX 3456`), which intentionally reveals partial information for user readability but may not satisfy strict zero-disclosure requirements.
 - **Non-exhaustive detection notice:** Sanitized text may still contain undetected sensitive entities if novel, obfuscated, or unmodeled patterns were present in the prompt. Users must review sanitized text before sending.
  
-+## 10. Presidio Country-Specific Recognizer Dormancy
-+- Microsoft Presidio includes country-specific recognizer classes (e.g. `InPanRecognizer`, `InAadhaarRecognizer`) within its codebase, but excludes them from its standard `AnalyzerEngine` default registry.
-+- Deploying standard stock Presidio out-of-the-box yields near-zero recall for Indian identifiers unless explicit custom registry assembly is performed.
-+- VeilGuard addresses this by providing dedicated, algorithmically validated detectors (Verhoeff checksum for Aadhaar, mod-36 for GSTIN, PAN character verification, context-window gated bank accounts) integrated natively into the scanner.
+## 10. Presidio Country-Specific Recognizer Dormancy
+- Microsoft Presidio includes country-specific recognizer classes (e.g. `InPanRecognizer`, `InAadhaarRecognizer`) within its codebase, but excludes them from its standard `AnalyzerEngine` default registry.
+- Deploying standard stock Presidio out-of-the-box yields near-zero recall for Indian identifiers unless explicit custom registry assembly is performed.
+- VeilGuard addresses this by providing dedicated, algorithmically validated detectors (Verhoeff checksum for Aadhaar, mod-36 for GSTIN, PAN character verification, context-window gated bank accounts) integrated natively into the scanner.
+
+## 11. Medical Conditions and Health Information
+- General PII detectors and statistical English language models (such as `en_core_web_sm`) do not recognize medical conditions, clinical diagnoses (e.g., diabetes, hypertension), or pharmaceutical prescriptions/medications as sensitive entities.
+- In prompts containing health details (e.g., "My patient John Doe has diabetes and takes medication daily. Their phone number is 9876543210."), VeilGuard detects and pseudonymizes direct identifiers (`PERSON`, `IN_MOBILE`), but clinical context words (`diabetes`, `medication`) remain undetected and unredacted.
+- Domain-adapted HIPAA/medical NER or clinical ontology recognizers are not part of the standard baseline and are documented as a known limitation verified via `@pytest.mark.xfail(strict=True)` in `tests/engine/test_known_limitations.py`.
 
 

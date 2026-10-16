@@ -94,6 +94,9 @@ rules:
     when:
       entity_types: [PERSON]
       min_score: 0.4
+      requires_none:
+        - entity_types: [PHONE_NUMBER, IN_MOBILE, EMAIL, EMAIL_ADDRESS, IN_AADHAAR, IN_PAN, IN_GSTIN, US_SSN, CREDIT_CARD, IN_BANK_ACCOUNT, UPI_ID, IN_IFSC]
+        - categories: [SECRET, GOVERNMENT_ID, FINANCIAL]
     min_count: 1
     then:
       decision: allow

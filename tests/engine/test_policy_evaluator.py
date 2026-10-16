@@ -195,3 +195,17 @@ def test_evaluation_determinism(registry: PolicyRegistry) -> None:
     assert res1.per_finding_actions == res2.per_finding_actions
     assert res1.summary == res2.summary
     assert len(res1.applied_rules) == len(res2.applied_rules)
+
+
+def test_allow_person_alone_not_applied_when_combined(registry: PolicyRegistry) -> None:
+    """ALLOW_PERSON_ALONE must not be in applied_rules when person is combined with phone/email/id."""
+    person_f = _make_finding("f1", "PERSON", Category.PII, score=0.85, start=0, end=12)
+    mobile_f = _make_finding("f2", "IN_MOBILE", Category.PII, score=0.90, start=20, end=30)
+
+    for prof_name in ["personal", "company", "finance"]:
+        profile = registry.get_profile(prof_name)
+        res = PolicyEvaluator.evaluate([person_f, mobile_f], "prompt", DestinationTrust.STANDARD, profile)
+        applied_rule_ids = [r.rule_id for r in res.applied_rules]
+        assert "ALLOW_PERSON_ALONE" not in applied_rule_ids
+        assert "PII_COMBINATION_PERSON" in applied_rule_ids
+
