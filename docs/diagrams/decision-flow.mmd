@@ -1,0 +1,48 @@
+flowchart TD
+    Start["User Submits Prompt in Web Interface"] --> Detect["Stage 1: Multi-Signal Entity Detection"]
+    
+    subgraph S1 ["Multi-Signal Detectors"]
+        Detect --> D1["Presidio NLP (NER + Statistical)"]
+        Detect --> D2["Indian ID Validators (Verhoeff Checksums)"]
+        Detect --> D3["Secrets Regex (API Keys, Passwords, Tokens)"]
+        Detect --> D4["Medical Rules (Conditions, Medications)"]
+        Detect --> D5["Quasi-Identifier Detector (Age, Role, Dept, City)"]
+    end
+
+    D1 & D2 & D3 & D4 & D5 --> Context["Stage 2: Context & Intent Intelligence"]
+
+    subgraph S2 ["Context & Intent Engine"]
+        Context --> T1["Task Inference (TLDR, KYC, Code, etc.)"]
+        Context --> T2["Necessity Matrix (Is entity necessary for task?)"]
+        Context --> T3["Quasi Re-ID Risk Scorer (Combination probability)"]
+        Context --> T4["Quasi Reducer (Scrub non-necessary quasi attributes)"]
+    end
+
+    T1 & T2 & T3 & T4 --> Policy["Stage 3: Deterministic Policy Evaluation"]
+
+    subgraph S3 ["Policy Evaluation (policies/company.yaml)"]
+        Policy --> P_Rules{"Match Rules (Priority Ordered)"}
+        P_Rules -->|"Critical Secret Found"| DecBlock["Decision: BLOCK"]
+        P_Rules -->|"Direct PII / Re-ID Risk > Threshold"| DecRedact["Decision: REDACT"]
+        P_Rules -->|"Low-Risk Quasi / Verified KYC Need"| DecApprove["Decision: REQUIRE_APPROVAL"]
+        P_Rules -->|"No Findings / Permitted Benign Task"| DecAllow["Decision: ALLOW"]
+    end
+
+    DecAllow --> DeliverRaw["Deliver Prompt Unmodified to AI"]
+    DecBlock --> ShowBlockUI["Show Block Modal in UI (Zero Delivery)"]
+
+    DecRedact & DecApprove --> Sanitize["Stage 4: Utility-Preserving Sanitization"]
+
+    subgraph S4 ["Sanitization & Vault Mapping"]
+        Sanitize --> S_Role["Role-Based Placeholders (e.g. CUSTOMER_1)"]
+        Sanitize --> S_Mask["Masking (e.g. Credit Card ****-1234)"]
+        Sanitize --> S_Generalize["Generalization (e.g. Age 45 -> 40-49)"]
+        Sanitize --> S_Vault["Store Mapping in Memory Session Vault"]
+    end
+
+    S_Role & S_Mask & S_Generalize & S_Vault --> UserConfirm{"Stage 5: User Confirmation Overlay"}
+
+    UserConfirm -->|"Send Sanitized (Recommended)"| DeliverSanitized["Deliver Sanitized Prompt to AI"]
+    UserConfirm -->|"Edit Original"| AbortDeliver["Abort Submission & Return Focus"]
+    UserConfirm -->|"Send Original (Approval Only)"| ConfirmTwoStep["Secondary Confirmation Step"]
+    ConfirmTwoStep -->|"Confirmed"| DeliverRaw

@@ -1,0 +1,59 @@
+sequenceDiagram
+    autonumber
+    actor User as User
+    participant Composer as AI Chat Composer (DOM)
+    participant Content as Content Script (Isolated)
+    participant Engine as Local Engine (127.0.0.1:8765)
+    participant Overlay as Review Overlay (Shadow DOM)
+    participant Backstop as Fetch Backstop (Main World)
+    participant Provider as AI Provider Endpoint
+
+    User->>Composer: Types prompt containing sensitive entities
+    User->>Composer: Submits (Click Send / Press Enter)
+    Composer-->>Content: Submission event intercepted (Capture phase)
+    Content->>Content: Prevent default & stop propagation
+    Content->>Engine: POST /analyze {text, profile, task_hint}
+    
+    activate Engine
+    Engine->>Engine: Run Detectors (Presidio, Indian IDs, Secrets, Medical)
+    Engine->>Engine: Infer Task Intent & Check Necessity
+    Engine->>Engine: Calculate Quasi Re-ID Risk Score
+    Engine->>Engine: Evaluate Policy Rules (e.g. decision: redact)
+    Engine->>Engine: Generate Sanitized Text & Role Placeholders
+    Engine-->>Content: AnalysisResponse {decision, sanitized_text, explanations, token}
+    deactivate Engine
+
+    alt Decision is "allow" (Benign text)
+        Content->>Backstop: Register approved verdict nonce
+        Content->>Composer: Restore and re-dispatch submission
+        Backstop->>Provider: Transmit original prompt (clean)
+    else Decision is "block" (Severe violation, e.g. secrets)
+        Content->>Overlay: Render Block Modal (No Send Original button)
+        User->>Overlay: Clicks "Edit Prompt" or "Cancel"
+        Overlay-->>Composer: Focus composer (Zero bytes sent to provider)
+    else Decision is "redact" or "require_approval"
+        Content->>Overlay: Render Review Overlay with Findings & Diff
+        
+        alt User chooses "Send Sanitized" (Recommended)
+            User->>Overlay: Clicks "Send Sanitized"
+            Overlay->>Content: Record metadata audit log
+            Content->>Composer: Replace DOM text with sanitized prompt
+            Content->>Backstop: Register approved verdict token
+            Content->>Composer: Dispatch native submit event
+            Composer->>Backstop: Outbound fetch(/conversation)
+            Backstop->>Backstop: Verify verdict token matches sanitized text
+            Backstop->>Provider: Transmit sanitized prompt (Zero raw PII)
+            Provider-->>Composer: Stream AI Response
+        else User chooses "Edit Original"
+            User->>Overlay: Clicks "Edit Original"
+            Overlay->>Content: Close overlay, focus input
+            Content-->>Composer: Zero network requests dispatched
+        else User chooses "Send Original" (Require approval only)
+            User->>Overlay: Clicks "Send Original"
+            Overlay->>Overlay: Show secondary confirmation warning
+            User->>Overlay: Confirms second step
+            Content->>Backstop: Register override verdict token
+            Content->>Composer: Dispatch native submit
+            Backstop->>Provider: Transmit original prompt
+        end
+    end

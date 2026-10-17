@@ -1,313 +1,181 @@
 # VeilGuard AI: Context-Aware Privacy Firewall for AI Tools
 
-> **Project Status:** **Phase 1 complete (mock-site testbed), Phase 2 complete (detection engine & /scan API), Phase 3a complete (policy engine & sanitizer), Phase 3b complete (extension + engine integration, review overlay, session vault, 14-cell enforcement matrix), Phase 3c complete (metadata dashboard, popup status, export, pause switch), Phase 4 complete (ChatGPT adapter, degraded mode, canary, real-site network-boundary harness), Phase 5 complete (context intelligence, task inference, necessity matrix, re-ID scoring & reduction, medical detection, sealed-test benchmark runner).**
-
-VeilGuard AI is a context-aware privacy firewall designed to sit between users and AI interfaces. When users paste sensitive data—such as customer conversations, financial records, medical notes, or system secrets—VeilGuard intercepts submissions, evaluates context and task necessity, enforces configurable privacy policies, produces utility-preserving pseudonymized prompts, and records metadata-only audit logs.
-
-- **Team:** Team Vexora
-- **Event:** DevHack 2026
-- **Problem Statement:** PS 2.2, Context-Aware Data Privacy under Responsible AI
+> **DevHack 2026 Submission** | **Track:** Problem Statement 2.2 — Context-Aware Data Privacy under Responsible AI  
+> **Team:** Team Vexora  
+> **Repository:** `[HUMAN FILL: Public GitHub URL]` | **Video Demonstration:** `[HUMAN FILL: 4-Minute Video Link]`
 
 ---
 
-## Prerequisites
+## What is VeilGuard AI?
 
-- **Node.js:** v20.x or higher (v24.x supported) & npm
-- **Python:** Python 3.11, 3.12, or 3.13 (64-bit)
-- **Git**
-- **Google Chrome** or Chromium-based browser (for extension execution)
+**VeilGuard AI** is a real-time, context-aware privacy firewall designed to sit between users and AI interfaces (such as ChatGPT, Claude, or internal LLM endpoints). 
 
----
+When users paste sensitive text—customer conversations, medical notes, financial identifiers, or code containing secrets—VeilGuard intercepts the submission directly inside the browser, evaluates context-dependent privacy risks on a local loopback engine (`127.0.0.1:8765`), enforces deterministic policy actions, generates utility-preserving pseudonymized prompts, and maintains strictly metadata-only audit logs.
 
-## Quickstart & Setup
-
-### 1. Repository Setup
-
-Clone or enter the project repository:
-```bash
-git clone <repo-url>
-cd DevHost_2026
 ```
+[User Submits Prompt] ──▶ [DOM Intercept (Capture Phase)] ──▶ [Local Engine Analysis (Loopback)]
+                                                                          │
+[AI Receives Sanitized Text] ◀── [Fetch Backstop Bridge] ◀── [Review Overlay & User Confirmation]
+```
+
+### The 5-Line Core Flow:
+1. **Intercept:** The Chrome extension intercepts the DOM submission (Enter / Send button click) before any network request is created.
+2. **Analyze Locally:** The local engine classifies entities, infers task necessity, and calculates quasi-identifier re-identification risk in <40ms.
+3. **Decide Deterministically:** Configurable declarative policies evaluate the risk to assign a deterministic verdict: `allow`, `redact`, `require_approval`, or `block`.
+4. **Sanitize & Pseudonymize:** Non-essential sensitive attributes are replaced with utility-preserving role placeholders (`[CUSTOMER_1]`, `****-1234`) maintained across turns by an in-memory session vault.
+5. **Enforce & Log:** The user reviews the side-by-side diff in a Shadow DOM overlay; upon confirmation, the sanitized text is delivered through a hardened fetch backstop while metadata-only audit logs are recorded.
+
+---
+
+## Headline Empirical Results (Sealed Benchmark Split)
+
+All figures below are sourced directly from verified test artifacts in `bench/results/benchmark_test.json` on a frozen, cryptographically sealed test corpus (N=286 records, strictly synthetic):
+
+| System | Entity F1 (50% IoU) | Exact Entity F1 | Flagged Precision | Flagged Recall | False Positive Rate (FPR) | Quasi-ID Combo Recall | Required Retained |
+|---|---|---|---|---|---|---|---|
+| **Regex Baseline** | 56.3% | 51.4% | 97.3% | 79.2% | 3.9% | 17.1% | 96.7% |
+| **Microsoft Presidio** | 22.6% | 22.3% | 60.5% | 72.7% | 84.5% | 97.1% | 63.5% |
+| **VeilGuard (Type-Based)** | 43.4% | 41.3% | 100.0% | 56.8% | 0.0% | 0.0% | 100.0% |
+| **VeilGuard AI (Full Intelligence)** | **73.2%** | **65.3%** | **100.0%** | **84.2%** | **0.0%** | **80.0%** | **100.0%** |
+
+*See full methodology and per-category breakdowns in [docs/EVIDENCE.md](./docs/EVIDENCE.md) and [bench/results/BENCHMARK.md](./bench/results/BENCHMARK.md).*
+
+---
+
+## One-Command Quickstart
+
+VeilGuard AI provides automated setup scripts that configure the Python virtual environment, download NLP models, install Node dependencies, build the extension, and verify smoke tests with zero manual friction:
+
+### On Windows (PowerShell):
+```powershell
+.\scripts\setup.ps1
+```
+
+### On macOS / Linux / WSL:
+```bash
+chmod +x scripts/setup.sh
+./scripts/setup.sh
+```
+
+---
+
+## Manual Step-by-Step Instructions
+
+If you prefer running setup steps manually:
+
+### 1. Prerequisites
+- **Python:** 3.10, 3.11, 3.12, 3.13, or 3.14 (64-bit)
+- **Node.js:** v18.x or higher (v20+ recommended) & npm
+- **Google Chrome** (or Chromium-based browser)
 
 ### 2. Python Engine Setup
-
-#### On Windows (PowerShell):
-```powershell
-# Create virtual environment
-py -3.13 -m venv .venv
-# Or: python -m venv .venv
-
-# Activate virtual environment
-.\.venv\Scripts\Activate.ps1
-
-# Upgrade pip and install dependencies
-python -m pip install --upgrade pip
-pip install -r engine/requirements.txt -r engine/requirements-dev.txt
-
-# Download required spaCy NLP model
-python -m spacy download en_core_web_sm
-```
-
-#### On macOS / Linux:
 ```bash
-# Create virtual environment
-python3 -m venv .venv
+# Create and activate virtual environment
+python -m venv .venv
 
-# Activate virtual environment
-source .venv/bin/activate
+# Activate:
+# On Windows: .\.venv\Scripts\Activate.ps1
+# On Linux/macOS: source .venv/bin/activate
 
-# Upgrade pip and install dependencies
-python -m pip install --upgrade pip
+# Install dependencies and spaCy language model
+pip install --upgrade pip
 pip install -r engine/requirements.txt -r engine/requirements-dev.txt
-
-# Download required spaCy NLP model
 python -m spacy download en_core_web_sm
 ```
 
-### 3. Extension & Frontend Tooling Setup
-
-Install root Node dependencies and Playwright test browsers:
+### 3. Extension Build
 ```bash
 npm install
-npx playwright install chromium
-```
-
----
-
-## Running the Components
-
-### 1. Start the Local Python Engine
-The engine must strictly bind to loopback (`127.0.0.1:8765`):
-```bash
-python -m veilguard_engine
-```
-
-Verify the engine health endpoint:
-- **Windows PowerShell:**
-  ```powershell
-  Invoke-RestMethod http://127.0.0.1:8765/health
-  # Returns: @{status=ok; version=0.0.1}
-  ```
-- **macOS / Linux / bash:**
-  ```bash
-  curl http://127.0.0.1:8765/health
-  # Returns: {"status":"ok","version":"0.1.0"}
-  ```
-
-Verify authenticated `/analyze` endpoint:
-- **Windows PowerShell:**
-  ```powershell
-  $token = Get-Content .veilguard/token
-  $headers = @{
-      "Authorization" = "Bearer $token"
-      "Content-Type" = "application/json"
-  }
-  $body = @{
-      text = "Analyze customer Rahul Sharma's account, phone number 9876543210."
-      profile = "company"
-  } | ConvertTo-Json
-  Invoke-RestMethod -Uri http://127.0.0.1:8765/analyze -Method Post -Headers $headers -Body $body
-  ```
-- **macOS / Linux / bash:**
-  ```bash
-  TOKEN=$(cat .veilguard/token)
-  curl -X POST http://127.0.0.1:8765/analyze \
-    -H "Authorization: Bearer $TOKEN" \
-    -H "Content-Type: application/json" \
-    -d '{"text": "Analyze customer Rahul Sharma'\''s account, phone number 9876543210.", "profile": "company"}'
-  ```
-
-
-### 2. Build the Extension
-```bash
 npm run build
 ```
-The compiled, production-ready extension artifacts will be located in `extension/dist/`.
 
-### 3. Load the Extension in Google Chrome
-1. Navigate to `chrome://extensions/` in Chrome.
-2. Enable **Developer mode** (toggle in top-right corner).
-3. Click **Load unpacked**.
-4. Select the `extension/dist/` folder from this repository.
-5. Click the VeilGuard AI extension icon in your browser toolbar to view the **Popup Status UI**.
-
----
-
-## Using the Privacy Dashboard & Popup (Phase 3c)
-
-### Opening the Popup Status
-- Click the VeilGuard AI extension icon in the toolbar.
-- The popup displays:
-  - **Engine Status:** Connected (v0.0.1) or Unreachable (with blocking warning).
-  - **Active Profile:** Current policy profile (e.g. `company`).
-  - **Today's Activity:** Messages checked, sanitized, and blocked today.
-  - **This Page Protection:** Shows `Protected` on supported AI sites or `Not active on this site` on unsupported pages.
-  - **Open Dashboard Button:** One click opens the full metadata dashboard in a new tab.
-
-### Opening the Privacy Dashboard
-- Either click **"Open Dashboard"** in the popup, or right-click the extension icon and select **"Options"**.
-- The dashboard is **strictly metadata-only** (Rule 7): zero prompt text, entity values, or bearer tokens are stored or rendered.
-
-### Dashboard Panels & Controls
-1. **Summary Cards:** Messages checked, sent unchanged, sent sanitized, blocked/cancelled, engine fail-closed, and documents scanned (0 until Phase 7).
-2. **Decision Tiers:** Bar chart showing policy decisions (`allow`, `redact`, `require_approval`, `block`). Labeled by plain-language meaning, not synthetic risk scores.
-3. **User Actions:** Distribution of choices made on the review overlay (`sent_sanitized`, `sent_original`, `edited`, `cancelled`, `auto_allowed`).
-4. **Sensitive Information by Category:** Cumulative entity counts across categories (PII, GOVERNMENT_ID, FINANCIAL, SECRET).
-5. **Rules That Fired:** Frequency and plain-language explanations of triggered policy rules fetched live from the engine.
-6. **Activity — Last 14 Days:** Daily volume histogram in local calendar dates.
-7. **Observed Engine Latency:** Median and 95th-percentile engine analysis round-trip times observed on this device.
-8. **Time Range & Facet Filters:** Filter events by 24h, 7d, 30d, all time, destination, profile, and decision.
-9. **Pause Recording Switch:** Temporarily pauses event logging. **Protection and interception remain 100% active while paused.**
-10. **Export & Clear:**
-    - **JSON / CSV Export:** Downloads client-side files containing only whitelisted metadata fields.
-    - **Clear History:** Two-click confirmation to permanently wipe stored audit events.
+### 4. Running the Stack
+1. **Start the local loopback engine (127.0.0.1:8765):**
+   ```bash
+   python -m veilguard_engine.server
+   ```
+2. **Start the mock AI chat testbed (127.0.0.1:4310):**
+   ```bash
+   npm run mock-site
+   ```
+3. **Load the Extension into Chrome:**
+   - Open Chrome and navigate to `chrome://extensions/`.
+   - Enable **Developer mode** (toggle in upper right).
+   - Click **Load unpacked** and select the `extension/dist` directory.
+4. **Visit the testbed:**
+   - Open `http://127.0.0.1:4310/` to test prompt interception, review overlays, and sanitized delivery.
+   - Click the extension icon or right-click -> Options to view the **Metadata-Only Privacy Dashboard**.
 
 ---
 
-## Testing
+## Project Status Matrix
 
-Run each test suite using the commands below:
+Feature status is strictly tracked in [docs/STATUS.md](./docs/STATUS.md) per Rule 2:
 
-### 1. Fast Pure Unit Tests (`vitest`)
+| Phase / Feature Area | Scope & Description | Status | Verification Artifact |
+|---|---|---|---|
+| **Phase 1: Mock Testbed** | Deterministic mock AI site, composers, form/click handlers | **Implemented** | `mock-ai-site/` (Passing in E2E) |
+| **Phase 2: Detection Engine** | Presidio, Indian ID validators (Aadhaar, PAN, GSTIN), Secrets | **Implemented** | `pytest tests/engine/` (155 passing) |
+| **Phase 3a: Policy & Sanitizer**| Declarative YAML policies, utility-preserving role placeholders | **Implemented** | `engine/veilguard_engine/policy/` |
+| **Phase 3b: Browser Enforcement**| Review overlay, session vault, dual fetch backstop (14-cell matrix)| **Implemented** | `tests/e2e/scenarios.spec.ts` (25/25) |
+| **Phase 3c: Audit Dashboard** | Metadata-only dashboard, summary cards, SVG charts, JSON export | **Implemented** | `tests/e2e/dashboard-popup.spec.ts` |
+| **Phase 4: Adapter & Real Site**| ChatGPT adapter, degraded mode, canary monitor, route harness | **Implemented** | `bench/results/enforcement_real_site.json`|
+| **Phase 5: Context Intelligence**| Task inference, necessity reducer, quasi-ID re-ID scoring | **Implemented** | `bench/results/benchmark_test.json` |
+| **Phase 6: Submission Essentials**| Setup scripts, evidence generator, Mermaid diagrams, demo runner | **Implemented** | `scripts/make_evidence.py`, `docs/` |
+
+---
+
+## Scientific Honesty & Known Boundaries
+
+> **Rule 1 & Rule 3 Invariants:** We never fabricate benchmark metrics or claim 100% protection. Known technical boundaries are openly documented in [docs/LIMITATIONS.md](./docs/LIMITATIONS.md):
+
+1. **Statistical NER Sensitivity:** Compact offline statistical models (`en_core_web_sm`) require capitalization and grammatical cues; lowercased or transliterated regional names lacking context can be missed.
+2. **Isolated Numeric Ambiguity:** A bare 10-digit number without semantic context cannot be definitively separated from an internal tracking ID.
+3. **Scanned Raster PDFs:** Document scanning operates on vector and text-layer streams; image-only scanned PDFs require an upstream OCR engine.
+4. **Insider Malice:** VeilGuard defends against inadvertent employee exposure and software vulnerabilities. An insider with browser dev tools or operating system access can intentionally bypass client software.
+
+---
+
+## Comprehensive Test Commands
+
+All test suites can be executed independently:
+
 ```bash
-npm run test:unit
-```
-Runs 28 in-memory tests covering data aggregation, percentiles, whitelisting, write queues, and retention limits in ~200ms without browser overhead.
-
-### 2. Python Engine Test Suite (`pytest`)
-From the repository root with `.venv` activated:
-```bash
+# Python Engine Tests (158 tests: 155 passed, 3 documented xfail)
 pytest -rx
-```
-Runs 80 tests (76 passing, 4 strict xfail documenting known statistical NER and medical boundaries).
 
-### 3. TypeScript Static Typecheck
-```bash
+# Pure In-Memory Extension Unit Tests (28 tests)
+npm run test:unit
+
+# TypeScript Static Typecheck (strict typing, 0 errors)
 npm run typecheck
-```
-Executes `tsc --noEmit` under strict typing rules (`strict: true`, `noImplicitAny: true`).
 
-### 4. Extension End-to-End Test Suite (`Playwright`)
-```bash
-npm run test:e2e
-```
-Runs the full end-to-end browser test suites against the real Python loopback engine and mock testbed:
-- `tests/e2e/dashboard-popup.spec.ts` (36 tests): Dashboard rendering, filtering, export, privacy assertions, popup statuses, 1000-event render benchmark, and offline CSP compliance.
-- `tests/e2e/enforcement-full-chain.spec.ts`: Full-chain 14-cell enforcement matrix across all composers, wirings, and paths.
-- `tests/e2e/scenarios.spec.ts`: 15 comprehensive edge-case scenarios (approval, block, double Enter, emoji, XSS, backstop, vault consistency).
+# Extension Production Build
+npm run build
 
-### 4. Degraded-Mode & Canary E2E Tests
-```bash
-npm run test:e2e
-```
-The standard E2E suite includes `tests/e2e/degraded-canary.spec.ts` which verifies:
-- Backstop-only enforcement when the DOM adapter's selectors are broken (`?break_selectors=1`).
-- Canary badge transition (≤15.2s timeout from last verified request).
+# End-to-End Browser Scenarios (25 scenarios)
+npx playwright test tests/e2e/scenarios.spec.ts
 
-### 5. Benchmark Suite & Sealed-Test Evaluation
-VeilGuard includes a fully reproducible, offline benchmark suite comparing VeilGuard against Keyword and Presidio baselines across 519 prompts (233 dev, 286 sealed test).
+# Live Demo Rehearsal & High-Res Screenshot Generation
+npx playwright test tests/e2e/demo-rehearsal.spec.ts
 
-#### Run on Development Split:
-```bash
+# Benchmark Evaluation on Development Split (N=233)
 python -m bench.run_benchmark --split dev --systems all
-```
 
-#### Run on Sealed Test Split:
-```bash
-python -m bench.run_benchmark --split test --confirm-frozen --systems all
-```
-*Enforces SHA-256 hash verification, a clean git working tree, and logs execution to `bench/results/test_run_log.jsonl`.* Generated results are written to `bench/results/benchmark_test.json` and `bench/results/BENCHMARK.md`. See [docs/BENCHMARK.md](./docs/BENCHMARK.md) for full methodology.
-
-### 6. Real-Site Network-Boundary Tests (ChatGPT) — Opt-In Only
-
-> **Privacy notice:** `.playwright-real-profile/` is gitignored. It contains a dedicated Chromium profile used exclusively for opt-in real-site testing. **No credentials are seen, typed, stored, or logged by this project.** If login is needed, the human operator logs in manually via the login script. See Rules 22–27 in [AGENTS.md](./AGENTS.md).
-
-Real-site tests run **only** when the human operator explicitly sets `VG_REAL_SITE=1`. They are excluded from `npm run test:e2e` and from CI.
-
-#### Step 1 — Initial Profile Setup (first time only)
-```bash
-npm run e2e:real:login
-```
-This opens a persistent Chromium browser at `.playwright-real-profile/` with the VeilGuard extension loaded. The human operator can log in to ChatGPT manually. Close the browser when done — the session cookie is saved to the profile.
-
-#### Step 2 — Run Real-Site Enforcement Tests
-```bash
-npm run e2e:real
-```
-Or equivalently:
-```powershell
-$env:VG_REAL_SITE=1; npx playwright test --config playwright.real.config.ts
-```
-
-Results are written to `bench/results/enforcement_real_site.json` after each test cell completes.
-
-#### What the harness does (Rule 22 compliance):
-- Intercepts **100% of chat conversation requests** via Playwright `page.route` before they leave the browser.
-- Returns minimal valid stub responses (JSON `{ok:true}` for prepare; SSE stream for conversation).
-- **Zero bytes of test prompt data reach OpenAI's servers.**
-- Records captured request payloads locally and asserts zero sensitive-data leakage.
-
----
-
-## Folder Layout
-
-```
-veilguard/
-  AGENTS.md                  # Project rules, invariants, and guidelines
-  README.md                  # Project overview, setup, and testing documentation
-  package.json               # Root Node package configuration and test scripts
-  playwright.config.ts       # Playwright E2E test configuration
-  pytest.ini                 # Pytest configuration
-  .github/workflows/ci.yml   # Continuous integration workflow definition
-  docs/
-    ARCHITECTURE.md          # Target architecture specification (design only)
-    STATUS.md                # Single source of truth for feature implementation status
-    LIMITATIONS.md           # Transparent declaration of boundaries and limitations
-    DECISIONS.md             # Technical and architectural decisions log
-    PHASES.md                # Complete project roadmap across Phases 0 through 8
-  extension/
-    manifest.json            # Chrome MV3 extension manifest
-    options.html, popup.html # Extension page entry points
-    vite.config.ts, tsconfig.json
-    src/
-      background/            # Service worker (Phase 0: lifecycle logging only)
-      popup/                 # Action popup React app ("Protection inactive")
-      options/               # Dashboard React app (metadata-only audit view)
-      content/               # Content script (IIFE bundle; unregistered in Phase 0)
-      page-world/            # MAIN-world fetch backstop (IIFE; unregistered in Phase 0)
-      shared/                # Common types and constants
-  engine/
-    requirements.txt         # Pinned engine dependencies
-    requirements-dev.txt     # Test dependencies
-    veilguard_engine/
-      __init__.py, __main__.py
-      config.py              # Host (127.0.0.1) and Port (8765) configuration
-      server.py              # FastAPI app with /health endpoint
-      detectors/             # Placeholder for Presidio, custom validators, secrets
-      context/               # Placeholder for context feature extraction
-      necessity/             # Placeholder for task intent & necessity matrices
-      reid/                  # Placeholder for quasi-identifier re-ID risk scorer
-      policy/                # Placeholder for declarative YAML policy engine
-      sanitizer/             # Placeholder for utility-preserving pseudonymization
-      vault/                 # Placeholder for reversible pseudonym store
-      pdf/                   # Placeholder for PyMuPDF vector/raster redaction
-  policies/                  # Placeholder for policy YAML files
-  bench/                     # Placeholder for reproducible evaluation harness & datasets
-  mock-ai-site/              # Placeholder for deterministic mock AI chat testbed
-  scripts/
-    build-extension.mjs      # Plain Vite multi-stage build script
-  tests/
-    engine/                  # Automated pytest smoke tests
-    e2e/                     # Automated Playwright extension tests
+# Generate / Verify Evidence Report
+python scripts/make_evidence.py --check
 ```
 
 ---
 
-## Documentation Links
+## Key Deliverables & Documentation Links
 
-- [Project Guidelines & Rules (AGENTS.md)](./AGENTS.md)
-- [Target Architecture](./docs/ARCHITECTURE.md)
-- [Implementation Status Matrix](./docs/STATUS.md)
-- [Known Limitations](./docs/LIMITATIONS.md)
-- [Architecture & Decisions Log](./docs/DECISIONS.md)
-- [Phase Roadmap (Phases 0–8)](./docs/PHASES.md)
+- **Evidence & Verification Report:** [docs/EVIDENCE.md](./docs/EVIDENCE.md)
+- **Detailed Benchmark Report:** [bench/results/BENCHMARK.md](./bench/results/BENCHMARK.md)
+- **4-Minute Demo Script:** [docs/DEMO_SCRIPT.md](./docs/DEMO_SCRIPT.md)
+- **Presentation Deck Content (8 Slides):** [docs/PPT_CONTENT.md](./docs/PPT_CONTENT.md)
+- **Submission Readiness Checklist:** [docs/SUBMISSION_CHECKLIST.md](./docs/SUBMISSION_CHECKLIST.md)
+- **Architecture & Sequence Diagrams:** [docs/diagrams/README.md](./docs/diagrams/README.md)
+- **Project Rules & Invariants:** [AGENTS.md](./AGENTS.md)
+- **Known Limitations:** [docs/LIMITATIONS.md](./docs/LIMITATIONS.md)
+- **Architectural Decisions Log:** [docs/DECISIONS.md](./docs/DECISIONS.md)

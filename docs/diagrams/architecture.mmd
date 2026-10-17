@@ -1,0 +1,91 @@
+flowchart TD
+    subgraph Browser ["Google Chrome / Chromium Browser (MV3)"]
+        subgraph TargetAI ["AI Web Interface (e.g. ChatGPT, Mock Site)"]
+            DOMInput["DOM Composer (textarea / contenteditable)"]
+            SendBtn["Send Button / Enter Key Handler"]
+            SiteFetch["Page Network Layer (fetch / XHR)"]
+        end
+
+        subgraph ExtIS ["VeilGuard Content Script (Isolated World)"]
+            Adapter["Site Adapter (Centralized Selectors)"]
+            Intercepter["DOM Interceptor (Capture-phase listeners)"]
+            Overlay["Review Overlay (Shadow DOM UI)"]
+            SessionVault["Client Session Vault (Cross-turn mapping)"]
+        end
+
+        subgraph ExtMW ["VeilGuard Main-World Script"]
+            Backstop["Fetch / XHR Backstop Bridge"]
+            VerdictTokenStore["Verdict Token Store (Short-lived Nonces)"]
+        end
+
+        subgraph ExtBG ["Extension Service Worker"]
+            Canary["Canary Liveness Monitor (15s heartbeat)"]
+            BadgeState["Action Badge & Degraded Mode Controller"]
+        end
+
+        subgraph ExtUI ["Extension Management UI"]
+            Popup["Action Popup (Status, Switch, Metrics)"]
+            Dashboard["Privacy Dashboard (React Options Page)"]
+            EventStore["Metadata Audit Store (chrome.storage.local)"]
+        end
+    end
+
+    subgraph Host ["Local Operating System Boundary (127.0.0.1)"]
+        subgraph Engine ["VeilGuard Local Engine (FastAPI, loopback:8765)"]
+            Auth["Bearer Token Guard (.veilguard/token)"]
+            
+            subgraph Detectors ["Detection Pipeline"]
+                Presidio["Presidio NLP Analyzer (en_core_web_sm)"]
+                CustomValidators["Indian ID Validators (Aadhaar Verhoeff, PAN, GSTIN)"]
+                SecretsRegex["Vendor Secrets & Generic Assignment Detector"]
+                MedicalDetector["Medical Entities & Health Context Rules"]
+                QuasiDetector["Quasi-Identifier Detector (Age, Role, Dept, City)"]
+            end
+
+            subgraph Intelligence ["Context & Necessity Intelligence"]
+                TaskInfer["Task Intent Inference (TLDR, KYC, Code, etc.)"]
+                NecessityMat["Domain Necessity Matrix (Role-based necessity)"]
+                ReidScorer["Re-ID Risk Scorer (Quasi combination analysis)"]
+                NecessityReducer["Necessity Reducer & Generalizer"]
+            end
+
+            subgraph PolicyEngine ["Policy & Sanitization Core"]
+                PolicyEval["Declarative Policy Evaluator (policies/*.yaml)"]
+                Sanitizer["Utility-Preserving Sanitizer (Role Placeholders)"]
+                VaultManager["Engine Vault Consistency Manager"]
+            end
+
+            subgraph PDFEngine ["Document Redaction Engine"]
+                PDFScanner["PyMuPDF In-Memory PDF Parser"]
+                PDFScrubber["True Redaction & Metadata Scrubbing Engine"]
+                DualVerify["Dual-Extractor Verifier (PyMuPDF + pypdf)"]
+            end
+        end
+    end
+
+    subgraph ExternalProvider ["External AI Provider (Cloud)"]
+        AICloud["Provider API Endpoint (OpenAI / Mock Backend)"]
+    end
+
+    %% Wiring
+    DOMInput --> Intercepter
+    SendBtn --> Intercepter
+    Intercepter --> Adapter
+    Intercepter -->|"POST /analyze (Loopback)"| Auth
+    Auth --> Detectors
+    Detectors --> Intelligence
+    Intelligence --> PolicyEngine
+    PolicyEngine -->|"Verdict (allow/redact/block)"| Overlay
+    
+    Overlay -->|"User confirms Send Sanitized"| SessionVault
+    SessionVault -->|"Injects sanitized prompt"| DOMInput
+    DOMInput --> SiteFetch
+    SiteFetch --> Backstop
+    Backstop -->|"Validates verdict token"| VerdictTokenStore
+    VerdictTokenStore -->|"Sanitized text only"| AICloud
+
+    Overlay -->|"Metadata only"| EventStore
+    EventStore --> Dashboard
+    ExtBG -->|"Polls engine health"| Engine
+    ExtBG --> BadgeState
+    BadgeState --> Popup
