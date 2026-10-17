@@ -3,6 +3,7 @@
   const composerType = urlParams.get("composer") === "contenteditable" ? "contenteditable" : "textarea";
   const wiringType = urlParams.get("wiring") === "click" ? "click" : "form";
   const transportType = urlParams.get("transport") === "xhr" ? "xhr" : "fetch";
+  const breakSelectors = urlParams.get("break_selectors") === "1";
 
   /**
    * State mode:
@@ -17,7 +18,7 @@
 
   const configBanner = document.getElementById("config-banner");
   if (configBanner) {
-    configBanner.textContent = `Config: composer=${composerType} | wiring=${wiringType} | transport=${transportType} | state=${stateMode}`;
+    configBanner.textContent = `Config: composer=${composerType} | wiring=${wiringType} | transport=${transportType} | state=${stateMode}${breakSelectors ? " | broken=1" : ""}`;
   }
 
   // Expose state mode on window for adapter verification
@@ -25,6 +26,7 @@
   window.__vg_composer_type = composerType;
   window.__vg_wiring_type = wiringType;
   window.__vg_transport_type = transportType;
+  window.__vg_break_selectors = breakSelectors;
 
   const messageList = document.getElementById("message-list");
   const composerSlot = document.getElementById("composer-slot");
@@ -45,26 +47,30 @@
     if (stateMode === "controlled") {
       return _controlledText;
     }
+    const editableId = breakSelectors ? "broken-composer-editable" : "chat-composer-editable";
+    const textareaId = breakSelectors ? "broken-composer-textarea" : "chat-composer-textarea";
     if (composerType === "contenteditable") {
-      const el = document.getElementById("chat-composer-editable");
+      const el = document.getElementById(editableId);
       return el ? el.innerText.trim() : "";
     } else {
-      const el = document.getElementById("chat-composer-textarea");
+      const el = document.getElementById(textareaId);
       return el ? el.value.trim() : "";
     }
   }
 
   function clearComposer() {
     _controlledText = "";
+    const editableId = breakSelectors ? "broken-composer-editable" : "chat-composer-editable";
+    const textareaId = breakSelectors ? "broken-composer-textarea" : "chat-composer-textarea";
     if (composerType === "contenteditable") {
-      const el = document.getElementById("chat-composer-editable");
+      const el = document.getElementById(editableId);
       if (el) {
         el.innerText = "";
         // Dispatch synthetic input event so any external listeners see the clear
         el.dispatchEvent(new Event("input", { bubbles: true }));
       }
     } else {
-      const el = document.getElementById("chat-composer-textarea");
+      const el = document.getElementById(textareaId);
       if (el) {
         el.value = "";
         el.dispatchEvent(new Event("input", { bubbles: true }));
@@ -126,20 +132,26 @@
   }
 
   // Render Composer & Wiring
+  const editableId = breakSelectors ? "broken-composer-editable" : "chat-composer-editable";
+  const textareaId = breakSelectors ? "broken-composer-textarea" : "chat-composer-textarea";
+  const sendBtnId = breakSelectors ? "broken-send-btn" : "send-btn";
+  const formId = breakSelectors ? "broken-form" : "chat-form";
+  const containerId = breakSelectors ? "broken-container" : "chat-container";
+
   const composerHtml = composerType === "contenteditable"
-    ? `<div id="chat-composer-editable" contenteditable="true" role="textbox" aria-label="Mock chat message"></div>`
-    : `<textarea id="chat-composer-textarea" placeholder="Type a message..." aria-label="Mock chat message"></textarea>`;
+    ? `<div id="${editableId}" contenteditable="true" role="textbox" aria-label="Mock chat message"></div>`
+    : `<textarea id="${textareaId}" placeholder="Type a message..." aria-label="Mock chat message"></textarea>`;
 
   const sendBtnHtml = wiringType === "form"
-    ? `<button type="submit" id="send-btn" class="btn btn-send">Send</button>`
-    : `<button type="button" id="send-btn" class="btn btn-send">Send</button>`;
+    ? `<button type="submit" id="${sendBtnId}" class="btn btn-send">Send</button>`
+    : `<button type="button" id="${sendBtnId}" class="btn btn-send">Send</button>`;
 
   const programmaticBtnHtml = `<button type="button" id="send-programmatic" class="btn btn-test" title="Test-only: bypasses DOM submit/click handlers">Send Programmatic (Test Only)</button>`;
 
   let containerHtml = "";
   if (wiringType === "form") {
     containerHtml = `
-      <form id="chat-form" class="composer-container" onsubmit="event.preventDefault(); return false;">
+      <form id="${formId}" class="composer-container" onsubmit="event.preventDefault(); return false;">
         ${composerHtml}
         <div class="controls">
           ${programmaticBtnHtml}
@@ -149,7 +161,7 @@
     `;
   } else {
     containerHtml = `
-      <div id="chat-container" class="composer-container">
+      <div id="${containerId}" class="composer-container">
         ${composerHtml}
         <div class="controls">
           ${programmaticBtnHtml}
@@ -166,8 +178,8 @@
   // Bind controlled-mode input listener
   if (stateMode === "controlled") {
     const composerEl = composerType === "contenteditable"
-      ? document.getElementById("chat-composer-editable")
-      : document.getElementById("chat-composer-textarea");
+      ? document.getElementById(editableId)
+      : document.getElementById(textareaId);
 
     if (composerEl) {
       composerEl.addEventListener("input", () => {
@@ -184,7 +196,7 @@
 
   // Bind Listeners
   if (wiringType === "form") {
-    const form = document.getElementById("chat-form");
+    const form = document.getElementById(formId);
     if (form) {
       form.addEventListener("submit", (e) => {
         e.preventDefault();
@@ -192,7 +204,7 @@
       });
     }
   } else {
-    const sendBtn = document.getElementById("send-btn");
+    const sendBtn = document.getElementById(sendBtnId);
     if (sendBtn) {
       sendBtn.addEventListener("click", (e) => {
         e.preventDefault();
@@ -211,8 +223,8 @@
 
   // Enter Keydown Listener on Composer
   const composerEl = composerType === "contenteditable"
-    ? document.getElementById("chat-composer-editable")
-    : document.getElementById("chat-composer-textarea");
+    ? document.getElementById(editableId)
+    : document.getElementById(textareaId);
 
   if (composerEl) {
     composerEl.addEventListener("keydown", (e) => {

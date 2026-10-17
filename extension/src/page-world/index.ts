@@ -30,28 +30,35 @@
   }
   win.__veilguard_page_world_installed = true;
 
-  const CHAT_ENDPOINT = "/api/chat";
+  function isChatEndpoint(url: string): boolean {
+    return (
+      url.includes("/api/chat") ||
+      url.includes("/backend-api/conversation") ||
+      url.includes("/backend-anon/conversation")
+    );
+  }
+
   const VERDICT_TIMEOUT_MS = 6000; // Slightly above engine 5s timeout
 
   // ---------------------------------------------------------------------------
   // Approved request cache (keyed by request fingerprint)
   // ---------------------------------------------------------------------------
 
-  /**
-   * Set of request fingerprints (text + endpoint hash) that have been
-   * approved by the content-script/engine flow. When the content script
-   * sets the sanitized text and re-triggers the submission, this cache
-   * allows the backstop to pass it through without re-analyzing.
-   *
-   * Entries are evicted after 30 seconds to prevent stale approvals.
-   */
   const approvedFingerprints = new Map<string, number>();
   const APPROVAL_TTL_MS = 30000;
 
+  /**
+   * Normalizes text for comparing approved text against outbound payloads.
+   * Collapses all whitespace sequences to a single space and trims.
+   */
+  function normalizeForApproval(text: string): string {
+    if (!text) return "";
+    return text.replace(/\s+/g, " ").trim();
+  }
+
   function fingerprintText(text: string): string {
-    // Simple fingerprint: first 64 chars + length. Not cryptographic — just
-    // enough to distinguish a re-triggered sanitized request from a fresh one.
-    return `${text.length}:${text.slice(0, 64)}`;
+    const norm = normalizeForApproval(text);
+    return `${norm.length}:${norm}`;
   }
 
   function isApproved(text: string): boolean {
@@ -145,22 +152,46 @@
   });
 
   // ---------------------------------------------------------------------------
-  // Payload extraction helper
+  // Payload extraction helper (supports strings, JSON, Blobs, ArrayBuffers)
   // ---------------------------------------------------------------------------
 
-  function extractMessageFromPayload(body: unknown): string {
+  async function extractMessageFromPayloadAsync(body: unknown): Promise<string> {
     if (!body) return "";
+
+    // Reject unreadable streaming bodies per Rule 6 and Phase 4 spec
+    if (typeof ReadableStream !== "undefined" && body instanceof ReadableStream) {
+      throw new TypeError("Failed to fetch: request blocked by VeilGuard AI backstop (unreadable streaming body).");
+    }
+
     if (typeof body === "string") {
       try {
-        const parsed = JSON.parse(body) as Record<string, unknown>;
-        if (parsed && typeof parsed["message"] === "string") {
-          return parsed["message"];
+        const parsed = JSON.parse(body);
+        if (parsed && Array.isArray(parsed.messages) && parsed.messages.length > 0) {
+          const first = parsed.messages[0];
+          if (first?.content?.parts && Array.isArray(first.content.parts)) {
+            return first.content.parts.filter((p: unknown) => typeof p === "string").join("\n");
+          }
         }
+        if (parsed && typeof parsed.message === "string") return parsed.message;
+        if (parsed && typeof parsed.text === "string") return parsed.text;
+        if (parsed && typeof parsed.prompt === "string") return parsed.prompt;
       } catch {
         // Plain text payload
       }
       return body;
     }
+
+    if (typeof Blob !== "undefined" && body instanceof Blob) {
+      const text = await body.text();
+      return extractMessageFromPayloadAsync(text);
+    }
+
+    if (body instanceof ArrayBuffer || ArrayBuffer.isView(body)) {
+      const decoder = new TextDecoder("utf-8");
+      const text = decoder.decode(body);
+      return extractMessageFromPayloadAsync(text);
+    }
+
     return "";
   }
 
@@ -198,21 +229,32 @@
         requestUrl = (input as Request).url;
       }
 
-      if (requestUrl.includes(CHAT_ENDPOINT)) {
+      if (isChatEndpoint(requestUrl)) {
+        // Notify content script that a chat request was observed (feeds the Canary timer)
+        window.postMessage({ type: "VEILGUARD_CHAT_OBSERVED", url: requestUrl }, "*");
+
         let messageText = "";
 
         if (!init?.body && input instanceof Request) {
           try {
             const clone = input.clone();
             const bodyText = await clone.text();
-            messageText = extractMessageFromPayload(bodyText);
-          } catch {
-            // If we can't read the body, fail closed
+            messageText = await extractMessageFromPayloadAsync(bodyText);
+          } catch (err: unknown) {
             notifyBlocked("fetch");
-            throw new TypeError("Failed to fetch: request blocked by VeilGuard AI backstop (unreadable body).");
+            throw new TypeError(
+              err instanceof Error ? err.message : "Failed to fetch: request blocked by VeilGuard AI backstop (unreadable body)."
+            );
           }
         } else {
-          messageText = extractMessageFromPayload(init?.body);
+          try {
+            messageText = await extractMessageFromPayloadAsync(init?.body);
+          } catch (err: unknown) {
+            notifyBlocked("fetch");
+            throw new TypeError(
+              err instanceof Error ? err.message : "Failed to fetch: request blocked by VeilGuard AI backstop (unreadable body)."
+            );
+          }
         }
 
         if (messageText) {
@@ -274,37 +316,47 @@
     body?: Document | XMLHttpRequestBodyInit | null
   ): void {
     const targetUrl = xhrUrlMap.get(this) || "";
-    if (targetUrl.includes(CHAT_ENDPOINT)) {
-      const messageText = extractMessageFromPayload(body);
+    if (isChatEndpoint(targetUrl)) {
+      window.postMessage({ type: "VEILGUARD_CHAT_OBSERVED", url: targetUrl }, "*");
 
-      if (messageText) {
-        if (isApproved(messageText)) {
-          return originalSend.apply(this, [body]);
-        }
+      // Reject unreadable streaming bodies per Rule 6
+      if (typeof ReadableStream !== "undefined" && body instanceof ReadableStream) {
+        notifyBlocked("xhr");
+        this.dispatchEvent(new ProgressEvent("error"));
+        return;
+      }
 
-        // XHR cannot be made async cleanly without aborting; we use a sync-style
-        // approach by suspending send and resuming via a setTimeout after the
-        // async verdict resolves. This is the standard extension backstop pattern.
-        const self = this;
-        const savedBody = body;
+      const self = this;
+      const savedBody = body;
 
-        requestVerdict(messageText, "xhr").then((allowed) => {
-          if (!allowed) {
+      extractMessageFromPayloadAsync(body).then((messageText) => {
+        if (messageText) {
+          if (isApproved(messageText)) {
+            return originalSend.apply(self, [savedBody]);
+          }
+
+          requestVerdict(messageText, "xhr").then((allowed) => {
+            if (!allowed) {
+              notifyBlocked("xhr");
+              self.dispatchEvent(new ProgressEvent("error"));
+              return;
+            }
+            originalSend.apply(self, [savedBody]);
+          }).catch(() => {
             notifyBlocked("xhr");
             self.dispatchEvent(new ProgressEvent("error"));
-            return;
-          }
-          // Allowed — proceed with original send
-          originalSend.apply(self, [savedBody]);
-        }).catch(() => {
-          // Fail closed on error
-          notifyBlocked("xhr");
-          self.dispatchEvent(new ProgressEvent("error"));
-        });
+          });
+          return;
+        }
+        originalSend.apply(self, [savedBody]);
+      }).catch(() => {
+        notifyBlocked("xhr");
+        self.dispatchEvent(new ProgressEvent("error"));
+      });
 
-        return; // Return immediately; send will be called after verdict resolves
-      }
+      return;
     }
     return originalSend.apply(this, [body]);
   };
 })();
+
