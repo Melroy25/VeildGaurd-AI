@@ -6,7 +6,7 @@ NEVER the raw sensitive substring.
 """
 
 from enum import Enum
-from typing import List, Literal, Optional
+from typing import Dict, List, Literal, Optional
 from pydantic import BaseModel, Field
 
 
@@ -171,6 +171,10 @@ class AnalyzeRequest(BaseModel):
         default=None,
         description="Optional seed list of previously assigned placeholders for session consistency",
     )
+    task_hint: Optional[str] = Field(
+        default=None,
+        description="Optional task intent hint from closed set of 11 valid tasks",
+    )
 
 
 class AnalyzeStats(BaseModel):
@@ -179,6 +183,48 @@ class AnalyzeStats(BaseModel):
     profile: str = Field(description="Policy profile applied")
     destination_trust: DestinationTrust = Field(description="Resolved destination trust level")
     scan_stats: ScanStats = Field(description="Underlying scan performance metrics")
+
+
+# ─── Context Intelligence API Models (Phase 5 Part C6) ─────────────────────────
+
+class ContextTask(BaseModel):
+    type: str = Field(description="Inferred or hinted task type from closed set")
+    confidence: Literal["high", "medium", "low"] = Field(description="Confidence tier")
+    evidence: List[str] = Field(default_factory=list, description="Rule IDs or ['USER_HINT']. Never text.")
+
+
+class FindingNecessity(BaseModel):
+    finding_id: str
+    level: str  # required | optional | unnecessary
+
+
+class ReidContributor(BaseModel):
+    type: str
+    weight: float
+
+
+class ContextReid(BaseModel):
+    score_before: float
+    score_after: float
+    level_before: Literal["low", "medium", "high"]
+    level_after: Literal["low", "medium", "high"]
+    contributors: List[ReidContributor] = Field(default_factory=list)
+    target: float = 0.5
+    applied: List[str] = Field(default_factory=list)
+
+
+class ContextUtility(BaseModel):
+    basis: Literal["task_aware", "type_only"]
+    may_change_result: Literal["low", "possible", "high"]
+    notes: List[str] = Field(default_factory=list)
+
+
+class ContextBlock(BaseModel):
+    task: ContextTask
+    necessity: List[FindingNecessity] = Field(default_factory=list)
+    reidentification: ContextReid
+    tradeoffs: List[Dict[str, str]] = Field(default_factory=list)
+    utility: ContextUtility
 
 
 class AnalyzeResponse(BaseModel):
@@ -195,6 +241,10 @@ class AnalyzeResponse(BaseModel):
     sanitization: Optional[SanitizeResult] = Field(
         default=None,
         description="Sanitization results including sanitized text and replacements (null if decision is allow)",
+    )
+    context: Optional[ContextBlock] = Field(
+        default=None,
+        description="Context intelligence block with task, necessity, re-id, trade-offs, and utility",
     )
     notices: List[str] = Field(
         default_factory=lambda: ["Detection is not exhaustive. Review the text before sending."],

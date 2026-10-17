@@ -36,8 +36,8 @@ def test_canonical_example_prompt_analyze() -> None:
     assert "9876543210" not in sanitized
     assert "[PHONE_1]" in sanitized
 
-    # With span normalization, the trailing 's is preserved in the sanitized output:
-    assert "[PERSON_1]'s account" in sanitized
+    # With span normalization and role placeholders, the trailing 's is preserved:
+    assert ("[CUSTOMER_1]'s account" in sanitized) or ("[PERSON_1]'s account" in sanitized)
 
 
     # Verification must report zero residuals

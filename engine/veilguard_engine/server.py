@@ -7,17 +7,26 @@ from fastapi.exceptions import RequestValidationError
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from veilguard_engine.config import VERSION
+from veilguard_engine.context import infer_task
 from veilguard_engine.models import (
     AnalyzeRequest,
     AnalyzeResponse,
     AnalyzeStats,
+    ContextBlock,
+    ContextReid,
+    ContextTask,
+    ContextUtility,
+    FindingNecessity,
     ProfileInfo,
+    ReidContributor,
     RuleInfo,
     ScanRequest,
     ScanResponse,
 )
+from veilguard_engine.necessity import evaluate_necessity
 from veilguard_engine.policy import PolicyEvaluator, PolicyRegistry
-from veilguard_engine.policy.models import Decision
+from veilguard_engine.policy.models import Action, Decision
+from veilguard_engine.reid import ReidReducer, ReidScorer
 from veilguard_engine.sanitizer import Sanitizer
 from veilguard_engine.scanner import Scanner
 from veilguard_engine.security import (
@@ -143,15 +152,47 @@ def analyze_text(
     scan_res = scanner.scan(payload.text, source=payload.source)
     utf16_findings = convert_findings_to_utf16(scan_res.findings, payload.text)
 
-    # 4. Evaluate policy rules
+    # 4. Context Intelligence: Task inference & Re-ID scoring
+    task_prof = infer_task(payload.text, task_hint=payload.task_hint)
+    reid_score = ReidScorer.get_instance().score_findings(scan_res.findings)
+
+    # 5. Evaluate policy rules
     policy_result = PolicyEvaluator.evaluate(
         findings=scan_res.findings,
         source=payload.source,
         destination_trust=dest_trust,
         profile=profile_obj,
+        reid_level=reid_score.level,
     )
 
-    # 5. Sanitize text unless decision is explicitly allow
+    # 6. Evaluate task-aware necessity and adjust policy actions/decision
+    nec_res = evaluate_necessity(
+        findings=scan_res.findings,
+        policy_result=policy_result,
+        task_profile=task_prof,
+    )
+    policy_result.decision = nec_res.adjusted_decision
+    policy_result.per_finding_actions = nec_res.adjusted_actions
+
+    # 7. Re-identification reduction for high/medium re-id risk
+    reducer = ReidReducer()
+    red_res = reducer.reduce(
+        text=payload.text,
+        findings=scan_res.findings,
+        per_finding_necessity=nec_res.per_finding_necessity,
+    )
+    for fid in red_res.applied:
+        policy_result.per_finding_actions[fid] = Action.GENERALIZE
+    if red_res.required_prevented_target:
+        if policy_result.decision in (Decision.ALLOW, Decision.REDACT):
+            policy_result.decision = Decision.REQUIRE_APPROVAL
+        nec_res.tradeoffs.append({
+            "finding_id": "reid_target",
+            "category": "QUASI_IDENTIFIER",
+            "tradeoff": "Re-identification risk remains above target because required details were preserved.",
+        })
+
+    # 8. Sanitize text unless decision is explicitly allow
     if policy_result.decision == Decision.ALLOW:
         sanitization_result = None
     else:
@@ -160,7 +201,40 @@ def analyze_text(
             findings=scan_res.findings,
             policy_result=policy_result,
             known_placeholders=payload.known_placeholders,
+            role_placeholders=True,
+            generalizations=red_res.generalizations,
         )
+
+    # 9. Build context intelligence response block (metadata and rule IDs only, NEVER raw text)
+    context_block = ContextBlock(
+        task=ContextTask(
+            type=task_prof.type,
+            confidence=task_prof.confidence,
+            evidence=task_prof.evidence,
+        ),
+        necessity=[
+            FindingNecessity(finding_id=fid, level=lvl)
+            for fid, lvl in nec_res.per_finding_necessity.items()
+        ],
+        reidentification=ContextReid(
+            score_before=red_res.score_before,
+            score_after=red_res.score_after,
+            level_before=red_res.level_before,
+            level_after=red_res.level_after,
+            contributors=[
+                ReidContributor(type=c.type, weight=c.weight)
+                for c in red_res.contributors
+            ],
+            target=red_res.target,
+            applied=red_res.applied,
+        ),
+        tradeoffs=nec_res.tradeoffs,
+        utility=ContextUtility(
+            basis=nec_res.utility.basis,
+            may_change_result=nec_res.utility.may_change_result,
+            notes=[nec_res.utility.notes],
+        ),
+    )
 
     total_latency_ms = (time.perf_counter() - t_start) * 1000.0
 
@@ -179,6 +253,7 @@ def analyze_text(
         applied_rules=policy_result.applied_rules,
         findings=utf16_findings,
         sanitization=sanitization_result,
+        context=context_block,
         stats=stats,
     )
 

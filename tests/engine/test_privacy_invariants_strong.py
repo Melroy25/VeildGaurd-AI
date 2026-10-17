@@ -69,6 +69,16 @@ def test_strong_privacy_invariants_analyze_response_and_logs(
         assert phone_number not in data["sanitization"]["sanitized_text"]
         assert person_name not in data["sanitization"]["sanitized_text"]
 
+    # 3. Context block must contain zero sensitive text or raw prompt
+    assert "context" in data
+    assert data["context"] is not None
+    import json
+    context_str = json.dumps(data["context"])
+    assert secret_key not in context_str, "Secret leaked in context block"
+    assert phone_number not in context_str, "Phone leaked in context block"
+    assert person_name not in context_str, "Name leaked in context block"
+    assert prompt_text not in context_str, "Full prompt leaked in context block"
+
     # Part B: Logging assertions (Zero sensitive text or full prompt in logs at DEBUG level)
     for record in caplog.records:
         msg = record.getMessage()

@@ -98,40 +98,41 @@ class VeilGuardResult:
 class _VeilGuardBase:
     """Shared pipeline: scanner → policy → sanitizer."""
 
-    # Singletons — avoid re-loading spaCy on each call
-    _scanner: Optional[Scanner] = None
     _registry: Optional[PolicyRegistry] = None
 
     def __init__(self, flags: FeatureFlags) -> None:
         self._flags = flags
-        self._init_pipeline()
-
-    @classmethod
-    def _init_pipeline(cls) -> None:
-        if cls._scanner is None:
-            cls._scanner = Scanner()
-        if cls._registry is None:
-            cls._registry = PolicyRegistry()
+        self._scanner = Scanner(
+            include_medical=flags.medical,
+            include_quasi=flags.reid,
+        )
+        if _VeilGuardBase._registry is None:
+            _VeilGuardBase._registry = PolicyRegistry()
+        self._registry = _VeilGuardBase._registry
 
     def run(self, text: str, profile: str = "company", destination: str = "127.0.0.1") -> VeilGuardResult:
         """Run the full VeilGuard analysis pipeline.
 
         Phase 5 intelligence features are gated behind self._flags.
-        In Part C those flags actually activate new detectors;
-        in Part B they are always off so both type_based and full behave identically.
         """
         t0 = time.perf_counter()
 
         scanner = self._scanner
         registry = self._registry
 
-        # Scan
+        # 1. Scan
         scan_result = scanner.scan(text)
         findings = scan_result.findings
 
-        # Future: in Part C, inject quasi/medical findings here when flags are on
+        # 2. Re-ID scoring (if enabled)
+        reid_level = None
+        if self._flags.reid:
+            from veilguard_engine.reid import ReidScorer
+            scorer = ReidScorer.get_instance()
+            reid_score = scorer.score_findings(findings)
+            reid_level = reid_score.level
 
-        # Policy
+        # 3. Policy evaluation
         profile_obj = registry.get_profile(profile)
         dest_trust = registry.get_destination_trust(destination)
         policy_result = PolicyEvaluator.evaluate(
@@ -139,9 +140,40 @@ class _VeilGuardBase:
             source="prompt",
             destination_trust=dest_trust,
             profile=profile_obj,
+            reid_level=reid_level,
         )
 
-        # Sanitize
+        # 4. Context intelligence: task inference, necessity, re-id reduction
+        generalizations = None
+        if self._flags.task or self._flags.necessity or self._flags.reid:
+            from veilguard_engine.context import infer_task
+            task_prof = infer_task(text) if self._flags.task else None
+
+            if self._flags.necessity and task_prof:
+                from veilguard_engine.necessity import evaluate_necessity
+                nec_res = evaluate_necessity(findings, policy_result, task_prof)
+                policy_result.decision = nec_res.adjusted_decision
+                policy_result.per_finding_actions = nec_res.adjusted_actions
+            else:
+                nec_res = None
+
+            if self._flags.reid and reid_level == "high":
+                from veilguard_engine.reid import ReidReducer
+                from veilguard_engine.necessity import NecessityMatrix
+                matrix = NecessityMatrix.get_instance()
+                task_type = task_prof.type if task_prof else "unknown"
+                per_nec = (
+                    nec_res.per_finding_necessity
+                    if nec_res
+                    else {f.id: matrix.resolve(task_type, f) for f in findings}
+                )
+                reducer = ReidReducer()
+                red_res = reducer.reduce(text, findings, per_nec)
+                for fid in red_res.applied:
+                    policy_result.per_finding_actions[fid] = Action.GENERALIZE
+                generalizations = red_res.generalizations
+
+        # 5. Sanitize
         sanitizer = Sanitizer(scanner=scanner, role_placeholders=self._flags.role_ph)
         if policy_result.decision == Decision.ALLOW:
             sanitized_text = text
@@ -150,6 +182,7 @@ class _VeilGuardBase:
                 text=text,
                 findings=findings,
                 policy_result=policy_result,
+                generalizations=generalizations,
             )
             sanitized_text = san_result.sanitized_text
 

@@ -159,6 +159,7 @@ Origin: chrome-extension://<extension-id>   (or omitted for local clients)
 | `destination` | `string` | No | Destination hostname string (e.g. `"127.0.0.1"`, `"chatgpt.com"`). Defaults to `"127.0.0.1"`. |
 | `profile` | `string` | No | Policy profile name (`"company"`, `"personal"`, `"finance"`). Defaults to `"company"`. |
 | `known_placeholders`| `array` | No | Optional seed list of `[{"entity_type": "...", "value": "...", "placeholder": "..."}]` for cross-turn chat session consistency. |
+| `task_hint` | `string` | No | Optional task hint (`"analyze_data"`, `"summarize"`, `"draft_document"`, `"draft_message"`, etc.) overriding lexical inference. |
 
 **Response Body (`AnalyzeResponse`):**
 
@@ -171,8 +172,19 @@ Origin: chrome-extension://<extension-id>   (or omitted for local clients)
 | `applied_rules`| `AppliedRule[]` | Policy rules that matched and fired (`rule_id`, `reason`, `finding_ids`). |
 | `findings` | `Finding[]` | Non-overlapping detected findings with UTF-16 offsets. |
 | `sanitization` | `SanitizeResult | null` | Sanitized text and replacement mapping. `null` if decision is `"allow"`. |
+| `context` | `ContextBlock | null` | Context intelligence block (task, necessity, re-id, trade-offs, utility). Contains rule IDs and metadata only; NEVER user text. |
 | `notices` | `string[]` | Safety notices, always including `"Detection is not exhaustive. Review the text before sending."` |
 | `stats` | `AnalyzeStats` | Execution statistics (latency, resolved trust tier, profile). |
+
+**`ContextBlock` Object (Phase 5 Intelligence):**
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `task` | `object` | `{ type: string, confidence: "high" | "medium" | "low", evidence: string[] }` (rule IDs only, e.g. `["T_ANALYZE_01"]`). |
+| `necessity` | `object[]` | List of `{ finding_id: string, level: "required" | "optional" | "unnecessary" }` mapped via task matrix. |
+| `reidentification` | `object` | `{ score_before: float, score_after: float, level_before: string, level_after: string, contributors: [{type, weight}], target: float, applied: string[] }`. |
+| `tradeoffs` | `object[]` | List of `{ finding_id: string, category: string, tradeoff: string }` where task necessity required keeping an identifier. |
+| `utility` | `object` | `{ basis: "task_aware" | "type_only", may_change_result: "low" | "possible" | "high", notes: string[] }`. |
 
 **`SanitizeResult` Object:**
 
