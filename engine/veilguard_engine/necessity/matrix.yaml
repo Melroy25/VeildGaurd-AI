@@ -1,0 +1,117 @@
+# VeilGuard Entity Necessity Matrix (Phase 5)
+# Maps task_type -> entity_type or category -> necessity level (required | optional | unnecessary)
+# Default fallback when unlisted is 'optional'.
+
+version: 1
+
+tasks:
+  analyze_data:
+    defaults: unnecessary
+    overrides:
+      PERSON: unnecessary
+      PHONE_NUMBER: unnecessary
+      IN_MOBILE: unnecessary
+      EMAIL: unnecessary
+      EMAIL_ADDRESS: unnecessary
+      LOCATION: optional
+      IN_AADHAAR: unnecessary
+      IN_PAN: unnecessary
+      IN_GSTIN: optional
+      CREDIT_CARD: optional
+      IN_BANK_ACCOUNT: optional
+      IN_IFSC: optional
+      UPI_ID: optional
+      FINANCIAL: optional
+      SECRET: unnecessary
+      MEDICAL: optional
+
+  summarize:
+    defaults: optional
+    overrides:
+      PERSON: optional
+      PHONE_NUMBER: unnecessary
+      IN_MOBILE: unnecessary
+      EMAIL: unnecessary
+      EMAIL_ADDRESS: unnecessary
+      GOVERNMENT_ID: unnecessary
+      IN_AADHAAR: unnecessary
+      IN_PAN: unnecessary
+      SECRET: unnecessary
+      MEDICAL: required
+      MEDICAL_CONDITION: required
+      MEDICATION: required
+      MEDICAL_PROCEDURE: required
+
+  draft_document:
+    defaults: optional
+    overrides:
+      PERSON: optional
+      QUASI_ROLE: required
+      IN_GSTIN: required
+      SECRET: unnecessary
+      PHONE_NUMBER: unnecessary
+      IN_MOBILE: unnecessary
+      EMAIL: unnecessary
+      EMAIL_ADDRESS: unnecessary
+
+  draft_message:
+    defaults: optional
+    overrides:
+      PERSON: required
+      PHONE_NUMBER: optional
+      IN_MOBILE: optional
+      EMAIL: optional
+      EMAIL_ADDRESS: optional
+      UPI_ID: optional
+      SECRET: unnecessary
+
+  rewrite_edit:
+    defaults: optional
+    overrides:
+      SECRET: unnecessary
+
+  debug_code:
+    defaults: unnecessary
+    overrides:
+      SECRET: unnecessary
+      PII: unnecessary
+      FINANCIAL: unnecessary
+
+  verify_identifier:
+    defaults: optional
+    overrides:
+      IN_AADHAAR: required
+      IN_PAN: required
+      IN_GSTIN: required
+      US_SSN: required
+      US_PASSPORT: required
+      GOVERNMENT_ID: required
+      IN_IFSC: required
+      IN_BANK_ACCOUNT: required
+      UPI_ID: required
+      PERSON: optional
+      SECRET: unnecessary
+
+  lookup_contact:
+    defaults: unnecessary
+    overrides:
+      PERSON: required
+      PHONE_NUMBER: required
+      IN_MOBILE: required
+      EMAIL: required
+      EMAIL_ADDRESS: required
+      SECRET: unnecessary
+
+  translate:
+    defaults: optional
+    overrides:
+      SECRET: unnecessary
+
+  general_qa:
+    defaults: optional
+    overrides:
+      SECRET: unnecessary
+
+  unknown:
+    defaults: optional
+    overrides: {}
