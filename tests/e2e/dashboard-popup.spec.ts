@@ -163,14 +163,57 @@ async function openOptionsPage(context: BrowserContext): Promise<Page> {
   return extPage;
 }
 
-async function openPopupPage(context: BrowserContext): Promise<Page> {
+async function openPopupPage(context: BrowserContext, tabId?: number): Promise<Page> {
   const extPage = await context.newPage();
   const [sw] = context.serviceWorkers();
   const extId = new URL(sw.url()).host;
-  await extPage.goto(`chrome-extension://${extId}/popup.html`);
+  // Append ?tabId=<n> when provided — this is the documented test seam (Decision 31)
+  // that lets tests target a specific tab without the removed sibling-tab heuristic.
+  const seam = tabId != null ? `?tabId=${tabId}` : "";
+  await extPage.goto(`chrome-extension://${extId}/popup.html${seam}`);
   await extPage.waitForLoadState("networkidle");
   return extPage;
 }
+
+/**
+ * Finds the Chrome tab ID of the tab running VeilGuard's content script.
+ * Iterates through tabs via chrome.tabs.query and sends GET_STATUS to identify
+ * the protected page. This avoids relying on restricted tab.url properties.
+ */
+async function getProtectedTabId(
+  context: BrowserContext
+): Promise<number | undefined> {
+  let [sw] = context.serviceWorkers();
+  if (!sw) sw = await context.waitForEvent("serviceworker", { timeout: 10000 });
+  return sw.evaluate(() => {
+    return new Promise<number | undefined>((resolve) => {
+      chrome.tabs.query({}, async (tabs) => {
+        for (const t of tabs) {
+          if (t.id == null) continue;
+          const status = await new Promise<string | null>((res) => {
+            try {
+              chrome.tabs.sendMessage(t.id!, { type: "GET_STATUS" }, (resp) => {
+                if (chrome.runtime.lastError || !resp) {
+                  res(null);
+                } else {
+                  res((resp as { status?: string }).status || null);
+                }
+              });
+            } catch {
+              res(null);
+            }
+          });
+          if (status === "active") {
+            resolve(t.id);
+            return;
+          }
+        }
+        resolve(undefined);
+      });
+    });
+  });
+}
+
 
 function buildSyntheticEvent(
   overrides: Partial<Record<string, unknown>> = {}
@@ -800,7 +843,10 @@ test.describe("Test 10: Popup status states", () => {
     await sitePage.waitForLoadState("domcontentloaded");
     await sitePage.waitForTimeout(1000); // let content script initialize
 
-    popupPage = await openPopupPage(context);
+    // Use getProtectedTabId to query tabs for active VeilGuard protection,
+    // then pass it as the ?tabId= test seam (Decision 31).
+    const tabId = await getProtectedTabId(context);
+    popupPage = await openPopupPage(context, tabId);
     await expect(popupPage.getByText("Protected")).toBeVisible({ timeout: 8000 });
 
     await sitePage.close();
@@ -850,7 +896,8 @@ test.describe("Test 10: Popup status states", () => {
     if (popupPage && !popupPage.isClosed()) {
       await popupPage.close();
     }
-    popupPage = await openPopupPage(context);
+    const tabId = await getProtectedTabId(context);
+    popupPage = await openPopupPage(context, tabId);
     await popupPage.waitForTimeout(2000);
 
     if (!fs.existsSync(SCREENSHOTS_DIR)) {

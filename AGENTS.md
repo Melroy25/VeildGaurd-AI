@@ -46,3 +46,12 @@ Users frequently paste customer conversations, financial statements, medical rec
 19. **Session initialization:** At the start of each work session, consult `AGENTS.md`, `docs/STATUS.md`, and `docs/PHASES.md`.
 20. **Security escalation:** When any security- or privacy-relevant design choice is ambiguous, halt and solicit clarification rather than making unverified assumptions.
 21. **Workspace containment:** Confine all file modifications, script executions, and package installations to the project workspace directory. Do not perform destructive actions or modify global system packages.
+
+### Live Third-Party Site Testing Rules (Phase 4)
+22. **Never send anything to the provider during automated trials:** All requests to the chat endpoint are intercepted in Playwright with `page.route`, recorded, and fulfilled with a stub response. Nothing the harness types ever reaches the provider's servers. (All test text is synthetic regardless.)
+23. **No evasion:** Do not use stealth plugins, spoofed fingerprints, CAPTCHA solvers, or any technique to defeat bot detection or terms of service. If the site blocks automated browsers, shows a challenge you cannot pass normally, or restricts automation in its terms, stop and report. Do not improvise a workaround.
+24. **Credentials are the human's:** If login is needed, the human logs in manually in a dedicated browser profile (`.playwright-real-profile/`, gitignored). The agent never sees, types, stores or logs credentials. Never commit the profile directory.
+25. **Respect the site:** Low request volume, no scraping, no bulk page loads. Check the site's terms and robots statements about automated access and summarize findings in `docs/SITE_SURVEY.md`.
+26. **Real-site tests are opt-in:** They run only with `VG_REAL_SITE=1`, live in `tests/e2e-real/`, and are excluded from `npm run test:e2e` and from CI.
+27. **Verify, don't assume:** Confirm all DOM details and request formats against the live site and record the verification date.
+

@@ -190,5 +190,8 @@ This document records key technical decisions, rationales, and alternatives eval
 - **Decision:** Avoid requesting `"tabs"`. In the action popup, determine active page status by sending a `GET_STATUS` message via `chrome.tabs.sendMessage` to the active tab ID obtained from `chrome.tabs.query({ active: true, currentWindow: true })`.
 - **Rationale:** Strictly adheres to Rule 9 (Least Privilege). The popup obtains protection status without needing to read browsing history or URLs of all open tabs.
 
-
-
+### 31. `?tabId=<n>` Popup Test Seam (Task 0, Phase 4)
+- **Date:** Phase 4 (Task 0)
+- **Context:** Phase 3c introduced a `chrome.tabs.getCurrent` heuristic inside `Popup.tsx` that detected when the popup was running in a browser tab (as opposed to the toolbar action bubble) and then picked the "last sibling tab" as the target for the `GET_STATUS` query. This was test-harness logic in production code: it only existed because Playwright opens `popup.html` as a full tab, not as the toolbar action popup.
+- **Decision:** Remove the `chrome.tabs.getCurrent` heuristic entirely. Production code always uses `chrome.tabs.query({ active: true, currentWindow: true })`. Tests that need to target a specific tab open `popup.html?tabId=<n>` and parse the `tabId` URL parameter to call `chrome.tabs.sendMessage` on that tab ID directly.
+- **Rationale:** Eliminates test-harness logic from the production code path. The `?tabId=` seam is explicit and documented, making the test intent clear without obscure runtime branching.

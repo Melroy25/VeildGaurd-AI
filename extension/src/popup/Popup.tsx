@@ -10,9 +10,14 @@
  *
  * Permission constraints:
  *   - Does NOT use the `tabs` permission.
- *   - Uses chrome.tabs.query({active:true, currentWindow:true}) which
- *     does not require the `tabs` permission in MV3 (works on visible tabs).
+ *   - Production: uses chrome.tabs.query({active:true, currentWindow:true})
+ *     which does not require the `tabs` permission in MV3.
  *   - Content-script status query via chrome.tabs.sendMessage without `tabs`.
+ *
+ * Test seam (Decision 31):
+ *   Open popup.html?tabId=<n> to query a specific tab directly.
+ *   This keeps the production code path clean while allowing Playwright tests
+ *   to target the correct tab without the removed sibling-tab heuristic.
  */
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -154,6 +159,8 @@ export const Popup: React.FC = () => {
   }, [pingEngine]);
 
   // ── Query active tab content script ──
+  // Production path: chrome.tabs.query({active:true, currentWindow:true})
+  // Test seam (Decision 31): ?tabId=<n> in URL → query that specific tab
   const queryContentScript = useCallback(() => {
     const sendStatusQuery = (targetTabId: number | undefined) => {
       if (!targetTabId) {
@@ -178,23 +185,33 @@ export const Popup: React.FC = () => {
       }
     };
 
-    chrome.tabs.getCurrent((currentTab) => {
-      if (currentTab?.id != null) {
-        // Running inside a tab (e.g. Playwright test or developer tab)
-        chrome.tabs.query({ currentWindow: true }, (allTabs) => {
-          const candidates = (allTabs || []).filter(
-            (t) => t.id != null && t.id !== currentTab.id
-          );
-          // Pick the last non-popup tab (the most recently opened page)
-          const target = candidates[candidates.length - 1];
-          sendStatusQuery(target?.id);
-        });
-      } else {
-        // Running inside an action popup bubble
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          sendStatusQuery(tabs?.[0]?.id);
-        });
+    // Check for the documented test seam: popup.html?tabId=<n> (Decision 31)
+    // Ignored unless it matches an existing tab.
+    const params = new URLSearchParams(window.location.search);
+    const seamTabId = params.get("tabId");
+    if (seamTabId !== null) {
+      const parsed = parseInt(seamTabId, 10);
+      if (Number.isFinite(parsed)) {
+        try {
+          chrome.tabs.get(parsed, (tab) => {
+            if (!chrome.runtime.lastError && tab?.id != null) {
+              sendStatusQuery(tab.id);
+            } else {
+              chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                sendStatusQuery(tabs?.[0]?.id);
+              });
+            }
+          });
+          return;
+        } catch {
+          // Fall through to production query
+        }
       }
+    }
+
+    // Production: query the active tab in the current window
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      sendStatusQuery(tabs?.[0]?.id);
     });
   }, []);
 

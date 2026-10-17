@@ -141,3 +141,61 @@ In compliance with Rule 3 (Honesty Invariant):
 1. **Mock-Site Scope:** Phase 1 verification applies strictly to the mock testbed (`127.0.0.1:4310`). No production AI adapters (ChatGPT, Claude) are included in this phase.
 2. **Alternative Protocols:** Interception covers DOM events, `window.fetch`, and `XMLHttpRequest`. Exotic protocols (WebSockets, WebRTC data channels, WebTransport, background Service Worker sync) are not intercepted by this layer. See [docs/LIMITATIONS.md](./LIMITATIONS.md) for full details.
 3. **Harness Stub Detector:** Phase 1 utilizes a synchronous regex detector stub (`isFlagged()`). Full integration with the Presidio analyzer and local FastAPI engine (`/scan`) is scheduled for Phase 2.
+
+---
+
+## Phase 3b: Root Cause of Enter/requestSubmit Delivery Failures and Fix
+
+### Problem
+
+During Phase 3b bring-up, two submission paths — **Enter key** and **form.requestSubmit()** — intermittently failed to deliver the sanitized text to the mock server after the user clicked "Send sanitized" on the review overlay. The `bench/results/enforcement_full_chain_mock_site.json` recorded `sanitized_delivered_correctly = false` for these cells in early runs.
+
+### Root Cause 1 — Double-Interception of the Re-Triggered Event (`isReTriggering` guard)
+
+When the user approved the sanitized text, `flow.ts` re-triggered the original submission path (e.g., synthesized an Enter `KeyboardEvent` and dispatched it on the composer, or called `form.requestSubmit()`). The extension's own capture-phase window listener (registered at `document_start`) would then re-intercept this synthetic event and open a second review overlay — blocking its own re-delivery in an infinite loop.
+
+**Fix:** A module-level boolean `isReTriggering` flag was added in [`extension/src/content/flow.ts`](../extension/src/content/flow.ts) (line ~44). Before re-dispatching the sanitized event, the flag is set to `true`; the capture-phase handler short-circuits immediately when `isReTriggering === true`; the flag is reset inside a `finally` block after the re-dispatch concludes.
+
+```typescript
+// flow.ts — simplified
+let isReTriggering = false;
+
+export async function retriggerWithSanitizedText(text: string, ctx: SubmitContext) {
+  isReTriggering = true;
+  try {
+    ctx.setText(text);
+    ctx.triggerSend();          // dispatches the synthetic event
+    await waitForSendComplete();
+  } finally {
+    isReTriggering = false;
+  }
+}
+
+// capture-phase handler
+window.addEventListener("keydown", (e) => {
+  if (isReTriggering) return;   // ← short-circuit; skip own re-trigger
+  // ... normal interception logic
+}, { capture: true });
+```
+
+### Root Cause 2 — Backstop Checked Pre-Approval Text Before Pre-Approval Was Posted
+
+The MAIN-world backstop (`extension/src/page-world/index.ts`) checks outgoing fetch/XHR payloads against the original flagged text stored in `window.__vg_preApproved`. For Enter-wired and requestSubmit-wired forms, the content script posted the `VEILGUARD_PRE_APPROVE` message to the page world **after** the re-triggered submission had already fired — so the backstop still saw the text as un-approved and blocked the sanitized delivery.
+
+**Fix:** The `VEILGUARD_PRE_APPROVE` `window.postMessage` is now dispatched **before** `retriggerWithSanitizedText()` is called, guaranteeing the backstop receives the approval token before any outgoing network request is attempted.
+
+### Root Cause 3 — Enter Debounce for Double-Enter Scenario
+
+Pressing Enter on a contenteditable element fires two `keydown` events in rapid succession on some platform/browser combinations (one for IME pre-composition, one for the actual submit Enter). The first event would open an overlay; the second would open a second overlay on top.
+
+**Fix:** A 300 ms debounce guard on Enter interception was added to deduplicate rapid consecutive Enter events while an overlay is active.
+
+### Outcome
+
+After these three fixes (committed in `303e97b`), all 14 cells of the enforcement matrix passed with 0 leaks and 100% sanitized delivery in two consecutive runs (N=20 per cell, VG_TRIALS=20):
+
+| Fix | Guard Location | File |
+| :--- | :--- | :--- |
+| `isReTriggering` double-interception guard | Capture-phase handler check | `extension/src/content/flow.ts` |
+| `VEILGUARD_PRE_APPROVE` ordering | Pre-approval posted before retrigger | `extension/src/content/flow.ts` |
+| Enter debounce | 300 ms cooldown while overlay active | `extension/src/content/flow.ts` |
