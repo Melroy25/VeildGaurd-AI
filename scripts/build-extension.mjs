@@ -4,6 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 import { copyFileSync, mkdirSync, existsSync } from "fs";
+import { generateBenchmarkSummary } from "./generate-benchmark-summary.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -13,6 +14,10 @@ const distDir = resolve(extensionDir, "dist");
 
 async function buildExtension() {
   console.log("[Build] Starting VeilGuard Extension build...");
+
+  // Step 0: Generate benchmark summary if test results are present
+  console.log("[Build] Step 0: Generating benchmark summary if available...");
+  generateBenchmarkSummary();
 
   // Step 1: Build HTML pages (popup, options) and service worker (background.js)
   console.log("[Build] Step 1: Building HTML pages and service worker...");

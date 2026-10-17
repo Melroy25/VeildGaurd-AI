@@ -30,6 +30,7 @@ import {
 } from "../shared/aggregate";
 import type { StoredEvent } from "../background/events-store";
 import { EVENTS_STORAGE_KEY, RECORD_HISTORY_KEY } from "../background/events-store";
+import benchmarkSummaryData from "./benchmark-summary.json";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -800,12 +801,50 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
         </div>
       </Section>
 
-      {/* 8. Benchmark placeholder */}
+      {/* 8. Benchmark panel */}
       <Section title="Benchmark results">
-        <p className="text-slate-500 text-sm italic">
-          No benchmark results are bundled yet. This panel will display
-          detection accuracy statistics from the Phase 6 benchmark run.
-        </p>
+        {benchmarkSummaryData && benchmarkSummaryData.systems && benchmarkSummaryData.systems.length > 0 ? (
+          <div className="space-y-3">
+            <div className="text-xs text-slate-400 flex flex-wrap gap-x-4 gap-y-1">
+              <span><strong className="text-slate-300">Dataset:</strong> {benchmarkSummaryData.dataset_size} items</span>
+              <span><strong className="text-slate-300">Date:</strong> {benchmarkSummaryData.date}</span>
+              <span><strong className="text-slate-300">Commit:</strong> <code className="text-sky-400">{benchmarkSummaryData.commit}</code></span>
+              <span><strong className="text-slate-300">Run #:</strong> {benchmarkSummaryData.run_number}</span>
+            </div>
+            <p className="text-xs text-amber-400/90 italic">
+              ⚠ {benchmarkSummaryData.caveat}
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left" aria-label="Benchmark results">
+                <thead>
+                  <tr className="text-slate-400 border-b border-slate-800">
+                    <th className="pb-2 pr-3 font-medium">System</th>
+                    <th className="pb-2 pr-3 font-medium text-right">Entity F1</th>
+                    <th className="pb-2 pr-3 font-medium text-right">Flagged Recall</th>
+                    <th className="pb-2 pr-3 font-medium text-right">Combo Recall</th>
+                    <th className="pb-2 font-medium text-right">p50 Latency</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {benchmarkSummaryData.systems.map((s) => (
+                    <tr key={s.name} className="border-b border-slate-800/40">
+                      <td className="py-1.5 pr-3 font-mono text-slate-300">{s.name}</td>
+                      <td className="py-1.5 pr-3 text-right text-slate-200">{s.entity_f1}%</td>
+                      <td className="py-1.5 pr-3 text-right text-slate-200">{s.flagged_recall}%</td>
+                      <td className="py-1.5 pr-3 text-right text-slate-200">{s.combo_recall}%</td>
+                      <td className="py-1.5 text-right font-mono text-slate-400">{s.p50_latency_ms} ms</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <p className="text-slate-500 text-sm italic">
+            No benchmark results are bundled yet. This panel will display
+            detection accuracy statistics from the benchmark run.
+          </p>
+        )}
       </Section>
 
       {/* 9. Recent events table */}

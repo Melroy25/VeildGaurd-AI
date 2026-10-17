@@ -26,6 +26,13 @@ export type {
   KnownPlaceholder,
   EngineHealthResponse,
   SanitizeVerification,
+  EngineContextBlock,
+  EngineContextTask,
+  EngineContextReid,
+  EngineFindingNecessity,
+  EngineReidContributor,
+  EngineContextTradeoff,
+  EngineContextUtility,
 } from "../background/engine-client";
 
 // ---------------------------------------------------------------------------

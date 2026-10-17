@@ -61,40 +61,45 @@
 - Deploying standard stock Presidio out-of-the-box yields near-zero recall for Indian identifiers unless explicit custom registry assembly is performed.
 - VeilGuard addresses this by providing dedicated, algorithmically validated detectors (Verhoeff checksum for Aadhaar, mod-36 for GSTIN, PAN character verification, context-window gated bank accounts) integrated natively into the scanner.
 
-## 11. Medical Conditions and Health Information
-- General PII detectors and statistical English language models (such as `en_core_web_sm`) do not recognize medical conditions, clinical diagnoses (e.g., diabetes, hypertension), or pharmaceutical prescriptions/medications as sensitive entities.
-- In prompts containing health details (e.g., "My patient John Doe has diabetes and takes medication daily. Their phone number is 9876543210."), VeilGuard detects and pseudonymizes direct identifiers (`PERSON`, `IN_MOBILE`), but clinical context words (`diabetes`, `medication`) remain undetected and unredacted.
-- Domain-adapted HIPAA/medical NER or clinical ontology recognizers are not part of the standard baseline and are documented as a known limitation verified via `@pytest.mark.xfail(strict=True)` in `tests/engine/test_known_limitations.py`.
+## 11. Medical Term Detection Scope & Lexicon (Updated Phase 5)
+- In Phase 5, VeilGuard added a curated 252-term medical lexicon (`data/medical_terms.txt`) and the `HEALTH_WITH_IDENTITY` policy rule.
+- When clinical terms appear alongside direct personal identifiers or a high re-identification score, direct identity is pseudonymized while medical terms are preserved to maintain AI utility.
+- However, medical detection remains dictionary-based and is **non-exhaustive**. Unlisted rare diseases, experimental medications, or clinical shorthand not in the dictionary will not be detected as medical entities.
 
-## 12. Local Audit History & Dashboard Scope Boundaries (Phase 3c)
+## 12. Context Intelligence & Benchmark Limitations (Phase 5)
+- **Lexical, English-Only Task Inference**: Task intent classification relies on ordered keyword and verb cues in English. It does not perform semantic embedding lookups or support multilingual prompts; non-standard or foreign language prompts fall back to `unknown`.
+- **Heuristic Re-Identification Scoring**: The weights in `reid/weights.yaml` and the Noisy-OR combination formula are expert-designed heuristics, tuned on development data. The score is a relative risk index, **NOT** an empirical probability of re-identification in the wild.
+- **Synthetic, Same-Team Dataset**: All 519 benchmark prompts (233 dev + 286 test) were synthetically authored by the engineering team. This introduces inevitable inductive bias; performance on real production user prompts may vary.
+- **Small Benchmark Sample Size**: While sufficient for directional evaluation ($N=286$ on test), several subcategories (e.g. `financial` $n=19$, `utility_tasks` $n=18$) have small counts, resulting in wide confidence intervals.
+- **Unvalidated Semantic Drift (`may_change_result`)**: The utility prediction (`may_change_result`) is a rule-based signal derived from whether required/optional details were altered. It has not been empirically verified against live downstream generations from OpenAI or Anthropic models.
+- **Statistical NER Sensitivity**: Small statistical models (`en_core_web_sm`) continue to miss lowercase names or uncommon transliterated Indian names without clear sentence context.
+
+## 13. Local Audit History & Dashboard Scope Boundaries (Phase 3c)
 - **Local persistence only:** Event history is stored strictly in `chrome.storage.local` on the client device. It is not synchronized across devices, backed up to any cloud or remote endpoint (Rule 8), and is permanently cleared if the extension is uninstalled.
 - **Fixed retention ring buffer (1000 events):** Event history is capped at the newest 1000 events. Older events are silently evicted to prevent unbounded storage consumption.
 - **Documents scanned is 0 until Phase 7:** The dashboard summary card displays "Documents scanned: 0" because document/PDF interception is scheduled for Phase 7.
-- **Dashboard counts describe local activity, not detection accuracy:** The counts, decision breakdowns, and user action distributions reflect activity intercepted on this specific browser profile. They are not benchmark precision or recall metrics. Benchmark metrics are computed independently in Phase 6.
+- **Dashboard counts describe local activity, not detection accuracy:** The counts, decision breakdowns, and user action distributions reflect activity intercepted on this specific browser profile. They are not benchmark precision or recall metrics. Benchmark metrics are computed independently in Phase 5/6.
 - **Popup protection status visibility:** Without the privileged `tabs` permission, the action popup queries only the active tab's content script via `chrome.tabs.sendMessage`. It cannot inspect arbitrary tabs or determine protection status on domains where VeilGuard has no registered content script, cleanly reporting "Not active on this site (unsupported site)". Never implies protection where none exists.
 
-
-
-
-## 13. Unscanned File Attachments (Phase 4)
+## 14. Unscanned File Attachments (Phase 4)
 - In Phase 4, VeilGuard AI does **not** scan the contents of files attached to chat messages via the ChatGPT file upload button or drag-and-drop.
 - A non-blocking notice is displayed to the user: *"Attachments are not scanned by VeilGuard AI. Their contents are not checked."*
 - **Protection status on the badge remains `active (verified)`** — the notice clarifies this specific limitation without downgrading overall protection.
 - Full document/attachment scanning using PyMuPDF is scheduled for Phase 7.
 
-## 14. Voice / Audio Input (Phase 4)
+## 15. Voice / Audio Input (Phase 4)
 - ChatGPT's voice dictation mode streams audio from the microphone directly to OpenAI's servers via real-time audio APIs.
 - VeilGuard AI does not intercept audio streams. This path is unprotected and must be prominently declared to users.
 - The badge does not claim protection on voice-mode submissions.
 
-## 15. DOM Selector Volatility — ChatGPT (Phase 4, Verified 2026-10-17)
+## 16. DOM Selector Volatility — ChatGPT (Phase 4, Verified 2026-10-17)
 - The ChatGPT adapter's DOM selectors were verified on 2026-10-17 against the live site at `https://chatgpt.com`:
   - Composer: `#mobile-composer-prompt` (TEXTAREA, `aria-label="Chat with ChatGPT"`)
   - Send Button: `button[aria-label="Send message"]` (`type="submit"`)
 - ChatGPT (OpenAI) may update its front-end at any time. If selectors break, the adapter's `selfTest()` will fail and VeilGuard transitions to **Limited Protection** (backstop-only) mode, displayed on the badge.
 - VeilGuard never silently claims full protection when adapter self-test fails (Rule 3).
 
-## 16. Single Real-Site Target in Phase 4 (Phase 4)
+## 17. Single Real-Site Target in Phase 4 (Phase 4)
 - Phase 4 implements and verifies protection on ChatGPT (`https://chatgpt.com`) only.
 - Claude, Gemini, Copilot, and other AI sites are **not supported** in Phase 4.
 - The extension manifest grants host permissions only for `https://chatgpt.com/*` and `https://*.chatgpt.com/*` (in addition to the mock test site). No other AI sites receive injected scripts.

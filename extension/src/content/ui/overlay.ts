@@ -17,7 +17,7 @@
  *    button are ignored to prevent automated bypass.
  */
 
-import type { EngineAnalyzeResponse, EngineFinding } from "../../shared/messages";
+import type { EngineAnalyzeResponse, EngineFinding, EngineContextBlock } from "../../shared/messages";
 
 let overlayHost: HTMLElement | null = null;
 let shadowRoot: ShadowRoot | null = null;
@@ -276,6 +276,88 @@ function buildSanitizedBox(sanitizedText: string, findings: EngineFinding[]): HT
   return box;
 }
 
+function buildWhySection(context?: EngineContextBlock): HTMLDivElement | null {
+  if (!context) return null;
+
+  const section = document.createElement("div");
+  section.id = "vg-overlay-why";
+  section.className = "why-section";
+  section.style.cssText =
+    "background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px; font-size: 0.82rem; color: #cbd5e1; display: flex; flex-direction: column; gap: 8px;";
+
+  const header = document.createElement("div");
+  header.className = "section-label";
+  header.style.cssText =
+    "font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #38bdf8;";
+  header.textContent = "Context Intelligence (Why)";
+  section.appendChild(header);
+
+  // 1. Task profile
+  if (context.task) {
+    const taskEl = document.createElement("div");
+    taskEl.id = "vg-why-task";
+    taskEl.textContent = `Task: ${context.task.type} (${context.task.confidence} confidence)`;
+    section.appendChild(taskEl);
+  }
+
+  // 2. Detail necessity: unnecessary vs kept
+  if (context.necessity && context.necessity.length > 0) {
+    const unnecessaryCount = context.necessity.filter((n) => n.level === "unnecessary").length;
+    const requiredCount = context.necessity.filter((n) => n.level === "required").length;
+    const optionalCount = context.necessity.filter((n) => n.level === "optional").length;
+
+    const necEl = document.createElement("div");
+    necEl.id = "vg-why-necessity";
+    const parts: string[] = [];
+    if (unnecessaryCount > 0) parts.push(`${unnecessaryCount} unnecessary (redacted)`);
+    if (requiredCount > 0) parts.push(`${requiredCount} required (kept)`);
+    if (optionalCount > 0) parts.push(`${optionalCount} optional`);
+    necEl.textContent = `Detail necessity: ${parts.join(", ")}`;
+    section.appendChild(necEl);
+  }
+
+  // 3. Trade-offs
+  if (context.tradeoffs && context.tradeoffs.length > 0) {
+    const toEl = document.createElement("div");
+    toEl.id = "vg-why-tradeoffs";
+    toEl.style.cssText = "color: #fdba74;";
+    for (const to of context.tradeoffs) {
+      const line = document.createElement("div");
+      line.textContent = `⚠ Trade-off: ${to.tradeoff || to.category || "Task needs detail"}`;
+      toEl.appendChild(line);
+    }
+    section.appendChild(toEl);
+  }
+
+  // 4. Re-identification risk & contributors
+  if (context.reidentification) {
+    const reid = context.reidentification;
+    const reidEl = document.createElement("div");
+    reidEl.id = "vg-why-reid";
+
+    const scoreLine = document.createElement("div");
+    const pctBefore = (reid.score_before * 100).toFixed(0);
+    const pctAfter = (reid.score_after * 100).toFixed(0);
+    scoreLine.textContent = `Re-ID risk: ${reid.level_before} (${pctBefore}%) → ${reid.level_after} (${pctAfter}%)`;
+    reidEl.appendChild(scoreLine);
+
+    if (reid.contributors && reid.contributors.length > 0) {
+      const contribLine = document.createElement("div");
+      contribLine.id = "vg-why-reid-contributors";
+      contribLine.style.cssText = "font-size: 0.78rem; color: #94a3b8; margin-top: 2px;";
+      const contribs = reid.contributors
+        .map((c) => `${c.type} (${(c.weight * 100).toFixed(0)}%)`)
+        .join(", ");
+      contribLine.textContent = `Contributors: ${contribs}`;
+      reidEl.appendChild(contribLine);
+    }
+
+    section.appendChild(reidEl);
+  }
+
+  return section;
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -377,6 +459,12 @@ export function showReviewOverlay(opts: ReviewOverlayOptions): void {
       chipList.appendChild(chip);
     }
     modal.appendChild(chipList);
+  }
+
+  // ---- Context Intelligence (Why) ----
+  const whySection = buildWhySection(engineResult.context);
+  if (whySection) {
+    modal.appendChild(whySection);
   }
 
   // ---- Utility notice ----

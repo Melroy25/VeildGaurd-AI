@@ -1,6 +1,6 @@
 # VeilGuard AI: Context-Aware Privacy Firewall for AI Tools
 
-> **Project Status:** **Phase 1 complete (mock-site testbed), Phase 2 complete (detection engine & /scan API), Phase 3a complete (policy engine & sanitizer), Phase 3b complete (extension + engine integration, review overlay, session vault, 14-cell enforcement matrix), Phase 3c complete (metadata dashboard, popup status, export, pause switch), Phase 4 complete (ChatGPT adapter, degraded mode, canary, real-site network-boundary harness & measurement).**
+> **Project Status:** **Phase 1 complete (mock-site testbed), Phase 2 complete (detection engine & /scan API), Phase 3a complete (policy engine & sanitizer), Phase 3b complete (extension + engine integration, review overlay, session vault, 14-cell enforcement matrix), Phase 3c complete (metadata dashboard, popup status, export, pause switch), Phase 4 complete (ChatGPT adapter, degraded mode, canary, real-site network-boundary harness), Phase 5 complete (context intelligence, task inference, necessity matrix, re-ID scoring & reduction, medical detection, sealed-test benchmark runner).**
 
 VeilGuard AI is a context-aware privacy firewall designed to sit between users and AI interfaces. When users paste sensitive data—such as customer conversations, financial records, medical notes, or system secrets—VeilGuard intercepts submissions, evaluates context and task necessity, enforces configurable privacy policies, produces utility-preserving pseudonymized prompts, and records metadata-only audit logs.
 
@@ -204,7 +204,21 @@ The standard E2E suite includes `tests/e2e/degraded-canary.spec.ts` which verifi
 - Backstop-only enforcement when the DOM adapter's selectors are broken (`?break_selectors=1`).
 - Canary badge transition (≤15.2s timeout from last verified request).
 
-### 5. Real-Site Network-Boundary Tests (ChatGPT) — Opt-In Only
+### 5. Benchmark Suite & Sealed-Test Evaluation
+VeilGuard includes a fully reproducible, offline benchmark suite comparing VeilGuard against Keyword and Presidio baselines across 519 prompts (233 dev, 286 sealed test).
+
+#### Run on Development Split:
+```bash
+python -m bench.run_benchmark --split dev --systems all
+```
+
+#### Run on Sealed Test Split:
+```bash
+python -m bench.run_benchmark --split test --confirm-frozen --systems all
+```
+*Enforces SHA-256 hash verification, a clean git working tree, and logs execution to `bench/results/test_run_log.jsonl`.* Generated results are written to `bench/results/benchmark_test.json` and `bench/results/BENCHMARK.md`. See [docs/BENCHMARK.md](./docs/BENCHMARK.md) for full methodology.
+
+### 6. Real-Site Network-Boundary Tests (ChatGPT) — Opt-In Only
 
 > **Privacy notice:** `.playwright-real-profile/` is gitignored. It contains a dedicated Chromium profile used exclusively for opt-in real-site testing. **No credentials are seen, typed, stored, or logged by this project.** If login is needed, the human operator logs in manually via the login script. See Rules 22–27 in [AGENTS.md](./AGENTS.md).
 

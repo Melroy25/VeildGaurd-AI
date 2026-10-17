@@ -207,3 +207,39 @@ This document records key technical decisions, rationales, and alternatives eval
 - **Context:** When VeilGuard writes sanitized text back into ChatGPT's textarea (to re-submit after user approval), directly setting `element.value = text` leaves React's internal `_valueTracker` snapshot at the old value. React then computes a zero-delta change event and keeps the send button disabled, causing the re-submission to silently fail.
 - **Decision:** Implement a three-step write sequence in `ChatGPTAdapter.setText()`: (1) clear the `_valueTracker` snapshot via `element._valueTracker?.setValue("")`, (2) assign `element.value = text`, (3) dispatch a synthetic `InputEvent` with `inputType: "insertText"` and the new text as `data`. This causes React to detect a transition from `""` to `text` and re-enable the submit button.
 - **Rationale:** This is the canonical pattern for programmatically updating React-controlled `<input>` and `<textarea>` elements without forking React internals. Accessing `_valueTracker` is a known, stable React internal (present since React 16). The fallback (`createNativeInputValueSetter`) is also implemented in case `_valueTracker` is absent in a future React version.
+
+### 34. Lexical Deterministic Task Profile Inference (Phase 5)
+- **Date:** Phase 5 (Part C1)
+- **Context:** A context-aware privacy firewall needs to know the user's task intent to avoid stripping data necessary for task utility (e.g. data analysis vs contact lookup). Using an LLM to classify intent would introduce network latency, cost, and non-deterministic behavior.
+- **Decision:** Implement task inference as an ordered, deterministic lexical classification engine over lowercased prompts using a closed set of 10 tasks and explicit rule IDs (`T_ANALYZE_01`...). Cues return confidence tiers (`high`, `medium`, `low`) and an evidence list containing rule IDs only, never text. An optional `task_hint` parameter in `POST /analyze` allows clients to supply explicit intent.
+- **Rationale:** Ensures zero additional latency (<1 ms), 100% offline predictability, complete reproducibility, and zero sensitive text leakage into classification logs or API responses.
+
+### 35. Task-Aware Necessity Adjustment with Safety Invariants (Phase 5)
+- **Date:** Phase 5 (Part C2)
+- **Context:** Redacting all detected entities blindly destroys prompt utility. For example, verifying an Aadhaar requires the ID number, while analyzing spending patterns does not require customer phone numbers.
+- **Decision:** Implement a YAML-backed Necessity Matrix (`required`, `optional`, `unnecessary`) governing entity types per task. Enforce three inviolable safety invariants: (1) Necessity never weakens a `block` decision and never keeps a `SECRET`; (2) A `required` detail that policy would otherwise sanitize is preserved (`action: keep`), raising the decision to at least `require_approval` with a documented trade-off note; (3) When task is `unknown`, all findings default to `optional` (fail-safe type-based behavior).
+- **Rationale:** Guarantees that task utility optimization cannot accidentally bypass critical security boundaries or leak credentials.
+
+### 36. Noisy-OR Quasi-Identifier Re-Identification Risk Model (Phase 5)
+- **Date:** Phase 5 (Part C4)
+- **Context:** Individual quasi-identifiers (age, role, organization, location, sensitive life event) do not directly identify an individual, but their intersection allows high-precision re-identification.
+- **Decision:** Model combination re-identification risk using a Noisy-OR formulation: $S = 1 - \prod (1 - w_t)$ over distinct quasi-identifier types present, with thresholds $0.5$ (medium) and $0.7$ (high). Re-identification findings never trigger actions independently; they are evaluated collectively in policy profiles (`reid_levels: [high]`).
+- **Rationale:** Noisy-OR provides diminishing marginal returns as multiple weak cues accumulate, while accurately detecting that a prompt combining age + role + company + location + event uniquely singles out an employee without full names or IDs.
+
+### 37. Utility-Maximizing Heuristic Reducer (Phase 5)
+- **Date:** Phase 5 (Part C4)
+- **Context:** When re-identification risk is high, redacting all quasi-identifiers ruins prompt utility (e.g., stripping the job title from a performance review prompt).
+- **Decision:** Implement `ReidReducer` which iteratively generalizes quasi-identifiers (e.g., age → decade "30s", org → `[COMPANY_1]`, event → "personal leave") in priority order: `unnecessary` first, then `optional`, ordered by weight descending, stopping as soon as the total score drops below target (0.50). `QUASI_ROLE` is preserved when required by the task; `QUASI_GENDER` is never modified.
+- **Rationale:** Drops re-identification risk from high to safe while preserving the core task semantics (such as the employee's role) needed by the AI.
+
+### 38. Medical Detection with `HEALTH_WITH_IDENTITY` Utility Preservation (Phase 5)
+- **Date:** Phase 5 (Part C5)
+- **Context:** Clinical terms appearing in prompts require protection when linked to an identifiable person, but general medical discussions (e.g. "What are the common symptoms of diabetes?") must not be blocked or redacted.
+- **Decision:** Implement a curated 252-term medical detector (`data/medical_terms.txt`) and a cross-category policy rule `HEALTH_WITH_IDENTITY`. When medical terms appear alone, policy decision is `allow`. When medical terms appear alongside identity findings (`PERSON`, contact info, government ID) or high re-ID risk, the rule fires `redact`, pseudonymizing the identity findings while explicitly keeping the medical terms.
+- **Rationale:** Protects personal health information (PHI) without degrading the user's ability to consult AI tools for general medical information.
+
+### 39. Sealed-Test Benchmark Protocol with Zero Hand-Typed Metrics (Phase 5)
+- **Date:** Phase 5 (Part D)
+- **Context:** Benchmark claims in privacy tools are frequently exaggerated, fabricated, or contaminated by tuning against the evaluation dataset.
+- **Decision:** Enforce a strict sealed-test protocol: (1) Manifest SHA-256 verification of `test.jsonl`; (2) Working tree must be 100% clean before running; (3) Mandatory `--confirm-frozen` flag; (4) Append-only logging to `test_run_log.jsonl`; (5) All tables in `BENCHMARK.md` and UI summaries are generated directly by script from runner JSON output; (6) Transparent publication of the "Where VeilGuard Did Not Win" section.
+- **Rationale:** Ensures complete adherence to Rule 1 (Honesty) and scientific reproducibility.

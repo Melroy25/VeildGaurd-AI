@@ -1,0 +1,44 @@
+{
+  "dataset_size": 286,
+  "date": "2026-10-17",
+  "commit": "41b9fc1",
+  "run_number": 1,
+  "caveat": "Synthetic dataset, relative results. Not a real-world accuracy guarantee.",
+  "systems": [
+    {
+      "name": "keyword",
+      "entity_f1": 56.3,
+      "flagged_recall": 79.2,
+      "combo_recall": 17.1,
+      "p50_latency_ms": 0.1
+    },
+    {
+      "name": "presidio_default",
+      "entity_f1": 22.6,
+      "flagged_recall": 72.7,
+      "combo_recall": 97.1,
+      "p50_latency_ms": 6.2
+    },
+    {
+      "name": "presidio_all_stock",
+      "entity_f1": 22.6,
+      "flagged_recall": 72.7,
+      "combo_recall": 97.1,
+      "p50_latency_ms": 6.1
+    },
+    {
+      "name": "veilguard_type_based",
+      "entity_f1": 43.4,
+      "flagged_recall": 56.8,
+      "combo_recall": 0,
+      "p50_latency_ms": 6.5
+    },
+    {
+      "name": "veilguard_full",
+      "entity_f1": 73.2,
+      "flagged_recall": 84.2,
+      "combo_recall": 80,
+      "p50_latency_ms": 19.3
+    }
+  ]
+}

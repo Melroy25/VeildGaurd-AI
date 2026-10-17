@@ -32,9 +32,10 @@
 | **Backstop Canary Warning** | Phase 4 | **Implemented** | `tests/e2e/degraded-canary.spec.ts` — canary badge timeout verified ≤15.2s; `bench/results/enforcement_real_site.json` cell `backstop_canary` (Protected) |
 | **Real-Site Network-Boundary Harness** | Phase 4 | **Implemented** | `tests/e2e-real/chatgpt.spec.ts`, `playwright.real.config.ts`, `scripts/run-real-site.mjs`; opt-in via `VG_REAL_SITE=1`; 100% of chat requests stubbed via `page.route`; results in `bench/results/enforcement_real_site.json` |
 | **ChatGPT Real-Site Enforcement** | Phase 4 | **Planned** | `bench/results/enforcement_real_site.json` — backstop and send button verified; remaining paths (Enter, edit-message, SPA) pending full matrix completion |
-| **Task Intent & Necessity Matrix** | Phase 5 | **Planned** | — |
-| **Quasi-Identifier & Re-ID Scorer** | Phase 5 | **Planned** | — |
-| **Utility-Preserving Sanitizer (task-aware)** | Phase 5 | **Planned** | — |
-| **Reproducible Benchmark Suite** | Phase 6 | **Planned** | — |
-| **PyMuPDF Document Redaction** | Phase 7 | **Planned** | — |
-| **Vault & Response Rehydration** | Phase 8 | **Planned** | — |
+| **Task Intent & Necessity Matrix** | Phase 5 | **Implemented** | `tests/engine/test_task_inference.py` (13 tests pass), `tests/engine/test_necessity.py` (7 tests pass, invariants 1-3 verified); `bench/results/benchmark_test.json` |
+| **Quasi-Identifier & Re-ID Scorer** | Phase 5 | **Implemented** | `tests/engine/test_reid.py` (5 tests pass), `tests/e2e/scenarios.spec.ts` (`scenario:hr-reid-combination`); `bench/results/benchmark_test.json` (combination recall 80.0%) |
+| **Utility-Preserving Sanitizer (context-aware)** | Phase 5 | **Implemented** | `tests/engine/test_role_placeholders.py` (7 tests pass), `tests/e2e/scenarios.spec.ts` (`scenario:customer-analysis-context`); 100.0% required retention in benchmark |
+| **Medical Term Detection (`HEALTH_WITH_IDENTITY`)** | Phase 5 | **Implemented** | `data/medical_terms.txt` (252 terms), `tests/engine/test_medical.py` (6 tests pass); previous medical xfail resolved |
+| **Benchmark Suite & Sealed-Test Runner** | Phase 5 | **Implemented** | `bench/run_benchmark.py`, `bench/results/test_run_log.jsonl` (run #1, commit `41b9fc1`), `bench/results/benchmark_test.json`, `docs/BENCHMARK.md` |
+| **PyMuPDF Document Redaction** | Phase 6 | **Planned** | — |
+| **Vault & Response Rehydration** | Phase 7 | **Planned** | — |

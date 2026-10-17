@@ -475,12 +475,12 @@ test.describe("Phase 3b Scenarios: Core Matrix", () => {
     expect(received).toHaveLength(1);
     expect(received[0].message, "Original phone must not leak").not.toContain("9876543210");
     expect(received[0].message, "Original name must not leak").not.toContain("Rahul Sharma");
-    expect(received[0].message).toMatch(/\[PERSON_\d+\]/);
+    expect(received[0].message).toMatch(/\[(PERSON|CUSTOMER)_\d+\]/);
     expect(received[0].message).toMatch(/\[PHONE_\d+\]/);
 
     // Verify controlled text variable was updated during send
     const lastSent = await page.evaluate(() => (window as unknown as { __vg_last_sent_text?: string }).__vg_last_sent_text);
-    expect(lastSent).toMatch(/\[PERSON_\d+\]/);
+    expect(lastSent).toMatch(/\[(PERSON|CUSTOMER)_\d+\]/);
   });
 
   // 11. Controlled state contenteditable
@@ -506,7 +506,7 @@ test.describe("Phase 3b Scenarios: Core Matrix", () => {
     expect(received).toHaveLength(1);
     expect(received[0].message).not.toContain("9876543210");
     expect(received[0].message).not.toContain("Rahul Sharma");
-    expect(received[0].message).toMatch(/\[PERSON_\d+\]/);
+    expect(received[0].message).toMatch(/\[(PERSON|CUSTOMER)_\d+\]/);
     expect(received[0].message).toMatch(/\[PHONE_\d+\]/);
   });
 
@@ -549,8 +549,8 @@ test.describe("Phase 3b Scenarios: Core Matrix", () => {
       return host?.shadowRoot?.getElementById("vg-sanitized-text")?.textContent ?? "";
     });
 
-    expect(text1).toContain("[PERSON_1]");
-    expect(text2).toContain("[PERSON_1]");
+    expect(text1).toContain("[CUSTOMER_1]");
+    expect(text2).toContain("[CUSTOMER_1]");
 
     await page.locator("#veilguard-overlay-host").locator("button.btn-send").click();
     await overlayIsGone(page);
@@ -819,5 +819,98 @@ test.describe("Phase 3b Scenarios: Core Matrix", () => {
     await page.waitForTimeout(1000);
     const received = await getReceivedMessages(page);
     expect(received).toHaveLength(0);
+  });
+
+  // 24. Phase 5 Context Intelligence: Customer analysis prompt
+  test("scenario:customer-analysis-context — overlay shows task, role placeholder [CUSTOMER_1], explanations; server receives sanitized text with 0 originals", async () => {
+    await resetServer(page);
+    await injectTokenAndProfile(context, E2E_TOKEN, "company");
+    await page.goto("http://127.0.0.1:4310/?composer=textarea&wiring=form&transport=fetch");
+    await page.waitForLoadState("domcontentloaded");
+
+    const prompt =
+      "Analyze customer Rahul Sharma's account, phone number 9876543210, and transaction history. Identify spending patterns.";
+    await setTextareaText(page, prompt);
+    await page.locator("#send-btn").click();
+
+    await waitForOverlay(page, 12000);
+    const host = page.locator("#veilguard-overlay-host");
+
+    // Overlay "Why" section checks
+    await expect(host.locator("#vg-overlay-why")).toBeVisible();
+    await expect(host.locator("#vg-why-task")).toContainText("analyze_data");
+    await expect(host.locator("#vg-why-necessity")).toBeVisible();
+
+    // Sanitized text contains role placeholder [CUSTOMER_1] and [PHONE_1]
+    const sanText = await host.locator("#vg-sanitized-text").textContent();
+    expect(sanText).toContain("[CUSTOMER_1]'s account");
+    expect(sanText).toContain("[PHONE_1]");
+    expect(sanText).not.toContain("Rahul Sharma");
+    expect(sanText).not.toContain("9876543210");
+
+    // Click Send Sanitized
+    await host.locator("button.btn-send").click();
+    await overlayIsGone(page);
+
+    await expect
+      .poll(async () => (await getReceivedMessages(page)).length, { timeout: 10000 })
+      .toBeGreaterThanOrEqual(1);
+
+    const received = await getReceivedMessages(page);
+    expect(received).toHaveLength(1);
+    const sent = received[0].message;
+    expect(sent).toBe(
+      "Analyze customer [CUSTOMER_1]'s account, phone number [PHONE_1], and transaction history. Identify spending patterns."
+    );
+    expect(sent).not.toContain("Rahul Sharma");
+    expect(sent).not.toContain("9876543210");
+  });
+
+  // 25. Phase 5 Context Intelligence: HR re-identification combination
+  test("scenario:hr-reid-combination — overlay shows re-ID explanation; server receives generalized text with 0 originals", async () => {
+    await resetServer(page);
+    await injectTokenAndProfile(context, E2E_TOKEN, "company");
+    await page.goto("http://127.0.0.1:4310/?composer=textarea&wiring=form&transport=fetch");
+    await page.waitForLoadState("domcontentloaded");
+
+    const hrPrompt =
+      "Draft a performance review for the 34-year-old HR manager at Acme's Pune office who recently went on maternity leave.";
+    await setTextareaText(page, hrPrompt);
+    await page.locator("#send-btn").click();
+
+    await waitForOverlay(page, 12000);
+    const host = page.locator("#veilguard-overlay-host");
+
+    // Overlay "Why" section checks
+    await expect(host.locator("#vg-overlay-why")).toBeVisible();
+    await expect(host.locator("#vg-why-reid")).toBeVisible();
+    await expect(host.locator("#vg-why-reid-contributors")).toBeVisible();
+
+    // Sanitized text generalizes quasi-identifiers while preserving role
+    const sanText = await host.locator("#vg-sanitized-text").textContent();
+    expect(sanText).toContain("HR manager");
+    expect(sanText).toContain("[COMPANY_1]");
+    expect(sanText).toContain("30s");
+    expect(sanText).not.toContain("34-year-old");
+    expect(sanText).not.toContain("Acme");
+    expect(sanText).not.toContain("maternity leave");
+
+    // Click Send Sanitized
+    await host.locator("button.btn-send").click();
+    await overlayIsGone(page);
+
+    await expect
+      .poll(async () => (await getReceivedMessages(page)).length, { timeout: 10000 })
+      .toBeGreaterThanOrEqual(1);
+
+    const received = await getReceivedMessages(page);
+    expect(received).toHaveLength(1);
+    const sent = received[0].message;
+    expect(sent).toContain("HR manager");
+    expect(sent).toContain("[COMPANY_1]");
+    expect(sent).toContain("30s");
+    expect(sent).not.toContain("34-year-old");
+    expect(sent).not.toContain("Acme");
+    expect(sent).not.toContain("maternity leave");
   });
 });

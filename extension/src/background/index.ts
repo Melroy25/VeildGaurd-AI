@@ -99,11 +99,16 @@ async function handleRequest(
   switch (message.type) {
     case "ANALYZE": {
       try {
+        let knownPlaceholders = message.knownPlaceholders ?? [];
+        if (sender.tab?.id != null && knownPlaceholders.length === 0) {
+          knownPlaceholders = await vaultGet(sender.tab.id);
+        }
+
         const result = await analyze(
           message.text,
           message.destination,
           message.profile ?? "company",
-          message.knownPlaceholders ?? []
+          knownPlaceholders
         );
 
         // Merge newly discovered placeholders into the session vault for this tab.

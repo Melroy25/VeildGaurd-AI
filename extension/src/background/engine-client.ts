@@ -57,6 +57,52 @@ export interface KnownPlaceholder {
   placeholder: string;
 }
 
+export interface EngineContextTask {
+  type: string;
+  confidence: "high" | "medium" | "low";
+  evidence: string[];
+}
+
+export interface EngineFindingNecessity {
+  finding_id: string;
+  level: string;
+}
+
+export interface EngineReidContributor {
+  type: string;
+  weight: number;
+}
+
+export interface EngineContextReid {
+  score_before: number;
+  score_after: number;
+  level_before: "low" | "medium" | "high";
+  level_after: "low" | "medium" | "high";
+  contributors: EngineReidContributor[];
+  target: number;
+  applied: string[];
+}
+
+export interface EngineContextTradeoff {
+  finding_id?: string;
+  category?: string;
+  tradeoff?: string;
+}
+
+export interface EngineContextUtility {
+  basis: "task_aware" | "type_only";
+  may_change_result: "low" | "possible" | "high";
+  notes: string[];
+}
+
+export interface EngineContextBlock {
+  task: EngineContextTask;
+  necessity: EngineFindingNecessity[];
+  reidentification: EngineContextReid;
+  tradeoffs: EngineContextTradeoff[];
+  utility: EngineContextUtility;
+}
+
 /** Full /analyze response from the engine. */
 export interface EngineAnalyzeResponse {
   decision: "allow" | "redact" | "require_approval" | "block";
@@ -69,6 +115,7 @@ export interface EngineAnalyzeResponse {
   may_change_result: boolean;
   offset_unit: "utf16";
   verification: SanitizeVerification;
+  context?: EngineContextBlock;
 }
 
 /** /health response fields we care about. */
@@ -262,12 +309,14 @@ export async function analyze(
 
   const findings: EngineFinding[] = rawFindings.map((f) => {
     const rep = replacementMap.get(String(f["id"] ?? ""));
+    const start = Number(f["start"] ?? 0);
+    const end = Number(f["end"] ?? 0);
     return {
       id: String(f["id"] ?? ""),
       entity_type: String(f["entity_type"] ?? ""),
-      value: String(f["value"] ?? ""),
-      start: Number(f["start"] ?? 0),
-      end: Number(f["end"] ?? 0),
+      value: text.slice(start, end),
+      start,
+      end,
       score: Number(f["score"] ?? 0),
       detector: String(f["detector"] ?? ""),
       action: rep?.action ?? "keep",
@@ -293,6 +342,7 @@ export async function analyze(
       residual_count: Number(verification?.["residual_findings"] ?? 0),
       residual_findings: [],
     },
+    context: (raw["context"] as EngineContextBlock | undefined) ?? undefined,
   };
 
   return result;
