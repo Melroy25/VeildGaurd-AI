@@ -716,6 +716,7 @@ test.describe("Test 8+9: Real flows + privacy assertion", () => {
       return data.messages?.length ?? 0;
     }, { timeout: 8000 }).toBeGreaterThanOrEqual(1);
     initialEventCount++;
+    await sitePage.waitForTimeout(500);
   });
 
   test("flow C: flagged → cancel records cancelled event", async () => {
@@ -726,7 +727,9 @@ test.describe("Test 8+9: Real flows + privacy assertion", () => {
     expect(shown).toBe(true);
     // Click cancel
     const host = sitePage.locator("#veilguard-overlay-host");
-    await host.locator("button.btn-cancel").click();
+    const cancelBtn = host.locator("button.btn-cancel");
+    await expect(cancelBtn).toBeVisible({ timeout: 10000 });
+    await cancelBtn.click();
     await sitePage.waitForTimeout(1000);
     initialEventCount++;
   });
@@ -754,9 +757,11 @@ test.describe("Test 8+9: Real flows + privacy assertion", () => {
     if (!optPage || optPage.isClosed()) {
       optPage = await openOptionsPage(context);
     }
+    const jsonBtn = optPage.getByRole("button", { name: "JSON" });
+    await expect(jsonBtn).toBeEnabled({ timeout: 8000 });
     const [download] = await Promise.all([
       optPage.waitForEvent("download"),
-      optPage.getByRole("button", { name: "JSON" }).click(),
+      jsonBtn.click(),
     ]);
     const dlPath = await download.path();
     const content = dlPath ? fs.readFileSync(dlPath, "utf8") : "{}";

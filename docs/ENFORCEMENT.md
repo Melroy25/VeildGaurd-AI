@@ -217,14 +217,25 @@ Phase 4 establishes a real-site enforcement harness targeting `https://chatgpt.c
 
 Route intercept pattern: `/(backend-api|backend-anon|unauth-mweb)\/conversation/`
 
+### Tested Environment & Authentication State
+
+- **Target Site:** ChatGPT (`https://chatgpt.com`)
+- **Authentication State Tested:** Logged-out (unauthenticated mobile-web flow on Chromium via `#mobile-composer-prompt`).
+- **Adapter Scope Limitation:** Per Rule 3 (Honesty Invariant), the adapter supports and guarantees enforcement strictly for the DOM configurations and endpoints tested below. Unauthenticated desktop ProseMirror or authenticated logged-in layouts are not certified.
+
 ### Real-Site Coverage Matrix
 
-| Cell | Path | Status | Flagged Trials | Flagged Leaked | Benign Delivered | Overlay Latency (med/max ms) |
-| :--- | :--- | :--- | :---: | :---: | :---: | :---: |
-| Backstop Fetch | `backstop_fetch` | **Protected** | 12 | **0** | 10/10 | 41 / 221 |
-| Degraded Mode (mock-site) | `degraded_mode_mock_site` | **Protected** | 10 | **0** | 10/10 | — |
-| Backstop Canary | `backstop_canary` | **Protected** | 1 | **0** | — | — |
-| ChatGPT Send Button | `main_composer_send_button` | **Protected** | 1 | **0** | 1/1 | — |
+| Path / Feature | Status | Flagged Trials | Flagged Leaked | Sanitize Delivered | Benign Delivered | Latency (med / max) | Notes |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| **Main Composer Send Button** | **Protected** | 1 | **0** | 1 / 1 | 0 / 1 | — | `#mobile-composer-prompt` + `button[aria-label='Send message']`. Intercepted, sanitized delivered to `/unauth-mweb`. |
+| **Main Composer Enter Key** | **Untested** | 0 | — | — | — | — | Enter submission not tested in current recorded run. |
+| **Edit-Message Send Button** | **Untested** | 0 | — | — | — | — | Turn edit button not tested in current recorded run. |
+| **SPA Navigation** | **Untested** | 0 | — | — | — | — | Client-side route transition not tested in current recorded run. |
+| **Programmatic fetch / XHR (Backstop)** | **Protected** | 12 | **0** | N/A | 10 / 10 | 41 ms / 221 ms | Layer 2 backstop; verified fail-closed on stream, Request clone, blocked PII. |
+| **File Attachments** | **Not protected** | 1 | N/A | N/A | N/A | — | Notice only: *"Attachments are not scanned by VeilGuard yet."* Documented limitation (Phase 7 scope). |
+| **Voice / Dictation Mode** | **Not protected** | 0 | — | — | — | — | Audio streaming bypasses DOM text interception. Documented limitation. |
+| **Degraded Mode (mock-site)** | **Protected** | 10 | **0** | N/A | 10 / 10 | — | DOM broken (`?break_selectors=1`); backstop enforces with 0 leaks. |
+| **Backstop Canary** | **Protected** | 1 | **0** | N/A | N/A | — | Missing chat request triggers canary badge warning in ≤15.2s. |
 
 ### Degraded-Mode (Adapter Failure) Behavior
 

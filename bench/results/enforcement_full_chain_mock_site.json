@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-17T10:18:09.270Z",
+  "timestamp": "2026-10-17T15:36:43.977Z",
   "playwright_version": "1.50.1",
   "chromium_channel": "chromium",
   "trials_per_cell": 20,
@@ -22,8 +22,8 @@
       "benign_trials": 20,
       "benign_delivered_correctly": 20,
       "overlay_latency_ms": {
-        "median": 152,
-        "max": 176
+        "median": 162,
+        "max": 177
       }
     },
     {
@@ -42,8 +42,8 @@
       "benign_trials": 20,
       "benign_delivered_correctly": 20,
       "overlay_latency_ms": {
-        "median": 129,
-        "max": 154
+        "median": 131,
+        "max": 139
       }
     },
     {
@@ -62,8 +62,8 @@
       "benign_trials": 20,
       "benign_delivered_correctly": 20,
       "overlay_latency_ms": {
-        "median": 120,
-        "max": 137
+        "median": 121,
+        "max": 133
       }
     },
     {
@@ -82,8 +82,8 @@
       "benign_trials": 20,
       "benign_delivered_correctly": 20,
       "overlay_latency_ms": {
-        "median": 153,
-        "max": 166
+        "median": 163,
+        "max": 171
       }
     },
     {
@@ -102,8 +102,8 @@
       "benign_trials": 20,
       "benign_delivered_correctly": 20,
       "overlay_latency_ms": {
-        "median": 123,
-        "max": 135
+        "median": 128,
+        "max": 178
       }
     },
     {
@@ -122,8 +122,8 @@
       "benign_trials": 20,
       "benign_delivered_correctly": 20,
       "overlay_latency_ms": {
-        "median": 171,
-        "max": 189
+        "median": 157,
+        "max": 171
       }
     },
     {
@@ -142,8 +142,8 @@
       "benign_trials": 20,
       "benign_delivered_correctly": 20,
       "overlay_latency_ms": {
-        "median": 147,
-        "max": 167
+        "median": 124,
+        "max": 455
       }
     },
     {
@@ -162,8 +162,8 @@
       "benign_trials": 20,
       "benign_delivered_correctly": 20,
       "overlay_latency_ms": {
-        "median": 138,
-        "max": 154
+        "median": 124,
+        "max": 125
       }
     },
     {
@@ -182,8 +182,8 @@
       "benign_trials": 20,
       "benign_delivered_correctly": 20,
       "overlay_latency_ms": {
-        "median": 182,
-        "max": 206
+        "median": 142,
+        "max": 157
       }
     },
     {
@@ -202,8 +202,8 @@
       "benign_trials": 20,
       "benign_delivered_correctly": 20,
       "overlay_latency_ms": {
-        "median": 139,
-        "max": 155
+        "median": 125,
+        "max": 180
       }
     },
     {
@@ -222,8 +222,8 @@
       "benign_trials": 20,
       "benign_delivered_correctly": 20,
       "overlay_latency_ms": {
-        "median": 169,
-        "max": 191
+        "median": 151,
+        "max": 169
       }
     },
     {
@@ -242,8 +242,8 @@
       "benign_trials": 20,
       "benign_delivered_correctly": 20,
       "overlay_latency_ms": {
-        "median": 170,
-        "max": 235
+        "median": 156,
+        "max": 173
       }
     },
     {
@@ -263,7 +263,7 @@
       "benign_delivered_correctly": 20,
       "overlay_latency_ms": {
         "median": 82,
-        "max": 104
+        "max": 101
       }
     },
     {
@@ -282,8 +282,8 @@
       "benign_trials": 20,
       "benign_delivered_correctly": 20,
       "overlay_latency_ms": {
-        "median": 78,
-        "max": 89
+        "median": 83,
+        "max": 98
       }
     }
   ]
