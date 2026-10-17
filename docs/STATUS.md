@@ -23,6 +23,10 @@
 | **Full-Chain 14-Cell Enforcement Benchmark** | Phase 3b | **Implemented** | `bench/results/enforcement_full_chain_mock_site.json` — 0 leaks across 280 flagged trials (14 cells × 20 trials), all 14 cells status: "pass" in 2 consecutive runs |
 | **Options Page & Token Entry** | Phase 3b | **Implemented** | `extension/src/options/Options.tsx` — Bearer token password input, profile selector, Test Connection, Clear All Vaults confirmed present in source; token sourced from `chrome.storage.local.get("vg_token")` (no hardcoded tokens) |
 | **Protection State Badge** | Phase 3b | **Implemented** | `tests/e2e/enforcement-full-chain.spec.ts` — badge element `#veilguard-badge-host` verified present in all DOM cells |
+| **Privacy Dashboard (metadata only)** | Phase 3c | **Implemented** | `tests/e2e/dashboard-popup.spec.ts` (Tests 1, 2, 3, 4, 8, 9, 11, 12 — summary cards, percentiles, SVG charts, 1000-event render, zero external egress) |
+| **Popup Status** | Phase 3c | **Implemented** | `tests/e2e/dashboard-popup.spec.ts` (Test 10 — connected, active profile, protected on mock site, engine unreachable when down, not active on about:blank) |
+| **Event Export and Clear** | Phase 3c | **Implemented** | `tests/e2e/dashboard-popup.spec.ts` (Tests 5, 6 — whitelist-only JSON/CSV download, two-click confirmation purge) |
+| **Recording Pause Switch** | Phase 3c | **Implemented** | `tests/e2e/dashboard-popup.spec.ts` (Test 7 — pause stops event recording while review overlay and interception remain active) |
 | **Task Intent & Necessity Matrix** | Phase 5 | **Planned** | — |
 | **Quasi-Identifier & Re-ID Scorer** | Phase 5 | **Planned** | — |
 | **Utility-Preserving Sanitizer (task-aware)** | Phase 5 | **Planned** | — |

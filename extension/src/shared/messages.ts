@@ -186,7 +186,8 @@ export interface AuditEventMetadata {
     | "user_edited"
     | "user_cancelled"
     | "user_overrode"
-    | "engine_unreachable";
+    | "engine_unreachable"
+    | "auto_allowed";
   /** Hostname of the destination AI site (no path, no query string). */
   destination: string;
 }

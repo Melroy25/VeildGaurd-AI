@@ -1,6 +1,6 @@
 # VeilGuard AI: Context-Aware Privacy Firewall for AI Tools
 
-> **Project Status:** **Phase 1 complete (multi-layer submission interception verified on mock site: 480 trials across 12 cells, with no leaks observed across 240 flagged trials). Phase 2 complete (detection engine & secured /scan API verified: 34 tests pass, 3 xfail). Phase 3a (policy engine & sanitizer) in progress.**
+> **Project Status:** **Phase 1 complete (mock-site testbed), Phase 2 complete (detection engine & /scan API), Phase 3a complete (policy engine & sanitizer), Phase 3b complete (extension + engine integration, review overlay, session vault, 14-cell enforcement matrix), Phase 3c complete (metadata dashboard, popup status, export, pause switch).**
 
 VeilGuard AI is a context-aware privacy firewall designed to sit between users and AI interfaces. When users paste sensitive data—such as customer conversations, financial records, medical notes, or system secrets—VeilGuard intercepts submissions, evaluates context and task necessity, enforces configurable privacy policies, produces utility-preserving pseudonymized prompts, and records metadata-only audit logs.
 
@@ -129,7 +129,38 @@ The compiled, production-ready extension artifacts will be located in `extension
 2. Enable **Developer mode** (toggle in top-right corner).
 3. Click **Load unpacked**.
 4. Select the `extension/dist/` folder from this repository.
-5. Click the VeilGuard AI extension icon in your browser toolbar. The popup will display the Phase 0 notice: **"Protection inactive"**.
+5. Click the VeilGuard AI extension icon in your browser toolbar to view the **Popup Status UI**.
+
+---
+
+## Using the Privacy Dashboard & Popup (Phase 3c)
+
+### Opening the Popup Status
+- Click the VeilGuard AI extension icon in the toolbar.
+- The popup displays:
+  - **Engine Status:** Connected (v0.0.1) or Unreachable (with blocking warning).
+  - **Active Profile:** Current policy profile (e.g. `company`).
+  - **Today's Activity:** Messages checked, sanitized, and blocked today.
+  - **This Page Protection:** Shows `Protected` on supported AI sites or `Not active on this site` on unsupported pages.
+  - **Open Dashboard Button:** One click opens the full metadata dashboard in a new tab.
+
+### Opening the Privacy Dashboard
+- Either click **"Open Dashboard"** in the popup, or right-click the extension icon and select **"Options"**.
+- The dashboard is **strictly metadata-only** (Rule 7): zero prompt text, entity values, or bearer tokens are stored or rendered.
+
+### Dashboard Panels & Controls
+1. **Summary Cards:** Messages checked, sent unchanged, sent sanitized, blocked/cancelled, engine fail-closed, and documents scanned (0 until Phase 7).
+2. **Decision Tiers:** Bar chart showing policy decisions (`allow`, `redact`, `require_approval`, `block`). Labeled by plain-language meaning, not synthetic risk scores.
+3. **User Actions:** Distribution of choices made on the review overlay (`sent_sanitized`, `sent_original`, `edited`, `cancelled`, `auto_allowed`).
+4. **Sensitive Information by Category:** Cumulative entity counts across categories (PII, GOVERNMENT_ID, FINANCIAL, SECRET).
+5. **Rules That Fired:** Frequency and plain-language explanations of triggered policy rules fetched live from the engine.
+6. **Activity — Last 14 Days:** Daily volume histogram in local calendar dates.
+7. **Observed Engine Latency:** Median and 95th-percentile engine analysis round-trip times observed on this device.
+8. **Time Range & Facet Filters:** Filter events by 24h, 7d, 30d, all time, destination, profile, and decision.
+9. **Pause Recording Switch:** Temporarily pauses event logging. **Protection and interception remain 100% active while paused.**
+10. **Export & Clear:**
+    - **JSON / CSV Export:** Downloads client-side files containing only whitelisted metadata fields.
+    - **Clear History:** Two-click confirmation to permanently wipe stored audit events.
 
 ---
 
@@ -137,24 +168,33 @@ The compiled, production-ready extension artifacts will be located in `extension
 
 Run each test suite using the commands below:
 
-### 1. Python Engine Smoke Tests (`pytest`)
+### 1. Fast Pure Unit Tests (`vitest`)
+```bash
+npm run test:unit
+```
+Runs 28 in-memory tests covering data aggregation, percentiles, whitelisting, write queues, and retention limits in ~200ms without browser overhead.
+
+### 2. Python Engine Test Suite (`pytest`)
 From the repository root with `.venv` activated:
 ```bash
-pytest
+pytest -rx
 ```
-Verifies loopback binding (`127.0.0.1`), FastAPI `/health` endpoint, spaCy `en_core_web_sm` loading, Presidio Analyzer instantiation, and PyMuPDF PDF generation/extraction.
+Runs 80 tests (76 passing, 4 strict xfail documenting known statistical NER and medical boundaries).
 
-### 2. TypeScript Static Typecheck
+### 3. TypeScript Static Typecheck
 ```bash
 npm run typecheck
 ```
 Executes `tsc --noEmit` under strict typing rules (`strict: true`, `noImplicitAny: true`).
 
-### 3. Extension End-to-End Test (`Playwright`)
+### 4. Extension End-to-End Test Suite (`Playwright`)
 ```bash
 npm run test:e2e
 ```
-Launches Chromium with the built extension loaded, detects the background service worker, navigates to `popup.html`, and verifies that "Protection inactive" is honestly rendered.
+Runs the full end-to-end browser test suites against the real Python loopback engine and mock testbed:
+- `tests/e2e/dashboard-popup.spec.ts` (36 tests): Dashboard rendering, filtering, export, privacy assertions, popup statuses, 1000-event render benchmark, and offline CSP compliance.
+- `tests/e2e/enforcement-full-chain.spec.ts`: Full-chain 14-cell enforcement matrix across all composers, wirings, and paths.
+- `tests/e2e/scenarios.spec.ts`: 15 comprehensive edge-case scenarios (approval, block, double Enter, emoji, XSS, backstop, vault consistency).
 
 ---
 

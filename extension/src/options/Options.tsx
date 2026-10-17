@@ -22,7 +22,12 @@ import React, {
   useMemo,
   useRef,
 } from "react";
-import { summarize, type SummaryResult, type EventFilter } from "../shared/aggregate";
+import {
+  summarize,
+  filterEvents,
+  type SummaryResult,
+  type EventFilter,
+} from "../shared/aggregate";
 import type { StoredEvent } from "../background/events-store";
 import { EVENTS_STORAGE_KEY, RECORD_HISTORY_KEY } from "../background/events-store";
 
@@ -416,45 +421,34 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
     [events, filter]
   );
 
-  // Unique values for filter dropdowns
-  const destinations = useMemo(
-    () => Array.from(new Set(events.map((e) => e.destination))).sort(),
+  const { validEvents: allValidEvents } = useMemo(
+    () => filterEvents(events as unknown[], {}),
     [events]
+  );
+
+  const { validEvents: filteredEvents } = useMemo(
+    () => filterEvents(events as unknown[], filter),
+    [events, filter]
+  );
+
+  // Unique values for filter dropdowns (derived from clean valid events)
+  const destinations = useMemo(
+    () => Array.from(new Set(allValidEvents.map((e) => e.destination))).sort(),
+    [allValidEvents]
   );
   const profiles = useMemo(
-    () => Array.from(new Set(events.map((e) => e.profile))).sort(),
-    [events]
+    () => Array.from(new Set(allValidEvents.map((e) => e.profile))).sort(),
+    [allValidEvents]
   );
-
-  // Recent events table (paginated, filtered)
-  const filteredEvents: StoredEvent[] = useMemo(() => {
-    let filtered = events;
-    const since = sinceForRange(timeRange);
-    if (since) {
-      const sinceMs = new Date(since).getTime();
-      filtered = filtered.filter(
-        (e) => new Date(e.timestamp).getTime() >= sinceMs
-      );
-    }
-    if (filterDestination !== "all") {
-      filtered = filtered.filter(
-        (e) => e.destination === filterDestination
-      );
-    }
-    if (filterProfile !== "all") {
-      filtered = filtered.filter((e) => e.profile === filterProfile);
-    }
-    if (filterDecision !== "all") {
-      filtered = filtered.filter((e) => e.decision === filterDecision);
-    }
-    return [...filtered].reverse(); // newest first
-  }, [events, timeRange, filterDestination, filterProfile, filterDecision]);
 
   const totalPages = Math.max(1, Math.ceil(filteredEvents.length / EVENTS_PER_PAGE));
-  const visibleEvents = filteredEvents.slice(
-    (page - 1) * EVENTS_PER_PAGE,
-    page * EVENTS_PER_PAGE
-  );
+  const visibleEvents = useMemo(() => {
+    const reversed = [...filteredEvents].reverse(); // newest first
+    return reversed.slice(
+      (page - 1) * EVENTS_PER_PAGE,
+      page * EVENTS_PER_PAGE
+    );
+  }, [filteredEvents, page]);
 
   // Reset page when filters change
   const prevFilter = useRef(filter);
@@ -464,10 +458,6 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
       prevFilter.current = filter;
     }
   }, [filter]);
-
-  if (events.length === 0) {
-    return <EmptyState />;
-  }
 
   // Decision bar chart entries
   const decisionEntries = (["allow", "redact", "require_approval", "block"] as const).map(
@@ -693,8 +683,12 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
         )}
       </section>
 
-      {/* 1. Summary cards */}
-      <Section title="Messages checked">
+      {allValidEvents.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <>
+          {/* 1. Summary cards */}
+          <Section title="Messages checked">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <SummaryCard label="Checked" value={summary.totals.checked} />
           <SummaryCard
@@ -918,6 +912,8 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
         Counts describe activity on this device. They are not a measure of
         detection accuracy.
       </p>
+        </>
+      )}
     </div>
   );
 };
@@ -1215,22 +1211,7 @@ export const Options: React.FC = () => {
     chrome.storage.local.get(EVENTS_STORAGE_KEY, (result) => {
       const raw = result[EVENTS_STORAGE_KEY];
       setLoadTime(Math.round(performance.now() - t0));
-      if (Array.isArray(raw)) {
-        // Re-sanitize on the client side for safety
-        const clean: StoredEvent[] = [];
-        for (const item of raw as unknown[]) {
-          if (
-            item &&
-            typeof item === "object" &&
-            "timestamp" in (item as object)
-          ) {
-            clean.push(item as StoredEvent);
-          }
-        }
-        setEvents(clean);
-      } else {
-        setEvents([]);
-      }
+      setEvents(Array.isArray(raw) ? (raw as unknown[] as StoredEvent[]) : []);
     });
   }, []);
 

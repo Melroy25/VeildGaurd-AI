@@ -148,4 +148,47 @@ This document records key technical decisions, rationales, and alternatives eval
 - **Decision:** Implement `normalize_finding_span()` in `engine/veilguard_engine/scanner.py` controlled by `NORMALIZE_SPANS = True`. For `PERSON` and `LOCATION` findings, trim trailing possessives (`'s`, `’s`, `'`) and surrounding punctuation, adjusting `start` and `end` offsets before overlap resolution, policy evaluation, and API serialization.
 - **Rationale:** Preserves natural language grammar in sanitized prompts (`Analyze customer [PERSON_1]'s account...`), guarantees consistent entity values for session-vault placeholder hashing, and maintains exact character slice bounds.
 
+### 24. Vitest for Fast In-Memory Unit Testing
+- **Date:** Phase 3c (Part A)
+- **Context:** Phase 3c introduces extensive pure data transformation logic (event filtering, percentiles, aggregation, retention limits, serialization queues) that requires fast, isolated testing of edge cases without spinning up a full Chromium browser.
+- **Decision:** Add `vitest` as a devDependency with `npm run test:unit` running headless in Node.js. Include in GitHub Actions CI workflow.
+- **Rationale:** Playwright E2E browser runs take 1–2 minutes; Vitest tests run in ~200ms, enabling instantaneous TDD verification of mathematical aggregation and security whitelists.
+
+### 25. Storage Injection Interface for Events Store
+- **Date:** Phase 3c (Part A)
+- **Context:** Hardcoding `chrome.storage.local` calls directly inside business logic makes automated testing dependent on browser mocking plugins.
+- **Decision:** Define a lightweight `StorageArea` interface (`get(keys)`, `set(items)`) and allow custom storage injection into `EventsStore`.
+- **Rationale:** Enables pure in-memory `MemoryStorage` in unit tests while defaulting to `chrome.storage.local` in production extension builds.
+
+### 26. Serialized Promise Queue for Extension Storage Writes
+- **Date:** Phase 3c (Part A)
+- **Context:** Rapid consecutive submissions or concurrent interception events can trigger race conditions in `chrome.storage.local` read-modify-write operations, leading to lost events.
+- **Decision:** Implement a FIFO promise queue in `EventsStore.appendEvent()` that serializes all store operations so each write completes before the next read commences.
+- **Rationale:** Guarantees zero dropped events during rapid message sending or multi-tab usage.
+
+### 27. Write-Time and Read-Time Runtime Whitelisting
+- **Date:** Phase 3c (Part A & B)
+- **Context:** TypeScript types vanish at runtime. Storing arbitrary JSON objects could allow prompt text, raw entity values, or malicious payloads to be injected into `chrome.storage.local` and rendered in the dashboard.
+- **Decision:** Enforce a strict runtime whitelist function `sanitizeEvent(raw)` that strips all unrecognized keys, enforces strict regex on `rule_ids`, validates numeric bounds, and rejects free-text fields. Apply at write time (`appendEvent`) and read time (`filterEvents`).
+- **Rationale:** Upholds Rule 7 (Metadata-only audit logs) and prevents XSS/injection attacks from corrupted storage.
+
+### 28. Nearest-Rank Method for Percentile Latency Calculation
+- **Date:** Phase 3c (Part A)
+- **Context:** Percentile calculations (median, P95) have multiple mathematical formulations across libraries (interpolated vs nearest-rank).
+- **Decision:** Implement the NIST / Wikipedia standard nearest-rank percentile formula: `rank = ceil((P / 100) * N)`, picking index `rank - 1` from sorted non-negative values.
+- **Rationale:** Deterministic, reproducible, matches industry standards, and requires zero external statistics dependencies.
+
+### 29. Hand-Crafted Responsive SVG and CSS Charts Without Third-Party Libraries
+- **Date:** Phase 3c (Part B)
+- **Context:** Third-party charting libraries (Chart.js, Recharts, D3) introduce heavy bundle bloat (100–300 kB), external dependencies, and potential DOM sanitization vulnerabilities.
+- **Decision:** Implement all dashboard visualizations (daily activity bar chart, decision breakdown, category breakdown, user choice distributions) using pure semantic HTML, Tailwind CSS flex bars, and inline SVG elements.
+- **Rationale:** Keeps extension bundle ultra-lightweight (<30 kB), zero external runtime dependencies, 100% accessible with text equivalents, and full dark mode compatibility via `prefers-color-scheme`.
+
+### 30. Popup Status Verification Without Privileged `tabs` Permission
+- **Date:** Phase 3c (Part C)
+- **Context:** Querying tab status typically prompts extensions to request the broad `"tabs"` permission in `manifest.json`.
+- **Decision:** Avoid requesting `"tabs"`. In the action popup, determine active page status by sending a `GET_STATUS` message via `chrome.tabs.sendMessage` to the active tab ID obtained from `chrome.tabs.query({ active: true, currentWindow: true })`.
+- **Rationale:** Strictly adheres to Rule 9 (Least Privilege). The popup obtains protection status without needing to read browsing history or URLs of all open tabs.
+
+
 

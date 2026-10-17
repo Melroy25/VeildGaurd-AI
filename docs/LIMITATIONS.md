@@ -66,4 +66,12 @@
 - In prompts containing health details (e.g., "My patient John Doe has diabetes and takes medication daily. Their phone number is 9876543210."), VeilGuard detects and pseudonymizes direct identifiers (`PERSON`, `IN_MOBILE`), but clinical context words (`diabetes`, `medication`) remain undetected and unredacted.
 - Domain-adapted HIPAA/medical NER or clinical ontology recognizers are not part of the standard baseline and are documented as a known limitation verified via `@pytest.mark.xfail(strict=True)` in `tests/engine/test_known_limitations.py`.
 
+## 12. Local Audit History & Dashboard Scope Boundaries (Phase 3c)
+- **Local persistence only:** Event history is stored strictly in `chrome.storage.local` on the client device. It is not synchronized across devices, backed up to any cloud or remote endpoint (Rule 8), and is permanently cleared if the extension is uninstalled.
+- **Fixed retention ring buffer (1000 events):** Event history is capped at the newest 1000 events. Older events are silently evicted to prevent unbounded storage consumption.
+- **Documents scanned is 0 until Phase 7:** The dashboard summary card displays "Documents scanned: 0" because document/PDF interception is scheduled for Phase 7.
+- **Dashboard counts describe local activity, not detection accuracy:** The counts, decision breakdowns, and user action distributions reflect activity intercepted on this specific browser profile. They are not benchmark precision or recall metrics. Benchmark metrics are computed independently in Phase 6.
+- **Popup protection status visibility:** Without the privileged `tabs` permission, the action popup queries only the active tab's content script via `chrome.tabs.sendMessage`. It cannot inspect arbitrary tabs or determine protection status on domains where VeilGuard has no registered content script, cleanly reporting "Not active on this site (unsupported site)". Never implies protection where none exists.
+
+
 

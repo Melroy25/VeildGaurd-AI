@@ -88,3 +88,62 @@ VeilGuard AI operates as a split-architecture system:
 - **Policy Engine (`policy/`):** Evaluates YAML configuration rules (`policies/default.yml`) against scan context to return a deterministic decision: `ALLOW`, `REDACT`, `REQUIRE_APPROVAL`, or `BLOCK`.
 - **Sanitizer (`sanitizer/`):** Generates consistent surrogate tokens (e.g., `[CUSTOMER_1]`, `[DATE_A]`) and calculates a structured token diff. Flags whether transformations may degrade task utility.
 - **PDF Engine (`pdf/`):** PyMuPDF (`fitz`) engine executing redaction annotations, coordinate-level blackouts, text suppression, and post-redaction re-extraction verification.
+
+---
+
+## 4. Phase 3c: Event Flow, Trust Boundaries, and Dashboard Architecture
+
+### Event Flow Pipeline
+
+```
+[ User Input / Send Action ]
+             │
+             ▼
+[ Content Script Interception (flow.ts) ]
+             │  (Engine /analyze evaluation)
+             ▼
+[ User Choice on Review Overlay ]
+ (sent_sanitized, sent_original, edited, cancelled, auto_allowed, failed_closed)
+             │
+             │ chrome.runtime.sendMessage({ type: "RECORD_EVENT", event: metadataOnlyEvent })
+             ▼
+[ Background Service Worker (index.ts -> events-store.ts) ]
+             │
+             ├─ 1. Pause Switch Check: If `vgRecordHistory === false`, drop event immediately.
+             │     (Note: Pausing history NEVER disables interception or protection).
+             │
+             ├─ 2. Runtime Whitelist (`sanitizeEvent`):
+             │     Drops all free-text fields. Verifies enumerated values, regex patterns,
+             │     and numeric bounds. Drops rogue fields and extra keys.
+             │
+             ├─ 3. Serialized Write Queue:
+             │     Routes writes through a Promise chain to eliminate concurrency races.
+             │
+             ├─ 4. Ring Buffer (1000-event cap):
+             │     Retains only the newest 1000 events in `chrome.storage.local["vg_events"]`.
+             ▼
+[ chrome.storage.local ("vg_events") ]
+             │
+             ├──────────────────────────────────────┐
+             ▼                                      ▼
+[ Options Page: Dashboard (Options.tsx) ]   [ Action Popup (Popup.tsx) ]
+  - Reads `vg_events`                         - Reads `vg_events` (today's counts)
+  - Pure aggregation via `summarize()`        - Pings engine `/health` (connected/unreachable)
+  - SVG/CSS charts (no external libraries)    - Queries active tab content script
+  - Time range & facet filtering                via `chrome.tabs.sendMessage` (GET_STATUS)
+  - Whitelist-only CSV/JSON export              WITHOUT `tabs` permission
+  - Two-click history purge                   - Shows active profile
+```
+
+### Trust Boundaries & Privacy Invariants
+
+1. **Dashboard Boundary:**
+   - **What it CAN see:** Metadata fields only (`timestamp`, `destination`, `profile`, `decision`, `user_choice`, `rule_ids`, `category_counts`, `entity_count`, `latency_ms`, `source`, `outcome`).
+   - **What it CANNOT see:** Raw prompt text, input strings, matched entity substrings, placeholder mappings, user identity, or engine bearer token.
+   - **Zero External Egress:** Dashboard and popup make zero external network requests. All data is stored and rendered locally within the browser origin.
+
+2. **Popup Boundary:**
+   - Works entirely without the privileged `tabs` permission in `manifest.json`.
+   - Engine status is determined via local loopback `/health` ping.
+   - Page status displays `Protected` only if a verified VeilGuard content script responds on the inspected tab; otherwise clearly marks `Not active on this site (unsupported site)`. Never implies protection where none exists.
+

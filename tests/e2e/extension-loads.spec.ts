@@ -39,9 +39,9 @@ test("extension loads and displays 'Protection inactive' in popup", async () => 
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/popup.html`);
 
-    // Assert popup UI renders and indicates honest Phase 0 status
+    // Assert popup UI renders and indicates Phase 3c status
     await expect(page.locator("text=VeilGuard AI")).toBeVisible();
-    await expect(page.locator("text=Protection inactive")).toBeVisible();
+    await expect(page.locator("text=Open Dashboard")).toBeVisible();
 
     await page.close();
   } finally {

@@ -182,6 +182,16 @@ async function runAnalysis(
       // Clean — allow the original submission through
       flowState = "idle";
       updateBadgeState("active");
+      recordEvent({
+        timestamp: new Date().toISOString(),
+        category: "CLEAN",
+        entityCount: 0,
+        riskScore: 0,
+        decision: "allow",
+        ruleIds: [],
+        outcome: "auto_allowed",
+        destination,
+      });
       retriggerSubmission(adapter, text);
       break;
 

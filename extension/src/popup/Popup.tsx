@@ -154,16 +154,15 @@ export const Popup: React.FC = () => {
   }, [pingEngine]);
 
   // ── Query active tab content script ──
-  useEffect(() => {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const tab = tabs[0];
-      if (!tab?.id) {
+  const queryContentScript = useCallback(() => {
+    const sendStatusQuery = (targetTabId: number | undefined) => {
+      if (!targetTabId) {
         setPageStatus("not active");
         return;
       }
       try {
         chrome.tabs.sendMessage(
-          tab.id,
+          targetTabId,
           { type: "GET_STATUS" },
           (response: GetStatusResponse | undefined) => {
             if (chrome.runtime.lastError || !response) {
@@ -177,8 +176,31 @@ export const Popup: React.FC = () => {
       } catch {
         setPageStatus("not active");
       }
+    };
+
+    chrome.tabs.getCurrent((currentTab) => {
+      if (currentTab?.id != null) {
+        // Running inside a tab (e.g. Playwright test or developer tab)
+        chrome.tabs.query({ currentWindow: true }, (allTabs) => {
+          const candidates = (allTabs || []).filter(
+            (t) => t.id != null && t.id !== currentTab.id
+          );
+          // Pick the last non-popup tab (the most recently opened page)
+          const target = candidates[candidates.length - 1];
+          sendStatusQuery(target?.id);
+        });
+      } else {
+        // Running inside an action popup bubble
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          sendStatusQuery(tabs?.[0]?.id);
+        });
+      }
     });
   }, []);
+
+  useEffect(() => {
+    queryContentScript();
+  }, [queryContentScript]);
 
   // ── Page status display ──
   const pageStatusInfo = (): { label: string; dot: "ok" | "warn" | "err" | "idle"; sub?: string } => {
