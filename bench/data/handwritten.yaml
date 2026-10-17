@@ -1,0 +1,788 @@
+# VeilGuard AI — Hand-written benchmark cases
+# IMPORTANT: All data is strictly synthetic. No real personal data.
+# All items are labelled synthetic per AGENTS.md Rule 10.
+# Entity group values: PERSON, PHONE, EMAIL, GOV_ID, FINANCIAL_ACCOUNT, SECRET,
+#   CONFIDENTIAL, MEDICAL, QUASI
+# expected_decision is under the `company` profile, `standard` destination.
+
+items:
+
+  # ─────────────────────────────────────────────────────
+  # Category: direct_pii
+  # ─────────────────────────────────────────────────────
+
+  - id: hw-001
+    category: direct_pii
+    text: "Please update the contact for Priya Nair to mobile 9876543210 and email priya.nair@acmecorp.example."
+    task_type: draft_message
+    expected_entities:
+      - {group: PERSON, value: "Priya Nair"}
+      - {group: PHONE, value: "9876543210"}
+      - {group: EMAIL, value: "priya.nair@acmecorp.example"}
+    expected_decision: redact
+    required_spans: []
+    combo_risk: false
+    notes: "Name + phone + email — classic multi-field PII combo."
+
+  - id: hw-002
+    category: direct_pii
+    text: "Send the invoice to Rohan Mehta at rohan.mehta@globex.example or call +91-9988776655."
+    task_type: draft_message
+    expected_entities:
+      - {group: PERSON, value: "Rohan Mehta"}
+      - {group: EMAIL, value: "rohan.mehta@globex.example"}
+      - {group: PHONE, value: "+91-9988776655"}
+    expected_decision: redact
+    required_spans: []
+    combo_risk: false
+    notes: "Email-first contact with phone alternative."
+
+  - id: hw-003
+    category: direct_pii
+    text: "Summarise the Q3 performance of Kiran Desai from the Pune branch."
+    task_type: summarize
+    expected_entities:
+      - {group: PERSON, value: "Kiran Desai"}
+    expected_decision: allow
+    required_spans: []
+    combo_risk: false
+    notes: "Isolated name — no linked identifier. Should be allowed by ALLOW_PERSON_ALONE."
+
+  - id: hw-004
+    category: direct_pii
+    text: "My name is Aarav Singh, date of birth 14 March 1990, living at 23B, Sector 12, Noida."
+    task_type: general_qa
+    expected_entities:
+      - {group: PERSON, value: "Aarav Singh"}
+    expected_decision: allow
+    required_spans: []
+    combo_risk: false
+    notes: "Name alone flagged at allow; address and DOB not captured by current engine — documented limitation."
+
+  - id: hw-005
+    category: direct_pii
+    text: "Please find the employee record for Sunita Rao, phone 8800123456, and update her designation to Senior Analyst."
+    task_type: draft_document
+    expected_entities:
+      - {group: PERSON, value: "Sunita Rao"}
+      - {group: PHONE, value: "8800123456"}
+    expected_decision: redact
+    required_spans: []
+    combo_risk: false
+    notes: "HR update prompt with name+phone."
+
+  - id: hw-006
+    category: direct_pii
+    text: "The customer's full name is Deepa Krishnamurthy, email deepa.k@fintech.example, and she is a premium member."
+    task_type: lookup_contact
+    expected_entities:
+      - {group: PERSON, value: "Deepa Krishnamurthy"}
+      - {group: EMAIL, value: "deepa.k@fintech.example"}
+    expected_decision: redact
+    required_spans: []
+    combo_risk: false
+    notes: "CRM lookup context."
+
+  - id: hw-007
+    category: direct_pii
+    text: "Translate the following letter addressed to Mr. Vikas Gupta, 9 Laxmi Nagar, Delhi, to French."
+    task_type: translate
+    expected_entities:
+      - {group: PERSON, value: "Vikas Gupta"}
+    expected_decision: allow
+    required_spans: []
+    combo_risk: false
+    notes: "Translation task; name alone is allowed."
+
+  # ─────────────────────────────────────────────────────
+  # Category: india_ids
+  # ─────────────────────────────────────────────────────
+
+  - id: hw-010
+    category: india_ids
+    text: "Verify Aadhaar 4732 9811 7605 for account KYC completion."
+    task_type: verify_identifier
+    expected_entities:
+      - {group: GOV_ID, value: "4732 9811 7605"}
+    expected_decision: redact
+    required_spans: []
+    combo_risk: false
+    notes: "Valid Aadhaar (synthetic) with spaces — checksum passes."
+
+  - id: hw-011
+    category: india_ids
+    text: "PAN number ABCPE1234F has been submitted for TDS refund processing."
+    task_type: verify_identifier
+    expected_entities:
+      - {group: GOV_ID, value: "ABCPE1234F"}
+    expected_decision: redact
+    required_spans: []
+    combo_risk: false
+    notes: "Valid PAN — entity type P (individual)."
+
+  - id: hw-012
+    category: india_ids
+    text: "GSTIN 27XYZCE9876K1ZS needs to be updated in the vendor master."
+    task_type: draft_document
+    expected_entities:
+      - {group: GOV_ID, value: "27XYZCE9876K1ZS"}
+    expected_decision: redact
+    required_spans: []
+    combo_risk: false
+    notes: "Synthetic GSTIN with correct checksum."
+
+  - id: hw-013
+    category: india_ids
+    text: "Transfer ₹50,000 to account 987654321012 via IFSC HDFC0001234."
+    task_type: draft_message
+    expected_entities:
+      - {group: FINANCIAL_ACCOUNT, value: "987654321012"}
+      - {group: FINANCIAL_ACCOUNT, value: "HDFC0001234"}
+    expected_decision: redact
+    required_spans: []
+    combo_risk: false
+    notes: "Bank account + IFSC both financial identifiers."
+
+  - id: hw-014
+    category: india_ids
+    text: "Please pay via UPI to rahul.sharma@oksbi."
+    task_type: draft_message
+    expected_entities:
+      - {group: FINANCIAL_ACCOUNT, value: "rahul.sharma@oksbi"}
+    expected_decision: redact
+    required_spans: []
+    combo_risk: false
+    notes: "UPI VPA — pseudonymized under company policy."
+
+  - id: hw-015
+    category: india_ids
+    text: "The order reference is 123456789012 for your recent purchase."
+    task_type: general_qa
+    expected_entities: []
+    expected_decision: allow
+    required_spans: [{value: "123456789012"}]
+    combo_risk: false
+    notes: "HARD NEGATIVE — 12-digit order number without Aadhaar context. Invalid Verhoeff. Must not be flagged."
+
+  - id: hw-016
+    category: india_ids
+    text: "Their Aadhaar is 1234 5678 9012 (possibly wrong, please check)."
+    task_type: verify_identifier
+    expected_entities:
+      - {group: GOV_ID, value: "1234 5678 9012"}
+    expected_decision: require_approval
+    required_spans: []
+    combo_risk: false
+    notes: "Invalid Verhoeff checksum — unvalidated gov ID requires approval."
+
+  - id: hw-017
+    category: india_ids
+    text: "ABCXE1234F was entered as the PAN but 'X' is not a valid entity code."
+    task_type: verify_identifier
+    expected_entities: []
+    expected_decision: allow
+    required_spans: [{value: "ABCXE1234F"}]
+    combo_risk: false
+    notes: "HARD NEGATIVE — invalid PAN entity code X. Must not be flagged."
+
+  # ─────────────────────────────────────────────────────
+  # Category: secrets
+  # ─────────────────────────────────────────────────────
+
+  - id: hw-020
+    category: secrets
+    text: "Debug this Python snippet that uses AWS_SECRET_KEY=AKIAIOSFODNN7EXAMPLE to upload to S3."
+    task_type: debug_code
+    expected_entities:
+      - {group: SECRET, value: "AKIAIOSFODNN7EXAMPLE"}
+    expected_decision: block
+    required_spans: []
+    combo_risk: false
+    notes: "AWS access key embedded in code — must be blocked."
+
+  - id: hw-021
+    category: secrets
+    text: "The GitHub PAT is ghp_A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8; push to main with it."
+    task_type: draft_message
+    expected_entities:
+      - {group: SECRET, value: "ghp_A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8"}
+    expected_decision: block
+    required_spans: []
+    combo_risk: false
+    notes: "GitHub personal access token — block."
+
+  - id: hw-022
+    category: secrets
+    text: "DATABASE_URL=postgresql://admin:hunter2@db.internal.example:5432/prod_db — is this connection string safe to share?"
+    task_type: general_qa
+    expected_entities:
+      - {group: SECRET, value: "postgresql://admin:hunter2@db.internal.example:5432/prod_db"}
+    expected_decision: block
+    required_spans: []
+    combo_risk: false
+    notes: "DB connection string with embedded credentials."
+
+  - id: hw-023
+    category: secrets
+    text: "Our Slack bot token is xoxb-123456789012-1234567890123-abcDEF123456. Rotate it now."
+    task_type: draft_message
+    expected_entities:
+      - {group: SECRET, value: "xoxb-123456789012-1234567890123-abcDEF123456"}
+    expected_decision: block
+    required_spans: []
+    combo_risk: false
+    notes: "Slack bot token — block."
+
+  - id: hw-024
+    category: secrets
+    text: "The JWT is eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IlRlc3QifQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c for auth testing."
+    task_type: debug_code
+    expected_entities:
+      - {group: SECRET, value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IlRlc3QifQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"}
+    expected_decision: block
+    required_spans: []
+    combo_risk: false
+    notes: "JWT token — block."
+
+  - id: hw-025
+    category: secrets
+    text: "password: Tr0ub4dor&3 — help me set this in Kubernetes as a secret."
+    task_type: debug_code
+    expected_entities:
+      - {group: SECRET, value: "Tr0ub4dor&3"}
+    expected_decision: block
+    required_spans: []
+    combo_risk: false
+    notes: "Plaintext password — block."
+
+  # ─────────────────────────────────────────────────────
+  # Category: financial
+  # ─────────────────────────────────────────────────────
+
+  - id: hw-030
+    category: financial
+    text: "Analyze the transaction: card 4111 1111 1111 1111 spent ₹12,500 at Zara on 15 Oct. Flag if unusual."
+    task_type: analyze_data
+    expected_entities:
+      - {group: FINANCIAL_ACCOUNT, value: "4111 1111 1111 1111"}
+    expected_decision: redact
+    required_spans: [{value: "₹12,500"}, {value: "15 Oct"}]
+    combo_risk: false
+    notes: "Card number masked; amounts and dates must survive for analysis."
+
+  - id: hw-031
+    category: financial
+    text: "Credit card 5500 0000 0000 0004 billed ₹3,200 to merchant Swiggy on 3 Sep. Is this a duplicate charge?"
+    task_type: analyze_data
+    expected_entities:
+      - {group: FINANCIAL_ACCOUNT, value: "5500 0000 0000 0004"}
+    expected_decision: redact
+    required_spans: [{value: "₹3,200"}, {value: "3 Sep"}]
+    combo_risk: false
+    notes: "Card masked; required amount retained."
+
+  - id: hw-032
+    category: financial
+    text: "Summarise monthly spends: Food ₹4,200, Travel ₹9,800, Utilities ₹2,100. No card number involved."
+    task_type: summarize
+    expected_entities: []
+    expected_decision: allow
+    required_spans: [{value: "₹4,200"}, {value: "₹9,800"}, {value: "₹2,100"}]
+    combo_risk: false
+    notes: "HARD NEGATIVE — amounts without card number. Must allow; amounts must be retained."
+
+  - id: hw-033
+    category: financial
+    text: "IBAN DE89 3704 0044 0532 0130 00 for wire transfer; amount €1,500."
+    task_type: draft_message
+    expected_entities:
+      - {group: FINANCIAL_ACCOUNT, value: "DE89 3704 0044 0532 0130 00"}
+    expected_decision: redact
+    required_spans: [{value: "€1,500"}]
+    combo_risk: false
+    notes: "IBAN is financial account; transfer amount is required."
+
+  # ─────────────────────────────────────────────────────
+  # Category: indirect_combo
+  # ─────────────────────────────────────────────────────
+
+  - id: hw-040
+    category: indirect_combo
+    text: "Draft a performance review for the 34-year-old HR manager at Acme Technologies' Pune office who recently went on maternity leave."
+    task_type: draft_document
+    expected_entities:
+      - {group: QUASI, value: "34-year-old"}
+      - {group: QUASI, value: "HR manager"}
+      - {group: QUASI, value: "Acme Technologies"}
+      - {group: QUASI, value: "Pune"}
+      - {group: QUASI, value: "maternity leave"}
+    expected_decision: require_approval
+    required_spans: []
+    combo_risk: true
+    notes: "THE key demo case. No phone/email/ID. Combination identifies a specific person."
+
+  - id: hw-041
+    category: indirect_combo
+    text: "Help me write feedback for the 28-year-old software engineer at Globex who resigned last month."
+    task_type: draft_document
+    expected_entities:
+      - {group: QUASI, value: "28-year-old"}
+      - {group: QUASI, value: "software engineer"}
+      - {group: QUASI, value: "Globex"}
+      - {group: QUASI, value: "resigned"}
+    expected_decision: require_approval
+    required_spans: []
+    combo_risk: true
+    notes: "Age + role + org + event — high re-ID risk combo."
+
+  - id: hw-042
+    category: indirect_combo
+    text: "Analyze the performance of the senior accountant at NovaTech in Bengaluru who was terminated in Q2."
+    task_type: analyze_data
+    expected_entities:
+      - {group: QUASI, value: "senior accountant"}
+      - {group: QUASI, value: "NovaTech"}
+      - {group: QUASI, value: "Bengaluru"}
+      - {group: QUASI, value: "terminated"}
+    expected_decision: require_approval
+    required_spans: []
+    combo_risk: true
+    notes: "No direct PII. Combination of role+org+location+event."
+
+  - id: hw-043
+    category: indirect_combo
+    text: "The female CFO at Meridian Corp in Mumbai who went through a divorce last year — can you suggest a wellness plan?"
+    task_type: draft_document
+    expected_entities:
+      - {group: QUASI, value: "CFO"}
+      - {group: QUASI, value: "Meridian Corp"}
+      - {group: QUASI, value: "Mumbai"}
+      - {group: QUASI, value: "divorce"}
+    expected_decision: require_approval
+    required_spans: []
+    combo_risk: true
+    notes: "Gender + role + org + location + sensitive life event."
+
+  - id: hw-044
+    category: indirect_combo
+    text: "Draft an email about the 45-year-old warehouse supervisor at LogiFirst who is currently on medical leave."
+    task_type: draft_message
+    expected_entities:
+      - {group: QUASI, value: "45-year-old"}
+      - {group: QUASI, value: "warehouse supervisor"}
+      - {group: QUASI, value: "LogiFirst"}
+      - {group: QUASI, value: "medical leave"}
+    expected_decision: require_approval
+    required_spans: []
+    combo_risk: true
+    notes: "Age + role + org + sensitive event — no direct PII."
+
+  - id: hw-045
+    category: indirect_combo
+    text: "What are some good team-building activities for a mid-sized engineering company?"
+    task_type: general_qa
+    expected_entities: []
+    expected_decision: allow
+    required_spans: []
+    combo_risk: false
+    notes: "HARD NEGATIVE — generic question; no quasi-identifiers pointing to any individual."
+
+  - id: hw-046
+    category: indirect_combo
+    text: "Our sales director at Acme recently got promoted. Write a congratulations email."
+    task_type: draft_message
+    expected_entities:
+      - {group: QUASI, value: "sales director"}
+      - {group: QUASI, value: "Acme"}
+      - {group: QUASI, value: "promoted"}
+    expected_decision: require_approval
+    required_spans: []
+    combo_risk: true
+    notes: "Role + org + promotion event. No name but still identifiable."
+
+  # ─────────────────────────────────────────────────────
+  # Category: medical
+  # ─────────────────────────────────────────────────────
+
+  - id: hw-050
+    category: medical
+    text: "Patient Meera Pillai, mobile 9123456780, was diagnosed with Type 2 diabetes and prescribed metformin."
+    task_type: draft_document
+    expected_entities:
+      - {group: PERSON, value: "Meera Pillai"}
+      - {group: PHONE, value: "9123456780"}
+      - {group: MEDICAL, value: "Type 2 diabetes"}
+      - {group: MEDICAL, value: "metformin"}
+    expected_decision: redact
+    required_spans: []
+    combo_risk: false
+    notes: "Medical + identity combination — must redact identity, keep medical term."
+
+  - id: hw-051
+    category: medical
+    text: "Summarize the clinical trial results for metformin in Type 2 diabetes management."
+    task_type: summarize
+    expected_entities:
+      - {group: MEDICAL, value: "metformin"}
+      - {group: MEDICAL, value: "Type 2 diabetes"}
+    expected_decision: allow
+    required_spans: [{value: "metformin"}, {value: "Type 2 diabetes"}]
+    combo_risk: false
+    notes: "Medical terms without personal identity — allow; medical terms are task content."
+
+  - id: hw-052
+    category: medical
+    text: "Employee Raju Shinde from Finance is on leave due to chemotherapy."
+    task_type: draft_document
+    expected_entities:
+      - {group: PERSON, value: "Raju Shinde"}
+      - {group: MEDICAL, value: "chemotherapy"}
+    expected_decision: redact
+    required_spans: []
+    combo_risk: false
+    notes: "HEALTH_WITH_IDENTITY: person + medical term triggers redact of identity."
+
+  - id: hw-053
+    category: medical
+    text: "The patient with Aadhaar 4732 9811 7605 has a history of hypertension and is on amlodipine."
+    task_type: draft_document
+    expected_entities:
+      - {group: GOV_ID, value: "4732 9811 7605"}
+      - {group: MEDICAL, value: "hypertension"}
+      - {group: MEDICAL, value: "amlodipine"}
+    expected_decision: redact
+    required_spans: []
+    combo_risk: false
+    notes: "Gov ID + medical — identity must be redacted."
+
+  - id: hw-054
+    category: medical
+    text: "Research paper: Depression affects approximately 264 million people globally according to the WHO."
+    task_type: summarize
+    expected_entities:
+      - {group: MEDICAL, value: "Depression"}
+    expected_decision: allow
+    required_spans: [{value: "264 million"}]
+    combo_risk: false
+    notes: "Medical term in educational/research context without personal identity — allow."
+
+  - id: hw-055
+    category: medical
+    text: "My colleague who works in legal has anxiety and ADHD — can you suggest how to support them?"
+    task_type: draft_message
+    expected_entities:
+      - {group: QUASI, value: "legal"}
+      - {group: MEDICAL, value: "anxiety"}
+      - {group: MEDICAL, value: "ADHD"}
+    expected_decision: require_approval
+    required_spans: []
+    combo_risk: true
+    notes: "Quasi-identifier (role/dept) + medical terms — identifiable combo."
+
+  # ─────────────────────────────────────────────────────
+  # Category: utility_tasks
+  # ─────────────────────────────────────────────────────
+
+  - id: hw-060
+    category: utility_tasks
+    text: "Analyze the following sales data and identify trends: Jan ₹1.2L, Feb ₹1.5L, Mar ₹0.9L, Apr ₹2.1L."
+    task_type: analyze_data
+    expected_entities: []
+    expected_decision: allow
+    required_spans: [{value: "₹1.2L"}, {value: "₹1.5L"}, {value: "₹0.9L"}, {value: "₹2.1L"}]
+    combo_risk: false
+    notes: "Pure analysis task; amounts must survive."
+
+  - id: hw-061
+    category: utility_tasks
+    text: "Rewrite this paragraph to be more concise: The company achieved strong growth in FY2025 driven by its cloud division."
+    task_type: rewrite_edit
+    expected_entities: []
+    expected_decision: allow
+    required_spans: [{value: "FY2025"}, {value: "cloud division"}]
+    combo_risk: false
+    notes: "Editing task — no PII; all content is required."
+
+  - id: hw-062
+    category: utility_tasks
+    text: "Summarize this contract: Effective 1 Jan 2025, Acme Technologies agrees to pay ₹45,00,000 annually for services."
+    task_type: summarize
+    expected_entities:
+      - {group: QUASI, value: "Acme Technologies"}
+    expected_decision: allow
+    required_spans: [{value: "₹45,00,000"}, {value: "1 Jan 2025"}]
+    combo_risk: false
+    notes: "Company name is quasi but not personal. Amount and date are required."
+
+  - id: hw-063
+    category: utility_tasks
+    text: "Debug: The function calculate_tax(gross=100000, rate=0.18) returns wrong result on negative inputs."
+    task_type: debug_code
+    expected_entities: []
+    expected_decision: allow
+    required_spans: [{value: "100000"}, {value: "0.18"}]
+    combo_risk: false
+    notes: "Code debugging — no PII; numeric values are code parameters."
+
+  - id: hw-064
+    category: utility_tasks
+    text: "Translate 'The meeting is scheduled for Monday at 3 PM' into Hindi."
+    task_type: translate
+    expected_entities: []
+    expected_decision: allow
+    required_spans: [{value: "Monday"}, {value: "3 PM"}]
+    combo_risk: false
+    notes: "Translation with time — no PII."
+
+  - id: hw-065
+    category: utility_tasks
+    text: "Draft a purchase order for 500 units of Product SKU-XR2024 at ₹150 each from Globex Supplies."
+    task_type: draft_document
+    expected_entities:
+      - {group: QUASI, value: "Globex Supplies"}
+    expected_decision: allow
+    required_spans: [{value: "500"}, {value: "₹150"}, {value: "SKU-XR2024"}]
+    combo_risk: false
+    notes: "Vendor name quasi; product and amounts needed."
+
+  # ─────────────────────────────────────────────────────
+  # Category: hard_negatives
+  # ─────────────────────────────────────────────────────
+
+  - id: hw-070
+    category: hard_negatives
+    text: "Mahatma Gandhi was born in 1869 in Porbandar, Gujarat."
+    task_type: general_qa
+    expected_entities: []
+    expected_decision: allow
+    required_spans: [{value: "1869"}, {value: "Porbandar"}]
+    combo_risk: false
+    notes: "Historical public figure — must not be flagged."
+
+  - id: hw-071
+    category: hard_negatives
+    text: "Albert Einstein published the special theory of relativity in 1905 at the age of 26."
+    task_type: general_qa
+    expected_entities: []
+    expected_decision: allow
+    required_spans: [{value: "1905"}]
+    combo_risk: false
+    notes: "Historical public figure — must not be flagged."
+
+  - id: hw-072
+    category: hard_negatives
+    text: "The meeting is at 10:30 AM. Please join Room 404 on Zoom."
+    task_type: draft_message
+    expected_entities: []
+    expected_decision: allow
+    required_spans: [{value: "10:30 AM"}, {value: "Room 404"}]
+    combo_risk: false
+    notes: "Meeting time — must not match phone number pattern."
+
+  - id: hw-073
+    category: hard_negatives
+    text: "Order #ORD-9876543210 has been dispatched. Track via the portal."
+    task_type: general_qa
+    expected_entities: []
+    expected_decision: allow
+    required_spans: [{value: "ORD-9876543210"}]
+    combo_risk: false
+    notes: "10-digit order number prefixed with ORD- — must not be flagged as mobile."
+
+  - id: hw-074
+    category: hard_negatives
+    text: "Product code PC-1234-5678-9012 does not match any catalog entry."
+    task_type: general_qa
+    expected_entities: []
+    expected_decision: allow
+    required_spans: [{value: "PC-1234-5678-9012"}]
+    combo_risk: false
+    notes: "Product code shaped like a number — not a card or ID."
+
+  - id: hw-075
+    category: hard_negatives
+    text: "The amount billed was ₹1,23,456.00 for consulting services in October."
+    task_type: analyze_data
+    expected_entities: []
+    expected_decision: allow
+    required_spans: [{value: "₹1,23,456.00"}]
+    combo_risk: false
+    notes: "Currency amount — must not be flagged as a financial account or card."
+
+  - id: hw-076
+    category: hard_negatives
+    text: "In medical school, students study pharmacology including drugs like metformin and atenolol as educational examples."
+    task_type: summarize
+    expected_entities:
+      - {group: MEDICAL, value: "metformin"}
+      - {group: MEDICAL, value: "atenolol"}
+    expected_decision: allow
+    required_spans: [{value: "metformin"}, {value: "atenolol"}]
+    combo_risk: false
+    notes: "Generic medical education text — no identity. Medical terms alone are allow."
+
+  - id: hw-077
+    category: hard_negatives
+    text: "HDFCA001234 is an invalid IFSC because the 5th character is not '0'."
+    task_type: verify_identifier
+    expected_entities: []
+    expected_decision: allow
+    required_spans: [{value: "HDFCA001234"}]
+    combo_risk: false
+    notes: "Invalid IFSC — must not be flagged."
+
+  - id: hw-078
+    category: hard_negatives
+    text: "Analyze the stock TATACONS at NSE closing at ₹3,412.50 with volume 1,23,456 shares."
+    task_type: analyze_data
+    expected_entities: []
+    expected_decision: allow
+    required_spans: [{value: "₹3,412.50"}, {value: "1,23,456"}]
+    combo_risk: false
+    notes: "Stock analysis — numbers are market data, not personal or financial account data."
+
+  - id: hw-079
+    category: hard_negatives
+    text: "CONF-2025-001 is the document reference for the internal proposal. Mark as draft."
+    task_type: draft_document
+    expected_entities: []
+    expected_decision: allow
+    required_spans: [{value: "CONF-2025-001"}]
+    combo_risk: false
+    notes: "Document reference code that starts with CONF — must not trigger confidential detector."
+
+  # Additional direct_pii for test split depth
+  - id: hw-080
+    category: direct_pii
+    text: "Please share Neha Joshi's contact: neha.joshi@techstar.example, 9911002233."
+    task_type: lookup_contact
+    expected_entities:
+      - {group: PERSON, value: "Neha Joshi"}
+      - {group: EMAIL, value: "neha.joshi@techstar.example"}
+      - {group: PHONE, value: "9911002233"}
+    expected_decision: redact
+    required_spans: []
+    combo_risk: false
+    notes: "Contact lookup — all three identifiers redacted."
+
+  - id: hw-081
+    category: secrets
+    text: "STRIPE_SECRET_KEY=sk_live_abcDEFGHIJKLMNOPQRSTUVWXYZ123456 — is this format correct?"
+    task_type: debug_code
+    expected_entities:
+      - {group: SECRET, value: "sk_live_abcDEFGHIJKLMNOPQRSTUVWXYZ123456"}
+    expected_decision: block
+    required_spans: []
+    combo_risk: false
+    notes: "Stripe live key — block."
+
+  - id: hw-082
+    category: indirect_combo
+    text: "Write an appraisal for the 52-year-old male VP of Operations at Zenith Industries in Chennai who filed a lawsuit against the company last quarter."
+    task_type: draft_document
+    expected_entities:
+      - {group: QUASI, value: "52-year-old"}
+      - {group: QUASI, value: "VP of Operations"}
+      - {group: QUASI, value: "Zenith Industries"}
+      - {group: QUASI, value: "Chennai"}
+      - {group: QUASI, value: "lawsuit"}
+    expected_decision: require_approval
+    required_spans: []
+    combo_risk: true
+    notes: "Age + gender + senior role + org + location + sensitive legal event — extremely identifiable."
+
+  - id: hw-083
+    category: medical
+    text: "Our CTO Vikram Sharma was recently diagnosed with depression. Help draft a compassionate HR note."
+    task_type: draft_document
+    expected_entities:
+      - {group: PERSON, value: "Vikram Sharma"}
+      - {group: QUASI, value: "CTO"}
+      - {group: MEDICAL, value: "depression"}
+    expected_decision: redact
+    required_spans: []
+    combo_risk: true
+    notes: "Medical + identity (name + role) — redact identity; keep medical term."
+
+  - id: hw-084
+    category: financial
+    text: "Analyze refunds for card 3782 822463 10005 (Amex) from Jan to Mar 2025. Total refunds: ₹8,200."
+    task_type: analyze_data
+    expected_entities:
+      - {group: FINANCIAL_ACCOUNT, value: "3782 822463 10005"}
+    expected_decision: redact
+    required_spans: [{value: "Jan to Mar 2025"}, {value: "₹8,200"}]
+    combo_risk: false
+    notes: "15-digit Amex card — financial; dates and amount are required."
+
+  - id: hw-085
+    category: india_ids
+    text: "Vendor GSTIN is 29AABCU9603R1ZX. Please validate before processing payment."
+    task_type: verify_identifier
+    expected_entities:
+      - {group: GOV_ID, value: "29AABCU9603R1ZX"}
+    expected_decision: redact
+    required_spans: []
+    combo_risk: false
+    notes: "Synthetic GSTIN Karnataka state code — validated."
+
+  - id: hw-086
+    category: hard_negatives
+    text: "Step 12345678 of the manufacturing process involves 9 quality checks."
+    task_type: general_qa
+    expected_entities: []
+    expected_decision: allow
+    required_spans: [{value: "12345678"}]
+    combo_risk: false
+    notes: "8-digit process step number — not any ID."
+
+  - id: hw-087
+    category: utility_tasks
+    text: "Generate a report comparing Q1 ₹42L, Q2 ₹38L, Q3 ₹55L, Q4 ₹61L revenue — highlight the best quarter."
+    task_type: analyze_data
+    expected_entities: []
+    expected_decision: allow
+    required_spans: [{value: "₹42L"}, {value: "₹38L"}, {value: "₹55L"}, {value: "₹61L"}]
+    combo_risk: false
+    notes: "Financial aggregates — no account numbers or PII."
+
+  - id: hw-088
+    category: direct_pii
+    text: "CC: Ananya Sharma <ananya.s@venturelab.example>; BCC: hr@venturelab.example. Please review the draft offer."
+    task_type: draft_message
+    expected_entities:
+      - {group: PERSON, value: "Ananya Sharma"}
+      - {group: EMAIL, value: "ananya.s@venturelab.example"}
+      - {group: EMAIL, value: "hr@venturelab.example"}
+    expected_decision: redact
+    required_spans: []
+    combo_risk: false
+    notes: "Email header format — name + email addresses."
+
+  - id: hw-089
+    category: indirect_combo
+    text: "The 38-year-old female product manager at Brainwave Labs in Hyderabad went on maternity leave in October."
+    task_type: draft_document
+    expected_entities:
+      - {group: QUASI, value: "38-year-old"}
+      - {group: QUASI, value: "product manager"}
+      - {group: QUASI, value: "Brainwave Labs"}
+      - {group: QUASI, value: "Hyderabad"}
+      - {group: QUASI, value: "maternity leave"}
+    expected_decision: require_approval
+    required_spans: []
+    combo_risk: true
+    notes: "Indirect combo: age+gender+role+org+location+event."
+
+  - id: hw-090
+    category: medical
+    text: "Applicant Farhan Khan, email farhan.k@startup.example, has disclosed schizophrenia in his medical form."
+    task_type: draft_document
+    expected_entities:
+      - {group: PERSON, value: "Farhan Khan"}
+      - {group: EMAIL, value: "farhan.k@startup.example"}
+      - {group: MEDICAL, value: "schizophrenia"}
+    expected_decision: redact
+    required_spans: []
+    combo_risk: false
+    notes: "Medical disclosure linked to named applicant with contact — high sensitivity."

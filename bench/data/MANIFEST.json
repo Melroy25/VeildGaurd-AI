@@ -1,0 +1,45 @@
+{
+  "version": "v1",
+  "created_at": "2026-10-17T15:52:37Z",
+  "generator_seed": 42,
+  "splits": {
+    "dev": {
+      "count": 233,
+      "sha256": "716bf6bc80310eeea602406d275d679e5a583f2b422bfe2e5856fc79ef804572",
+      "categories": {
+        "direct_pii": 23,
+        "financial": 24,
+        "hard_negatives": 35,
+        "india_ids": 53,
+        "indirect_combo": 26,
+        "medical": 20,
+        "secrets": 31,
+        "utility_tasks": 21
+      }
+    },
+    "test": {
+      "count": 286,
+      "sha256": "335a7ad7739b86f71c062fc51ff43fdc239d9a4d198302c7700138ee3e28242d",
+      "categories": {
+        "direct_pii": 52,
+        "financial": 19,
+        "hard_negatives": 34,
+        "india_ids": 56,
+        "indirect_combo": 47,
+        "medical": 30,
+        "secrets": 30,
+        "utility_tasks": 18
+      }
+    }
+  },
+  "history": [
+    {
+      "event": "initial_freeze",
+      "created_at": "2026-10-17T15:52:37Z",
+      "dev_sha256": "716bf6bc80310eeea602406d275d679e5a583f2b422bfe2e5856fc79ef804572",
+      "test_sha256": "335a7ad7739b86f71c062fc51ff43fdc239d9a4d198302c7700138ee3e28242d",
+      "note": "Dataset v1 frozen. test.jsonl must not be modified."
+    }
+  ],
+  "integrity_note": "test.jsonl is sealed after this commit. The no-peek rule cannot be technically enforced because the same team authored the dataset and the intelligence code. See docs/BENCHMARK.md for the full limitation disclosure."
+}
