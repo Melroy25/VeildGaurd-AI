@@ -32,7 +32,7 @@ if str(ENGINE_PATH) not in sys.path:
 
 from veilguard_engine.scanner import Scanner
 from veilguard_engine.policy import PolicyEvaluator, PolicyRegistry
-from veilguard_engine.policy.models import Decision
+from veilguard_engine.policy.models import Action, Decision
 from veilguard_engine.sanitizer import Sanitizer
 
 

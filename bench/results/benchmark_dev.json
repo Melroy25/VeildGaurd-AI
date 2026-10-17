@@ -1,0 +1,3980 @@
+{
+  "meta": {
+    "split": "dev",
+    "n": 233,
+    "commit": "950404a",
+    "manifest_version": "v1",
+    "dev_sha256": "716bf6bc80310eeea602406d275d679e5a583f2b422bfe2e5856fc79ef804572",
+    "test_sha256": "335a7ad7739b86f71c062fc51ff43fdc239d9a4d198302c7700138ee3e28242d",
+    "hardware": {
+      "platform": "Windows-11-10.0.26300-SP0",
+      "python": "3.13.5",
+      "processor": "Intel64 Family 6 Model 140 Stepping 1, GenuineIntel"
+    }
+  },
+  "systems": {
+    "keyword": {
+      "entity_metrics": {
+        "tp": 149,
+        "fp": 33,
+        "fn": 146,
+        "precision": 0.8186813186813187,
+        "recall": 0.5050847457627119,
+        "f1": 0.6247379454926625,
+        "per_group": {
+          "PHONE": {
+            "tp": 2,
+            "fp": 6,
+            "fn": 0,
+            "precision": 0.25,
+            "recall": 1.0,
+            "f1": 0.4
+          },
+          "EMAIL": {
+            "tp": 21,
+            "fp": 1,
+            "fn": 0,
+            "precision": 0.9545454545454546,
+            "recall": 1.0,
+            "f1": 0.9767441860465117
+          },
+          "GOV_ID": {
+            "tp": 22,
+            "fp": 24,
+            "fn": 17,
+            "precision": 0.4782608695652174,
+            "recall": 0.5641025641025641,
+            "f1": 0.5176470588235293
+          },
+          "SECRET": {
+            "tp": 31,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+          },
+          "FINANCIAL_ACCOUNT": {
+            "tp": 36,
+            "fp": 1,
+            "fn": 1,
+            "precision": 0.972972972972973,
+            "recall": 0.972972972972973,
+            "f1": 0.972972972972973
+          },
+          "MEDICAL": {
+            "tp": 37,
+            "fp": 1,
+            "fn": 2,
+            "precision": 0.9736842105263158,
+            "recall": 0.9487179487179487,
+            "f1": 0.9610389610389611
+          },
+          "PERSON": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 24,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "QUASI": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 102,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          }
+        },
+        "precision_ci95": {
+          "lower": 0.7563,
+          "upper": 0.8679
+        },
+        "recall_ci95": {
+          "lower": 0.4483,
+          "upper": 0.5617
+        }
+      },
+      "entity_metrics_strict": {
+        "tp": 148,
+        "fp": 34,
+        "fn": 147,
+        "precision": 0.8131868131868132,
+        "recall": 0.5016949152542373,
+        "f1": 0.6205450733752621,
+        "per_group": {
+          "PHONE": {
+            "tp": 2,
+            "fp": 6,
+            "fn": 0,
+            "precision": 0.25,
+            "recall": 1.0,
+            "f1": 0.4
+          },
+          "EMAIL": {
+            "tp": 21,
+            "fp": 1,
+            "fn": 0,
+            "precision": 0.9545454545454546,
+            "recall": 1.0,
+            "f1": 0.9767441860465117
+          },
+          "GOV_ID": {
+            "tp": 22,
+            "fp": 24,
+            "fn": 17,
+            "precision": 0.4782608695652174,
+            "recall": 0.5641025641025641,
+            "f1": 0.5176470588235293
+          },
+          "SECRET": {
+            "tp": 31,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+          },
+          "FINANCIAL_ACCOUNT": {
+            "tp": 36,
+            "fp": 1,
+            "fn": 1,
+            "precision": 0.972972972972973,
+            "recall": 0.972972972972973,
+            "f1": 0.972972972972973
+          },
+          "MEDICAL": {
+            "tp": 36,
+            "fp": 2,
+            "fn": 3,
+            "precision": 0.9473684210526315,
+            "recall": 0.9230769230769231,
+            "f1": 0.935064935064935
+          },
+          "PERSON": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 24,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "QUASI": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 102,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          }
+        }
+      },
+      "flagged_metrics": {
+        "n": 233,
+        "tp": 113,
+        "fp": 26,
+        "fn": 42,
+        "tn": 52,
+        "precision": 0.8129496402877698,
+        "recall": 0.7290322580645161,
+        "f1": 0.7687074829931972,
+        "fpr": 0.3333333333333333,
+        "combo_risk_recall": 0.04,
+        "combo_total": 25,
+        "combo_flagged": 1,
+        "precision_ci95": {
+          "lower": 0.74,
+          "upper": 0.869
+        },
+        "recall_ci95": {
+          "lower": 0.6542,
+          "upper": 0.7928
+        },
+        "combo_risk_recall_ci95": {
+          "lower": 0.0071,
+          "upper": 0.1954
+        }
+      },
+      "decision_accuracy": null,
+      "utility": {
+        "required_retained_rate": 0.7771739130434783,
+        "required_retained_count": 143,
+        "required_total": 184,
+        "sensitive_removed_rate": 0.5084745762711864,
+        "sensitive_removed_count": 150,
+        "sensitive_total": 295,
+        "note": "Retention rate does not prove an AI would answer identically."
+      },
+      "per_category": {
+        "direct_pii": {
+          "n": 23,
+          "entity_metrics": {
+            "tp": 22,
+            "fp": 0,
+            "fn": 23,
+            "precision": 1.0,
+            "recall": 0.4888888888888889,
+            "f1": 0.6567164179104478,
+            "per_group": {
+              "PHONE": {
+                "tp": 1,
+                "fp": 0,
+                "fn": 0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0
+              },
+              "EMAIL": {
+                "tp": 21,
+                "fp": 0,
+                "fn": 0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0
+              },
+              "PERSON": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 23,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 23,
+            "tp": 22,
+            "fp": 0,
+            "fn": 0,
+            "tn": 1,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 0,
+            "required_total": 0,
+            "required_retained_rate": null,
+            "sensitive_removed_count": 22,
+            "sensitive_total": 45,
+            "sensitive_removed_rate": 0.4888888888888889
+          },
+          "low_confidence": false
+        },
+        "india_ids": {
+          "n": 53,
+          "entity_metrics": {
+            "tp": 36,
+            "fp": 0,
+            "fn": 17,
+            "precision": 1.0,
+            "recall": 0.6792452830188679,
+            "f1": 0.8089887640449438,
+            "per_group": {
+              "GOV_ID": {
+                "tp": 22,
+                "fp": 0,
+                "fn": 17,
+                "precision": 1.0,
+                "recall": 0.5641025641025641,
+                "f1": 0.7213114754098361
+              },
+              "FINANCIAL_ACCOUNT": {
+                "tp": 14,
+                "fp": 0,
+                "fn": 0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 53,
+            "tp": 36,
+            "fp": 0,
+            "fn": 17,
+            "tn": 0,
+            "precision": 1.0,
+            "recall": 0.6792452830188679,
+            "f1": 0.8089887640449438,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 0,
+            "required_total": 0,
+            "required_retained_rate": null,
+            "sensitive_removed_count": 36,
+            "sensitive_total": 53,
+            "sensitive_removed_rate": 0.6792452830188679
+          },
+          "low_confidence": false
+        },
+        "secrets": {
+          "n": 31,
+          "entity_metrics": {
+            "tp": 31,
+            "fp": 3,
+            "fn": 0,
+            "precision": 0.9117647058823529,
+            "recall": 1.0,
+            "f1": 0.9538461538461539,
+            "per_group": {
+              "SECRET": {
+                "tp": 31,
+                "fp": 0,
+                "fn": 0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0
+              },
+              "EMAIL": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "GOV_ID": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "FINANCIAL_ACCOUNT": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 31,
+            "tp": 31,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 0,
+            "required_total": 0,
+            "required_retained_rate": null,
+            "sensitive_removed_count": 31,
+            "sensitive_total": 31,
+            "sensitive_removed_rate": 1.0
+          },
+          "low_confidence": false
+        },
+        "financial": {
+          "n": 24,
+          "entity_metrics": {
+            "tp": 22,
+            "fp": 22,
+            "fn": 1,
+            "precision": 0.5,
+            "recall": 0.9565217391304348,
+            "f1": 0.6567164179104478,
+            "per_group": {
+              "GOV_ID": {
+                "tp": 0,
+                "fp": 22,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "FINANCIAL_ACCOUNT": {
+                "tp": 22,
+                "fp": 0,
+                "fn": 1,
+                "precision": 1.0,
+                "recall": 0.9565217391304348,
+                "f1": 0.9777777777777777
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 24,
+            "tp": 22,
+            "fp": 0,
+            "fn": 1,
+            "tn": 1,
+            "precision": 1.0,
+            "recall": 0.9565217391304348,
+            "f1": 0.9777777777777777,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 49,
+            "required_total": 49,
+            "required_retained_rate": 1.0,
+            "sensitive_removed_count": 22,
+            "sensitive_total": 23,
+            "sensitive_removed_rate": 0.9565217391304348
+          },
+          "low_confidence": false
+        },
+        "indirect_combo": {
+          "n": 26,
+          "entity_metrics": {
+            "tp": 0,
+            "fp": 1,
+            "fn": 101,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "per_group": {
+              "MEDICAL": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "QUASI": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 101,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 26,
+            "tp": 1,
+            "fp": 0,
+            "fn": 24,
+            "tn": 1,
+            "precision": 1.0,
+            "recall": 0.04,
+            "f1": 0.07692307692307693,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.04,
+            "combo_total": 25,
+            "combo_flagged": 1
+          },
+          "utility": {
+            "required_retained_count": 0,
+            "required_total": 0,
+            "required_retained_rate": null,
+            "sensitive_removed_count": 1,
+            "sensitive_total": 101,
+            "sensitive_removed_rate": 0.009900990099009901
+          },
+          "low_confidence": false
+        },
+        "medical": {
+          "n": 20,
+          "entity_metrics": {
+            "tp": 38,
+            "fp": 0,
+            "fn": 3,
+            "precision": 1.0,
+            "recall": 0.926829268292683,
+            "f1": 0.9620253164556963,
+            "per_group": {
+              "PHONE": {
+                "tp": 1,
+                "fp": 0,
+                "fn": 0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0
+              },
+              "MEDICAL": {
+                "tp": 37,
+                "fp": 0,
+                "fn": 2,
+                "precision": 1.0,
+                "recall": 0.9487179487179487,
+                "f1": 0.9736842105263158
+              },
+              "PERSON": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 1,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 20,
+            "tp": 1,
+            "fp": 19,
+            "fn": 0,
+            "tn": 0,
+            "precision": 0.05,
+            "recall": 1.0,
+            "f1": 0.09523809523809523,
+            "fpr": 1.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 3,
+            "required_total": 37,
+            "required_retained_rate": 0.08108108108108109,
+            "sensitive_removed_count": 38,
+            "sensitive_total": 41,
+            "sensitive_removed_rate": 0.926829268292683
+          },
+          "low_confidence": false
+        },
+        "utility_tasks": {
+          "n": 21,
+          "entity_metrics": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 1,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "per_group": {
+              "QUASI": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 1,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 21,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 21,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 62,
+            "required_total": 62,
+            "required_retained_rate": 1.0,
+            "sensitive_removed_count": 0,
+            "sensitive_total": 1,
+            "sensitive_removed_rate": 0.0
+          },
+          "low_confidence": false
+        },
+        "hard_negatives": {
+          "n": 35,
+          "entity_metrics": {
+            "tp": 0,
+            "fp": 7,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "per_group": {
+              "PHONE": {
+                "tp": 0,
+                "fp": 6,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "GOV_ID": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 35,
+            "tp": 0,
+            "fp": 7,
+            "fn": 0,
+            "tn": 28,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "fpr": 0.2,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 29,
+            "required_total": 36,
+            "required_retained_rate": 0.8055555555555556,
+            "sensitive_removed_count": 0,
+            "sensitive_total": 0,
+            "sensitive_removed_rate": null
+          },
+          "low_confidence": false
+        }
+      },
+      "latency": {
+        "p50_ms": 0.07770000956952572,
+        "p95_ms": 0.10289996862411499,
+        "n_measurements": 699,
+        "passes": 3,
+        "warmup_calls": 5
+      }
+    },
+    "presidio_default": {
+      "entity_metrics": {
+        "tp": 26,
+        "fp": 312,
+        "fn": 269,
+        "precision": 0.07692307692307693,
+        "recall": 0.08813559322033898,
+        "f1": 0.0821484992101106,
+        "per_group": {
+          "PERSON": {
+            "tp": 22,
+            "fp": 16,
+            "fn": 2,
+            "precision": 0.5789473684210527,
+            "recall": 0.9166666666666666,
+            "f1": 0.7096774193548387
+          },
+          "DATE_TIME": {
+            "tp": 0,
+            "fp": 140,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "LOCATION": {
+            "tp": 0,
+            "fp": 30,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "PHONE": {
+            "tp": 2,
+            "fp": 16,
+            "fn": 0,
+            "precision": 0.1111111111111111,
+            "recall": 1.0,
+            "f1": 0.19999999999999998
+          },
+          "US_BANK_NUMBER": {
+            "tp": 0,
+            "fp": 22,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "US_DRIVER_LICENSE": {
+            "tp": 0,
+            "fp": 44,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "URL": {
+            "tp": 0,
+            "fp": 41,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "UK_NHS": {
+            "tp": 0,
+            "fp": 3,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "FINANCIAL_ACCOUNT": {
+            "tp": 2,
+            "fp": 0,
+            "fn": 35,
+            "precision": 1.0,
+            "recall": 0.05405405405405406,
+            "f1": 0.10256410256410257
+          },
+          "EMAIL": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 21,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "GOV_ID": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 39,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "SECRET": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 31,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "QUASI": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 102,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "MEDICAL": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 39,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          }
+        },
+        "precision_ci95": {
+          "lower": 0.053,
+          "upper": 0.1103
+        },
+        "recall_ci95": {
+          "lower": 0.0609,
+          "upper": 0.126
+        }
+      },
+      "entity_metrics_strict": {
+        "tp": 26,
+        "fp": 312,
+        "fn": 269,
+        "precision": 0.07692307692307693,
+        "recall": 0.08813559322033898,
+        "f1": 0.0821484992101106,
+        "per_group": {
+          "PERSON": {
+            "tp": 22,
+            "fp": 16,
+            "fn": 2,
+            "precision": 0.5789473684210527,
+            "recall": 0.9166666666666666,
+            "f1": 0.7096774193548387
+          },
+          "DATE_TIME": {
+            "tp": 0,
+            "fp": 140,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "LOCATION": {
+            "tp": 0,
+            "fp": 30,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "PHONE": {
+            "tp": 2,
+            "fp": 16,
+            "fn": 0,
+            "precision": 0.1111111111111111,
+            "recall": 1.0,
+            "f1": 0.19999999999999998
+          },
+          "US_BANK_NUMBER": {
+            "tp": 0,
+            "fp": 22,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "US_DRIVER_LICENSE": {
+            "tp": 0,
+            "fp": 44,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "URL": {
+            "tp": 0,
+            "fp": 41,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "UK_NHS": {
+            "tp": 0,
+            "fp": 3,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "FINANCIAL_ACCOUNT": {
+            "tp": 2,
+            "fp": 0,
+            "fn": 35,
+            "precision": 1.0,
+            "recall": 0.05405405405405406,
+            "f1": 0.10256410256410257
+          },
+          "EMAIL": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 21,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "GOV_ID": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 39,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "SECRET": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 31,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "QUASI": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 102,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "MEDICAL": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 39,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          }
+        }
+      },
+      "flagged_metrics": {
+        "n": 233,
+        "tp": 103,
+        "fp": 42,
+        "fn": 52,
+        "tn": 36,
+        "precision": 0.7103448275862069,
+        "recall": 0.6645161290322581,
+        "f1": 0.6866666666666668,
+        "fpr": 0.5384615384615384,
+        "combo_risk_recall": 0.96,
+        "combo_total": 25,
+        "combo_flagged": 24,
+        "precision_ci95": {
+          "lower": 0.6318,
+          "upper": 0.778
+        },
+        "recall_ci95": {
+          "lower": 0.587,
+          "upper": 0.7341
+        },
+        "combo_risk_recall_ci95": {
+          "lower": 0.8046,
+          "upper": 0.9929
+        }
+      },
+      "decision_accuracy": null,
+      "utility": {
+        "required_retained_rate": 0.7717391304347826,
+        "required_retained_count": 142,
+        "required_total": 184,
+        "sensitive_removed_rate": 0.3254237288135593,
+        "sensitive_removed_count": 96,
+        "sensitive_total": 295,
+        "note": "Retention rate does not prove an AI would answer identically."
+      },
+      "per_category": {
+        "direct_pii": {
+          "n": 23,
+          "entity_metrics": {
+            "tp": 22,
+            "fp": 37,
+            "fn": 23,
+            "precision": 0.3728813559322034,
+            "recall": 0.4888888888888889,
+            "f1": 0.42307692307692313,
+            "per_group": {
+              "PERSON": {
+                "tp": 21,
+                "fp": 0,
+                "fn": 2,
+                "precision": 1.0,
+                "recall": 0.9130434782608695,
+                "f1": 0.9545454545454545
+              },
+              "DATE_TIME": {
+                "tp": 0,
+                "fp": 21,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "LOCATION": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "PHONE": {
+                "tp": 1,
+                "fp": 0,
+                "fn": 0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0
+              },
+              "US_BANK_NUMBER": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "US_DRIVER_LICENSE": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "URL": {
+                "tp": 0,
+                "fp": 13,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "EMAIL": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 21,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 23,
+            "tp": 22,
+            "fp": 1,
+            "fn": 0,
+            "tn": 0,
+            "precision": 0.9565217391304348,
+            "recall": 1.0,
+            "f1": 0.9777777777777777,
+            "fpr": 1.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 0,
+            "required_total": 0,
+            "required_retained_rate": null,
+            "sensitive_removed_count": 35,
+            "sensitive_total": 45,
+            "sensitive_removed_rate": 0.7777777777777778
+          },
+          "low_confidence": false
+        },
+        "india_ids": {
+          "n": 53,
+          "entity_metrics": {
+            "tp": 0,
+            "fp": 16,
+            "fn": 53,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "per_group": {
+              "DATE_TIME": {
+                "tp": 0,
+                "fp": 5,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "URL": {
+                "tp": 0,
+                "fp": 11,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "GOV_ID": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 39,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "FINANCIAL_ACCOUNT": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 14,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 53,
+            "tp": 16,
+            "fp": 0,
+            "fn": 37,
+            "tn": 0,
+            "precision": 1.0,
+            "recall": 0.3018867924528302,
+            "f1": 0.463768115942029,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 0,
+            "required_total": 0,
+            "required_retained_rate": null,
+            "sensitive_removed_count": 16,
+            "sensitive_total": 53,
+            "sensitive_removed_rate": 0.3018867924528302
+          },
+          "low_confidence": false
+        },
+        "secrets": {
+          "n": 31,
+          "entity_metrics": {
+            "tp": 0,
+            "fp": 55,
+            "fn": 31,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "per_group": {
+              "URL": {
+                "tp": 0,
+                "fp": 17,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "DATE_TIME": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "US_BANK_NUMBER": {
+                "tp": 0,
+                "fp": 2,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "US_DRIVER_LICENSE": {
+                "tp": 0,
+                "fp": 18,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "PERSON": {
+                "tp": 0,
+                "fp": 16,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "LOCATION": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "SECRET": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 31,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 31,
+            "tp": 18,
+            "fp": 0,
+            "fn": 13,
+            "tn": 0,
+            "precision": 1.0,
+            "recall": 0.5806451612903226,
+            "f1": 0.7346938775510204,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 0,
+            "required_total": 0,
+            "required_retained_rate": null,
+            "sensitive_removed_count": 3,
+            "sensitive_total": 31,
+            "sensitive_removed_rate": 0.0967741935483871
+          },
+          "low_confidence": false
+        },
+        "financial": {
+          "n": 24,
+          "entity_metrics": {
+            "tp": 2,
+            "fp": 39,
+            "fn": 21,
+            "precision": 0.04878048780487805,
+            "recall": 0.08695652173913043,
+            "f1": 0.06250000000000001,
+            "per_group": {
+              "DATE_TIME": {
+                "tp": 0,
+                "fp": 33,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "FINANCIAL_ACCOUNT": {
+                "tp": 2,
+                "fp": 0,
+                "fn": 21,
+                "precision": 1.0,
+                "recall": 0.08695652173913043,
+                "f1": 0.16
+              },
+              "US_DRIVER_LICENSE": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "PHONE": {
+                "tp": 0,
+                "fp": 2,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "LOCATION": {
+                "tp": 0,
+                "fp": 3,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 24,
+            "tp": 22,
+            "fp": 1,
+            "fn": 1,
+            "tn": 0,
+            "precision": 0.9565217391304348,
+            "recall": 0.9565217391304348,
+            "f1": 0.9565217391304348,
+            "fpr": 1.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 28,
+            "required_total": 49,
+            "required_retained_rate": 0.5714285714285714,
+            "sensitive_removed_count": 13,
+            "sensitive_total": 23,
+            "sensitive_removed_rate": 0.5652173913043478
+          },
+          "low_confidence": false
+        },
+        "indirect_combo": {
+          "n": 26,
+          "entity_metrics": {
+            "tp": 0,
+            "fp": 51,
+            "fn": 101,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "per_group": {
+              "DATE_TIME": {
+                "tp": 0,
+                "fp": 26,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "LOCATION": {
+                "tp": 0,
+                "fp": 25,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "QUASI": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 101,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 26,
+            "tp": 24,
+            "fp": 0,
+            "fn": 1,
+            "tn": 1,
+            "precision": 1.0,
+            "recall": 0.96,
+            "f1": 0.9795918367346939,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.96,
+            "combo_total": 25,
+            "combo_flagged": 24
+          },
+          "utility": {
+            "required_retained_count": 0,
+            "required_total": 0,
+            "required_retained_rate": null,
+            "sensitive_removed_count": 27,
+            "sensitive_total": 101,
+            "sensitive_removed_rate": 0.26732673267326734
+          },
+          "low_confidence": false
+        },
+        "medical": {
+          "n": 20,
+          "entity_metrics": {
+            "tp": 2,
+            "fp": 2,
+            "fn": 39,
+            "precision": 0.5,
+            "recall": 0.04878048780487805,
+            "f1": 0.08888888888888888,
+            "per_group": {
+              "PERSON": {
+                "tp": 1,
+                "fp": 0,
+                "fn": 0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0
+              },
+              "PHONE": {
+                "tp": 1,
+                "fp": 0,
+                "fn": 0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0
+              },
+              "US_BANK_NUMBER": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "US_DRIVER_LICENSE": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "MEDICAL": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 39,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 20,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0,
+            "tn": 19,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 37,
+            "required_total": 37,
+            "required_retained_rate": 1.0,
+            "sensitive_removed_count": 2,
+            "sensitive_total": 41,
+            "sensitive_removed_rate": 0.04878048780487805
+          },
+          "low_confidence": false
+        },
+        "utility_tasks": {
+          "n": 21,
+          "entity_metrics": {
+            "tp": 0,
+            "fp": 58,
+            "fn": 1,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "per_group": {
+              "US_DRIVER_LICENSE": {
+                "tp": 0,
+                "fp": 5,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "DATE_TIME": {
+                "tp": 0,
+                "fp": 53,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "QUASI": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 1,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 21,
+            "tp": 0,
+            "fp": 21,
+            "fn": 0,
+            "tn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "fpr": 1.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 60,
+            "required_total": 62,
+            "required_retained_rate": 0.967741935483871,
+            "sensitive_removed_count": 0,
+            "sensitive_total": 1,
+            "sensitive_removed_rate": 0.0
+          },
+          "low_confidence": false
+        },
+        "hard_negatives": {
+          "n": 35,
+          "entity_metrics": {
+            "tp": 0,
+            "fp": 54,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "per_group": {
+              "DATE_TIME": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "UK_NHS": {
+                "tp": 0,
+                "fp": 3,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "PHONE": {
+                "tp": 0,
+                "fp": 14,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "US_BANK_NUMBER": {
+                "tp": 0,
+                "fp": 18,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "US_DRIVER_LICENSE": {
+                "tp": 0,
+                "fp": 18,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 35,
+            "tp": 0,
+            "fp": 19,
+            "fn": 0,
+            "tn": 16,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "fpr": 0.5428571428571428,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 17,
+            "required_total": 36,
+            "required_retained_rate": 0.4722222222222222,
+            "sensitive_removed_count": 0,
+            "sensitive_total": 0,
+            "sensitive_removed_rate": null
+          },
+          "low_confidence": false
+        }
+      },
+      "latency": {
+        "p50_ms": 6.368400005158037,
+        "p95_ms": 10.041300032753497,
+        "n_measurements": 699,
+        "passes": 3,
+        "warmup_calls": 5
+      }
+    },
+    "presidio_all_stock": {
+      "entity_metrics": {
+        "tp": 26,
+        "fp": 312,
+        "fn": 269,
+        "precision": 0.07692307692307693,
+        "recall": 0.08813559322033898,
+        "f1": 0.0821484992101106,
+        "per_group": {
+          "PERSON": {
+            "tp": 22,
+            "fp": 16,
+            "fn": 2,
+            "precision": 0.5789473684210527,
+            "recall": 0.9166666666666666,
+            "f1": 0.7096774193548387
+          },
+          "DATE_TIME": {
+            "tp": 0,
+            "fp": 140,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "LOCATION": {
+            "tp": 0,
+            "fp": 30,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "PHONE": {
+            "tp": 2,
+            "fp": 16,
+            "fn": 0,
+            "precision": 0.1111111111111111,
+            "recall": 1.0,
+            "f1": 0.19999999999999998
+          },
+          "US_BANK_NUMBER": {
+            "tp": 0,
+            "fp": 22,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "US_DRIVER_LICENSE": {
+            "tp": 0,
+            "fp": 44,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "URL": {
+            "tp": 0,
+            "fp": 41,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "UK_NHS": {
+            "tp": 0,
+            "fp": 3,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "FINANCIAL_ACCOUNT": {
+            "tp": 2,
+            "fp": 0,
+            "fn": 35,
+            "precision": 1.0,
+            "recall": 0.05405405405405406,
+            "f1": 0.10256410256410257
+          },
+          "EMAIL": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 21,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "GOV_ID": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 39,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "SECRET": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 31,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "QUASI": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 102,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "MEDICAL": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 39,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          }
+        },
+        "precision_ci95": {
+          "lower": 0.053,
+          "upper": 0.1103
+        },
+        "recall_ci95": {
+          "lower": 0.0609,
+          "upper": 0.126
+        }
+      },
+      "entity_metrics_strict": {
+        "tp": 26,
+        "fp": 312,
+        "fn": 269,
+        "precision": 0.07692307692307693,
+        "recall": 0.08813559322033898,
+        "f1": 0.0821484992101106,
+        "per_group": {
+          "PERSON": {
+            "tp": 22,
+            "fp": 16,
+            "fn": 2,
+            "precision": 0.5789473684210527,
+            "recall": 0.9166666666666666,
+            "f1": 0.7096774193548387
+          },
+          "DATE_TIME": {
+            "tp": 0,
+            "fp": 140,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "LOCATION": {
+            "tp": 0,
+            "fp": 30,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "PHONE": {
+            "tp": 2,
+            "fp": 16,
+            "fn": 0,
+            "precision": 0.1111111111111111,
+            "recall": 1.0,
+            "f1": 0.19999999999999998
+          },
+          "US_BANK_NUMBER": {
+            "tp": 0,
+            "fp": 22,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "US_DRIVER_LICENSE": {
+            "tp": 0,
+            "fp": 44,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "URL": {
+            "tp": 0,
+            "fp": 41,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "UK_NHS": {
+            "tp": 0,
+            "fp": 3,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "FINANCIAL_ACCOUNT": {
+            "tp": 2,
+            "fp": 0,
+            "fn": 35,
+            "precision": 1.0,
+            "recall": 0.05405405405405406,
+            "f1": 0.10256410256410257
+          },
+          "EMAIL": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 21,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "GOV_ID": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 39,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "SECRET": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 31,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "QUASI": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 102,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "MEDICAL": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 39,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          }
+        }
+      },
+      "flagged_metrics": {
+        "n": 233,
+        "tp": 103,
+        "fp": 42,
+        "fn": 52,
+        "tn": 36,
+        "precision": 0.7103448275862069,
+        "recall": 0.6645161290322581,
+        "f1": 0.6866666666666668,
+        "fpr": 0.5384615384615384,
+        "combo_risk_recall": 0.96,
+        "combo_total": 25,
+        "combo_flagged": 24,
+        "precision_ci95": {
+          "lower": 0.6318,
+          "upper": 0.778
+        },
+        "recall_ci95": {
+          "lower": 0.587,
+          "upper": 0.7341
+        },
+        "combo_risk_recall_ci95": {
+          "lower": 0.8046,
+          "upper": 0.9929
+        }
+      },
+      "decision_accuracy": null,
+      "utility": {
+        "required_retained_rate": 0.7717391304347826,
+        "required_retained_count": 142,
+        "required_total": 184,
+        "sensitive_removed_rate": 0.3254237288135593,
+        "sensitive_removed_count": 96,
+        "sensitive_total": 295,
+        "note": "Retention rate does not prove an AI would answer identically."
+      },
+      "per_category": {
+        "direct_pii": {
+          "n": 23,
+          "entity_metrics": {
+            "tp": 22,
+            "fp": 37,
+            "fn": 23,
+            "precision": 0.3728813559322034,
+            "recall": 0.4888888888888889,
+            "f1": 0.42307692307692313,
+            "per_group": {
+              "PERSON": {
+                "tp": 21,
+                "fp": 0,
+                "fn": 2,
+                "precision": 1.0,
+                "recall": 0.9130434782608695,
+                "f1": 0.9545454545454545
+              },
+              "DATE_TIME": {
+                "tp": 0,
+                "fp": 21,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "LOCATION": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "PHONE": {
+                "tp": 1,
+                "fp": 0,
+                "fn": 0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0
+              },
+              "US_BANK_NUMBER": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "US_DRIVER_LICENSE": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "URL": {
+                "tp": 0,
+                "fp": 13,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "EMAIL": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 21,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 23,
+            "tp": 22,
+            "fp": 1,
+            "fn": 0,
+            "tn": 0,
+            "precision": 0.9565217391304348,
+            "recall": 1.0,
+            "f1": 0.9777777777777777,
+            "fpr": 1.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 0,
+            "required_total": 0,
+            "required_retained_rate": null,
+            "sensitive_removed_count": 35,
+            "sensitive_total": 45,
+            "sensitive_removed_rate": 0.7777777777777778
+          },
+          "low_confidence": false
+        },
+        "india_ids": {
+          "n": 53,
+          "entity_metrics": {
+            "tp": 0,
+            "fp": 16,
+            "fn": 53,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "per_group": {
+              "DATE_TIME": {
+                "tp": 0,
+                "fp": 5,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "URL": {
+                "tp": 0,
+                "fp": 11,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "GOV_ID": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 39,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "FINANCIAL_ACCOUNT": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 14,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 53,
+            "tp": 16,
+            "fp": 0,
+            "fn": 37,
+            "tn": 0,
+            "precision": 1.0,
+            "recall": 0.3018867924528302,
+            "f1": 0.463768115942029,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 0,
+            "required_total": 0,
+            "required_retained_rate": null,
+            "sensitive_removed_count": 16,
+            "sensitive_total": 53,
+            "sensitive_removed_rate": 0.3018867924528302
+          },
+          "low_confidence": false
+        },
+        "secrets": {
+          "n": 31,
+          "entity_metrics": {
+            "tp": 0,
+            "fp": 55,
+            "fn": 31,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "per_group": {
+              "URL": {
+                "tp": 0,
+                "fp": 17,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "DATE_TIME": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "US_BANK_NUMBER": {
+                "tp": 0,
+                "fp": 2,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "US_DRIVER_LICENSE": {
+                "tp": 0,
+                "fp": 18,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "PERSON": {
+                "tp": 0,
+                "fp": 16,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "LOCATION": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "SECRET": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 31,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 31,
+            "tp": 18,
+            "fp": 0,
+            "fn": 13,
+            "tn": 0,
+            "precision": 1.0,
+            "recall": 0.5806451612903226,
+            "f1": 0.7346938775510204,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 0,
+            "required_total": 0,
+            "required_retained_rate": null,
+            "sensitive_removed_count": 3,
+            "sensitive_total": 31,
+            "sensitive_removed_rate": 0.0967741935483871
+          },
+          "low_confidence": false
+        },
+        "financial": {
+          "n": 24,
+          "entity_metrics": {
+            "tp": 2,
+            "fp": 39,
+            "fn": 21,
+            "precision": 0.04878048780487805,
+            "recall": 0.08695652173913043,
+            "f1": 0.06250000000000001,
+            "per_group": {
+              "DATE_TIME": {
+                "tp": 0,
+                "fp": 33,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "FINANCIAL_ACCOUNT": {
+                "tp": 2,
+                "fp": 0,
+                "fn": 21,
+                "precision": 1.0,
+                "recall": 0.08695652173913043,
+                "f1": 0.16
+              },
+              "US_DRIVER_LICENSE": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "PHONE": {
+                "tp": 0,
+                "fp": 2,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "LOCATION": {
+                "tp": 0,
+                "fp": 3,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 24,
+            "tp": 22,
+            "fp": 1,
+            "fn": 1,
+            "tn": 0,
+            "precision": 0.9565217391304348,
+            "recall": 0.9565217391304348,
+            "f1": 0.9565217391304348,
+            "fpr": 1.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 28,
+            "required_total": 49,
+            "required_retained_rate": 0.5714285714285714,
+            "sensitive_removed_count": 13,
+            "sensitive_total": 23,
+            "sensitive_removed_rate": 0.5652173913043478
+          },
+          "low_confidence": false
+        },
+        "indirect_combo": {
+          "n": 26,
+          "entity_metrics": {
+            "tp": 0,
+            "fp": 51,
+            "fn": 101,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "per_group": {
+              "DATE_TIME": {
+                "tp": 0,
+                "fp": 26,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "LOCATION": {
+                "tp": 0,
+                "fp": 25,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "QUASI": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 101,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 26,
+            "tp": 24,
+            "fp": 0,
+            "fn": 1,
+            "tn": 1,
+            "precision": 1.0,
+            "recall": 0.96,
+            "f1": 0.9795918367346939,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.96,
+            "combo_total": 25,
+            "combo_flagged": 24
+          },
+          "utility": {
+            "required_retained_count": 0,
+            "required_total": 0,
+            "required_retained_rate": null,
+            "sensitive_removed_count": 27,
+            "sensitive_total": 101,
+            "sensitive_removed_rate": 0.26732673267326734
+          },
+          "low_confidence": false
+        },
+        "medical": {
+          "n": 20,
+          "entity_metrics": {
+            "tp": 2,
+            "fp": 2,
+            "fn": 39,
+            "precision": 0.5,
+            "recall": 0.04878048780487805,
+            "f1": 0.08888888888888888,
+            "per_group": {
+              "PERSON": {
+                "tp": 1,
+                "fp": 0,
+                "fn": 0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0
+              },
+              "PHONE": {
+                "tp": 1,
+                "fp": 0,
+                "fn": 0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0
+              },
+              "US_BANK_NUMBER": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "US_DRIVER_LICENSE": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "MEDICAL": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 39,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 20,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0,
+            "tn": 19,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 37,
+            "required_total": 37,
+            "required_retained_rate": 1.0,
+            "sensitive_removed_count": 2,
+            "sensitive_total": 41,
+            "sensitive_removed_rate": 0.04878048780487805
+          },
+          "low_confidence": false
+        },
+        "utility_tasks": {
+          "n": 21,
+          "entity_metrics": {
+            "tp": 0,
+            "fp": 58,
+            "fn": 1,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "per_group": {
+              "US_DRIVER_LICENSE": {
+                "tp": 0,
+                "fp": 5,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "DATE_TIME": {
+                "tp": 0,
+                "fp": 53,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "QUASI": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 1,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 21,
+            "tp": 0,
+            "fp": 21,
+            "fn": 0,
+            "tn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "fpr": 1.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 60,
+            "required_total": 62,
+            "required_retained_rate": 0.967741935483871,
+            "sensitive_removed_count": 0,
+            "sensitive_total": 1,
+            "sensitive_removed_rate": 0.0
+          },
+          "low_confidence": false
+        },
+        "hard_negatives": {
+          "n": 35,
+          "entity_metrics": {
+            "tp": 0,
+            "fp": 54,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "per_group": {
+              "DATE_TIME": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "UK_NHS": {
+                "tp": 0,
+                "fp": 3,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "PHONE": {
+                "tp": 0,
+                "fp": 14,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "US_BANK_NUMBER": {
+                "tp": 0,
+                "fp": 18,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "US_DRIVER_LICENSE": {
+                "tp": 0,
+                "fp": 18,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 35,
+            "tp": 0,
+            "fp": 19,
+            "fn": 0,
+            "tn": 16,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "fpr": 0.5428571428571428,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 17,
+            "required_total": 36,
+            "required_retained_rate": 0.4722222222222222,
+            "sensitive_removed_count": 0,
+            "sensitive_total": 0,
+            "sensitive_removed_rate": null
+          },
+          "low_confidence": false
+        }
+      },
+      "latency": {
+        "p50_ms": 5.887999956030399,
+        "p95_ms": 8.482599980197847,
+        "n_measurements": 699,
+        "passes": 3,
+        "warmup_calls": 5
+      }
+    },
+    "veilguard_type_based": {
+      "entity_metrics": {
+        "tp": 105,
+        "fp": 84,
+        "fn": 190,
+        "precision": 0.5555555555555556,
+        "recall": 0.3559322033898305,
+        "f1": 0.4338842975206612,
+        "per_group": {
+          "PERSON": {
+            "tp": 20,
+            "fp": 38,
+            "fn": 4,
+            "precision": 0.3448275862068966,
+            "recall": 0.8333333333333334,
+            "f1": 0.4878048780487806
+          },
+          "PHONE": {
+            "tp": 2,
+            "fp": 13,
+            "fn": 0,
+            "precision": 0.13333333333333333,
+            "recall": 1.0,
+            "f1": 0.23529411764705882
+          },
+          "GOV_ID": {
+            "tp": 37,
+            "fp": 2,
+            "fn": 2,
+            "precision": 0.9487179487179487,
+            "recall": 0.9487179487179487,
+            "f1": 0.9487179487179487
+          },
+          "SECRET": {
+            "tp": 30,
+            "fp": 1,
+            "fn": 1,
+            "precision": 0.967741935483871,
+            "recall": 0.967741935483871,
+            "f1": 0.967741935483871
+          },
+          "LOCATION": {
+            "tp": 0,
+            "fp": 30,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "FINANCIAL_ACCOUNT": {
+            "tp": 16,
+            "fp": 0,
+            "fn": 21,
+            "precision": 1.0,
+            "recall": 0.43243243243243246,
+            "f1": 0.6037735849056604
+          },
+          "EMAIL": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 21,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "QUASI": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 102,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "MEDICAL": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 39,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          }
+        },
+        "precision_ci95": {
+          "lower": 0.4843,
+          "upper": 0.6246
+        },
+        "recall_ci95": {
+          "lower": 0.3035,
+          "upper": 0.4121
+        }
+      },
+      "entity_metrics_strict": {
+        "tp": 105,
+        "fp": 84,
+        "fn": 190,
+        "precision": 0.5555555555555556,
+        "recall": 0.3559322033898305,
+        "f1": 0.4338842975206612,
+        "per_group": {
+          "PERSON": {
+            "tp": 20,
+            "fp": 38,
+            "fn": 4,
+            "precision": 0.3448275862068966,
+            "recall": 0.8333333333333334,
+            "f1": 0.4878048780487806
+          },
+          "PHONE": {
+            "tp": 2,
+            "fp": 13,
+            "fn": 0,
+            "precision": 0.13333333333333333,
+            "recall": 1.0,
+            "f1": 0.23529411764705882
+          },
+          "GOV_ID": {
+            "tp": 37,
+            "fp": 2,
+            "fn": 2,
+            "precision": 0.9487179487179487,
+            "recall": 0.9487179487179487,
+            "f1": 0.9487179487179487
+          },
+          "SECRET": {
+            "tp": 30,
+            "fp": 1,
+            "fn": 1,
+            "precision": 0.967741935483871,
+            "recall": 0.967741935483871,
+            "f1": 0.967741935483871
+          },
+          "LOCATION": {
+            "tp": 0,
+            "fp": 30,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "FINANCIAL_ACCOUNT": {
+            "tp": 16,
+            "fp": 0,
+            "fn": 21,
+            "precision": 1.0,
+            "recall": 0.43243243243243246,
+            "f1": 0.6037735849056604
+          },
+          "EMAIL": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 21,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "QUASI": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 102,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "MEDICAL": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 39,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          }
+        }
+      },
+      "flagged_metrics": {
+        "n": 233,
+        "tp": 90,
+        "fp": 11,
+        "fn": 65,
+        "tn": 67,
+        "precision": 0.8910891089108911,
+        "recall": 0.5806451612903226,
+        "f1": 0.7031250000000001,
+        "fpr": 0.14102564102564102,
+        "combo_risk_recall": 0.0,
+        "combo_total": 25,
+        "combo_flagged": 0,
+        "precision_ci95": {
+          "lower": 0.8154,
+          "upper": 0.9381
+        },
+        "recall_ci95": {
+          "lower": 0.5019,
+          "upper": 0.6555
+        },
+        "combo_risk_recall_ci95": {
+          "lower": 0.0,
+          "upper": 0.1332
+        }
+      },
+      "decision_accuracy": {
+        "n": 233,
+        "correct": 157,
+        "accuracy": 0.6738197424892703,
+        "confusion_matrix": {
+          "allow": {
+            "allow": 67,
+            "redact": 11,
+            "require_approval": 0,
+            "block": 0
+          },
+          "redact": {
+            "allow": 40,
+            "redact": 59,
+            "require_approval": 0,
+            "block": 0
+          },
+          "require_approval": {
+            "allow": 25,
+            "redact": 0,
+            "require_approval": 0,
+            "block": 0
+          },
+          "block": {
+            "allow": 0,
+            "redact": 0,
+            "require_approval": 0,
+            "block": 31
+          }
+        }
+      },
+      "utility": {
+        "required_retained_rate": 0.9402173913043478,
+        "required_retained_count": 173,
+        "required_total": 184,
+        "sensitive_removed_rate": 0.31186440677966104,
+        "sensitive_removed_count": 92,
+        "sensitive_total": 295,
+        "note": "Retention rate does not prove an AI would answer identically."
+      },
+      "per_category": {
+        "direct_pii": {
+          "n": 23,
+          "entity_metrics": {
+            "tp": 20,
+            "fp": 1,
+            "fn": 25,
+            "precision": 0.9523809523809523,
+            "recall": 0.4444444444444444,
+            "f1": 0.6060606060606061,
+            "per_group": {
+              "PERSON": {
+                "tp": 19,
+                "fp": 0,
+                "fn": 4,
+                "precision": 1.0,
+                "recall": 0.8260869565217391,
+                "f1": 0.9047619047619047
+              },
+              "PHONE": {
+                "tp": 1,
+                "fp": 0,
+                "fn": 0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0
+              },
+              "LOCATION": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "EMAIL": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 21,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 23,
+            "tp": 1,
+            "fp": 0,
+            "fn": 21,
+            "tn": 1,
+            "precision": 1.0,
+            "recall": 0.045454545454545456,
+            "f1": 0.08695652173913045,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 0,
+            "required_total": 0,
+            "required_retained_rate": null,
+            "sensitive_removed_count": 2,
+            "sensitive_total": 45,
+            "sensitive_removed_rate": 0.044444444444444446
+          },
+          "low_confidence": false
+        },
+        "india_ids": {
+          "n": 53,
+          "entity_metrics": {
+            "tp": 51,
+            "fp": 25,
+            "fn": 2,
+            "precision": 0.6710526315789473,
+            "recall": 0.9622641509433962,
+            "f1": 0.7906976744186047,
+            "per_group": {
+              "GOV_ID": {
+                "tp": 37,
+                "fp": 0,
+                "fn": 2,
+                "precision": 1.0,
+                "recall": 0.9487179487179487,
+                "f1": 0.9736842105263158
+              },
+              "PERSON": {
+                "tp": 0,
+                "fp": 14,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "LOCATION": {
+                "tp": 0,
+                "fp": 11,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "FINANCIAL_ACCOUNT": {
+                "tp": 14,
+                "fp": 0,
+                "fn": 0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 53,
+            "tp": 51,
+            "fp": 0,
+            "fn": 2,
+            "tn": 0,
+            "precision": 1.0,
+            "recall": 0.9622641509433962,
+            "f1": 0.9807692307692307,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 0,
+            "required_total": 0,
+            "required_retained_rate": null,
+            "sensitive_removed_count": 51,
+            "sensitive_total": 53,
+            "sensitive_removed_rate": 0.9622641509433962
+          },
+          "low_confidence": false
+        },
+        "secrets": {
+          "n": 31,
+          "entity_metrics": {
+            "tp": 30,
+            "fp": 18,
+            "fn": 1,
+            "precision": 0.625,
+            "recall": 0.967741935483871,
+            "f1": 0.759493670886076,
+            "per_group": {
+              "SECRET": {
+                "tp": 30,
+                "fp": 1,
+                "fn": 1,
+                "precision": 0.967741935483871,
+                "recall": 0.967741935483871,
+                "f1": 0.967741935483871
+              },
+              "PERSON": {
+                "tp": 0,
+                "fp": 16,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "LOCATION": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 31,
+            "tp": 31,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 0,
+            "required_total": 0,
+            "required_retained_rate": null,
+            "sensitive_removed_count": 31,
+            "sensitive_total": 31,
+            "sensitive_removed_rate": 1.0
+          },
+          "low_confidence": false
+        },
+        "financial": {
+          "n": 24,
+          "entity_metrics": {
+            "tp": 2,
+            "fp": 5,
+            "fn": 21,
+            "precision": 0.2857142857142857,
+            "recall": 0.08695652173913043,
+            "f1": 0.13333333333333333,
+            "per_group": {
+              "FINANCIAL_ACCOUNT": {
+                "tp": 2,
+                "fp": 0,
+                "fn": 21,
+                "precision": 1.0,
+                "recall": 0.08695652173913043,
+                "f1": 0.16
+              },
+              "PHONE": {
+                "tp": 0,
+                "fp": 2,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "PERSON": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "GOV_ID": {
+                "tp": 0,
+                "fp": 2,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 24,
+            "tp": 6,
+            "fp": 0,
+            "fn": 17,
+            "tn": 1,
+            "precision": 1.0,
+            "recall": 0.2608695652173913,
+            "f1": 0.41379310344827586,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 49,
+            "required_total": 49,
+            "required_retained_rate": 1.0,
+            "sensitive_removed_count": 6,
+            "sensitive_total": 23,
+            "sensitive_removed_rate": 0.2608695652173913
+          },
+          "low_confidence": false
+        },
+        "indirect_combo": {
+          "n": 26,
+          "entity_metrics": {
+            "tp": 0,
+            "fp": 20,
+            "fn": 101,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "per_group": {
+              "LOCATION": {
+                "tp": 0,
+                "fp": 17,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "PERSON": {
+                "tp": 0,
+                "fp": 3,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "QUASI": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 101,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 26,
+            "tp": 0,
+            "fp": 0,
+            "fn": 25,
+            "tn": 1,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 25,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 0,
+            "required_total": 0,
+            "required_retained_rate": null,
+            "sensitive_removed_count": 0,
+            "sensitive_total": 101,
+            "sensitive_removed_rate": 0.0
+          },
+          "low_confidence": false
+        },
+        "medical": {
+          "n": 20,
+          "entity_metrics": {
+            "tp": 2,
+            "fp": 0,
+            "fn": 39,
+            "precision": 1.0,
+            "recall": 0.04878048780487805,
+            "f1": 0.09302325581395349,
+            "per_group": {
+              "PERSON": {
+                "tp": 1,
+                "fp": 0,
+                "fn": 0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0
+              },
+              "PHONE": {
+                "tp": 1,
+                "fp": 0,
+                "fn": 0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0
+              },
+              "MEDICAL": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 39,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 20,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0,
+            "tn": 19,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 37,
+            "required_total": 37,
+            "required_retained_rate": 1.0,
+            "sensitive_removed_count": 2,
+            "sensitive_total": 41,
+            "sensitive_removed_rate": 0.04878048780487805
+          },
+          "low_confidence": false
+        },
+        "utility_tasks": {
+          "n": 21,
+          "entity_metrics": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 1,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "per_group": {
+              "QUASI": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 1,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 21,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 21,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 62,
+            "required_total": 62,
+            "required_retained_rate": 1.0,
+            "sensitive_removed_count": 0,
+            "sensitive_total": 1,
+            "sensitive_removed_rate": 0.0
+          },
+          "low_confidence": false
+        },
+        "hard_negatives": {
+          "n": 35,
+          "entity_metrics": {
+            "tp": 0,
+            "fp": 15,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "per_group": {
+              "PHONE": {
+                "tp": 0,
+                "fp": 11,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "PERSON": {
+                "tp": 0,
+                "fp": 4,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 35,
+            "tp": 0,
+            "fp": 11,
+            "fn": 0,
+            "tn": 24,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "fpr": 0.3142857142857143,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 25,
+            "required_total": 36,
+            "required_retained_rate": 0.6944444444444444,
+            "sensitive_removed_count": 0,
+            "sensitive_total": 0,
+            "sensitive_removed_rate": null
+          },
+          "low_confidence": false
+        }
+      },
+      "latency": {
+        "p50_ms": 7.40800000494346,
+        "p95_ms": 12.721599952783436,
+        "n_measurements": 699,
+        "passes": 3,
+        "warmup_calls": 5
+      }
+    },
+    "veilguard_full": {
+      "entity_metrics": {
+        "tp": 236,
+        "fp": 133,
+        "fn": 59,
+        "precision": 0.6395663956639567,
+        "recall": 0.8,
+        "f1": 0.710843373493976,
+        "per_group": {
+          "PERSON": {
+            "tp": 20,
+            "fp": 38,
+            "fn": 4,
+            "precision": 0.3448275862068966,
+            "recall": 0.8333333333333334,
+            "f1": 0.4878048780487806
+          },
+          "QUASI": {
+            "tp": 92,
+            "fp": 49,
+            "fn": 10,
+            "precision": 0.6524822695035462,
+            "recall": 0.9019607843137255,
+            "f1": 0.7572016460905351
+          },
+          "PHONE": {
+            "tp": 2,
+            "fp": 13,
+            "fn": 0,
+            "precision": 0.13333333333333333,
+            "recall": 1.0,
+            "f1": 0.23529411764705882
+          },
+          "GOV_ID": {
+            "tp": 37,
+            "fp": 2,
+            "fn": 2,
+            "precision": 0.9487179487179487,
+            "recall": 0.9487179487179487,
+            "f1": 0.9487179487179487
+          },
+          "SECRET": {
+            "tp": 30,
+            "fp": 1,
+            "fn": 1,
+            "precision": 0.967741935483871,
+            "recall": 0.967741935483871,
+            "f1": 0.967741935483871
+          },
+          "MEDICAL": {
+            "tp": 39,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+          },
+          "LOCATION": {
+            "tp": 0,
+            "fp": 30,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "FINANCIAL_ACCOUNT": {
+            "tp": 16,
+            "fp": 0,
+            "fn": 21,
+            "precision": 1.0,
+            "recall": 0.43243243243243246,
+            "f1": 0.6037735849056604
+          },
+          "EMAIL": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 21,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          }
+        },
+        "precision_ci95": {
+          "lower": 0.5894,
+          "upper": 0.6869
+        },
+        "recall_ci95": {
+          "lower": 0.7506,
+          "upper": 0.8417
+        }
+      },
+      "entity_metrics_strict": {
+        "tp": 211,
+        "fp": 158,
+        "fn": 84,
+        "precision": 0.5718157181571816,
+        "recall": 0.7152542372881356,
+        "f1": 0.6355421686746987,
+        "per_group": {
+          "PERSON": {
+            "tp": 20,
+            "fp": 38,
+            "fn": 4,
+            "precision": 0.3448275862068966,
+            "recall": 0.8333333333333334,
+            "f1": 0.4878048780487806
+          },
+          "QUASI": {
+            "tp": 67,
+            "fp": 74,
+            "fn": 35,
+            "precision": 0.475177304964539,
+            "recall": 0.6568627450980392,
+            "f1": 0.5514403292181069
+          },
+          "PHONE": {
+            "tp": 2,
+            "fp": 13,
+            "fn": 0,
+            "precision": 0.13333333333333333,
+            "recall": 1.0,
+            "f1": 0.23529411764705882
+          },
+          "GOV_ID": {
+            "tp": 37,
+            "fp": 2,
+            "fn": 2,
+            "precision": 0.9487179487179487,
+            "recall": 0.9487179487179487,
+            "f1": 0.9487179487179487
+          },
+          "SECRET": {
+            "tp": 30,
+            "fp": 1,
+            "fn": 1,
+            "precision": 0.967741935483871,
+            "recall": 0.967741935483871,
+            "f1": 0.967741935483871
+          },
+          "MEDICAL": {
+            "tp": 39,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+          },
+          "LOCATION": {
+            "tp": 0,
+            "fp": 30,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "FINANCIAL_ACCOUNT": {
+            "tp": 16,
+            "fp": 0,
+            "fn": 21,
+            "precision": 1.0,
+            "recall": 0.43243243243243246,
+            "f1": 0.6037735849056604
+          },
+          "EMAIL": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 21,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          }
+        }
+      },
+      "flagged_metrics": {
+        "n": 233,
+        "tp": 93,
+        "fp": 11,
+        "fn": 62,
+        "tn": 67,
+        "precision": 0.8942307692307693,
+        "recall": 0.6,
+        "f1": 0.7181467181467182,
+        "fpr": 0.14102564102564102,
+        "combo_risk_recall": 0.12,
+        "combo_total": 25,
+        "combo_flagged": 3,
+        "precision_ci95": {
+          "lower": 0.8205,
+          "upper": 0.9399
+        },
+        "recall_ci95": {
+          "lower": 0.5214,
+          "upper": 0.6738
+        },
+        "combo_risk_recall_ci95": {
+          "lower": 0.0417,
+          "upper": 0.2996
+        }
+      },
+      "decision_accuracy": {
+        "n": 233,
+        "correct": 136,
+        "accuracy": 0.5836909871244635,
+        "confusion_matrix": {
+          "allow": {
+            "allow": 67,
+            "redact": 11,
+            "require_approval": 0,
+            "block": 0
+          },
+          "redact": {
+            "allow": 40,
+            "redact": 38,
+            "require_approval": 21,
+            "block": 0
+          },
+          "require_approval": {
+            "allow": 22,
+            "redact": 3,
+            "require_approval": 0,
+            "block": 0
+          },
+          "block": {
+            "allow": 0,
+            "redact": 0,
+            "require_approval": 0,
+            "block": 31
+          }
+        }
+      },
+      "utility": {
+        "required_retained_rate": 0.9402173913043478,
+        "required_retained_count": 173,
+        "required_total": 184,
+        "sensitive_removed_rate": 0.26440677966101694,
+        "sensitive_removed_count": 78,
+        "sensitive_total": 295,
+        "note": "Retention rate does not prove an AI would answer identically."
+      },
+      "per_category": {
+        "direct_pii": {
+          "n": 23,
+          "entity_metrics": {
+            "tp": 20,
+            "fp": 8,
+            "fn": 25,
+            "precision": 0.7142857142857143,
+            "recall": 0.4444444444444444,
+            "f1": 0.5479452054794521,
+            "per_group": {
+              "PERSON": {
+                "tp": 19,
+                "fp": 0,
+                "fn": 4,
+                "precision": 1.0,
+                "recall": 0.8260869565217391,
+                "f1": 0.9047619047619047
+              },
+              "QUASI": {
+                "tp": 0,
+                "fp": 7,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "PHONE": {
+                "tp": 1,
+                "fp": 0,
+                "fn": 0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0
+              },
+              "LOCATION": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "EMAIL": {
+                "tp": 0,
+                "fp": 0,
+                "fn": 21,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 23,
+            "tp": 1,
+            "fp": 0,
+            "fn": 21,
+            "tn": 1,
+            "precision": 1.0,
+            "recall": 0.045454545454545456,
+            "f1": 0.08695652173913045,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 0,
+            "required_total": 0,
+            "required_retained_rate": null,
+            "sensitive_removed_count": 2,
+            "sensitive_total": 45,
+            "sensitive_removed_rate": 0.044444444444444446
+          },
+          "low_confidence": false
+        },
+        "india_ids": {
+          "n": 53,
+          "entity_metrics": {
+            "tp": 51,
+            "fp": 51,
+            "fn": 2,
+            "precision": 0.5,
+            "recall": 0.9622641509433962,
+            "f1": 0.6580645161290323,
+            "per_group": {
+              "QUASI": {
+                "tp": 0,
+                "fp": 26,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "GOV_ID": {
+                "tp": 37,
+                "fp": 0,
+                "fn": 2,
+                "precision": 1.0,
+                "recall": 0.9487179487179487,
+                "f1": 0.9736842105263158
+              },
+              "PERSON": {
+                "tp": 0,
+                "fp": 14,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "LOCATION": {
+                "tp": 0,
+                "fp": 11,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "FINANCIAL_ACCOUNT": {
+                "tp": 14,
+                "fp": 0,
+                "fn": 0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 53,
+            "tp": 51,
+            "fp": 0,
+            "fn": 2,
+            "tn": 0,
+            "precision": 1.0,
+            "recall": 0.9622641509433962,
+            "f1": 0.9807692307692307,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 0,
+            "required_total": 0,
+            "required_retained_rate": null,
+            "sensitive_removed_count": 30,
+            "sensitive_total": 53,
+            "sensitive_removed_rate": 0.5660377358490566
+          },
+          "low_confidence": false
+        },
+        "secrets": {
+          "n": 31,
+          "entity_metrics": {
+            "tp": 30,
+            "fp": 34,
+            "fn": 1,
+            "precision": 0.46875,
+            "recall": 0.967741935483871,
+            "f1": 0.631578947368421,
+            "per_group": {
+              "SECRET": {
+                "tp": 30,
+                "fp": 1,
+                "fn": 1,
+                "precision": 0.967741935483871,
+                "recall": 0.967741935483871,
+                "f1": 0.967741935483871
+              },
+              "QUASI": {
+                "tp": 0,
+                "fp": 16,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "PERSON": {
+                "tp": 0,
+                "fp": 16,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "LOCATION": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 31,
+            "tp": 31,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 0,
+            "required_total": 0,
+            "required_retained_rate": null,
+            "sensitive_removed_count": 31,
+            "sensitive_total": 31,
+            "sensitive_removed_rate": 1.0
+          },
+          "low_confidence": false
+        },
+        "financial": {
+          "n": 24,
+          "entity_metrics": {
+            "tp": 2,
+            "fp": 14,
+            "fn": 21,
+            "precision": 0.125,
+            "recall": 0.08695652173913043,
+            "f1": 0.10256410256410256,
+            "per_group": {
+              "QUASI": {
+                "tp": 0,
+                "fp": 9,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "FINANCIAL_ACCOUNT": {
+                "tp": 2,
+                "fp": 0,
+                "fn": 21,
+                "precision": 1.0,
+                "recall": 0.08695652173913043,
+                "f1": 0.16
+              },
+              "PHONE": {
+                "tp": 0,
+                "fp": 2,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "PERSON": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "GOV_ID": {
+                "tp": 0,
+                "fp": 2,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 24,
+            "tp": 6,
+            "fp": 0,
+            "fn": 17,
+            "tn": 1,
+            "precision": 1.0,
+            "recall": 0.2608695652173913,
+            "f1": 0.41379310344827586,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 49,
+            "required_total": 49,
+            "required_retained_rate": 1.0,
+            "sensitive_removed_count": 6,
+            "sensitive_total": 23,
+            "sensitive_removed_rate": 0.2608695652173913
+          },
+          "low_confidence": false
+        },
+        "indirect_combo": {
+          "n": 26,
+          "entity_metrics": {
+            "tp": 77,
+            "fp": 22,
+            "fn": 24,
+            "precision": 0.7777777777777778,
+            "recall": 0.7623762376237624,
+            "f1": 0.7699999999999999,
+            "per_group": {
+              "QUASI": {
+                "tp": 77,
+                "fp": 2,
+                "fn": 24,
+                "precision": 0.9746835443037974,
+                "recall": 0.7623762376237624,
+                "f1": 0.8555555555555555
+              },
+              "LOCATION": {
+                "tp": 0,
+                "fp": 17,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "PERSON": {
+                "tp": 0,
+                "fp": 3,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 26,
+            "tp": 3,
+            "fp": 0,
+            "fn": 22,
+            "tn": 1,
+            "precision": 1.0,
+            "recall": 0.12,
+            "f1": 0.21428571428571425,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.12,
+            "combo_total": 25,
+            "combo_flagged": 3
+          },
+          "utility": {
+            "required_retained_count": 0,
+            "required_total": 0,
+            "required_retained_rate": null,
+            "sensitive_removed_count": 7,
+            "sensitive_total": 101,
+            "sensitive_removed_rate": 0.06930693069306931
+          },
+          "low_confidence": false
+        },
+        "medical": {
+          "n": 20,
+          "entity_metrics": {
+            "tp": 41,
+            "fp": 1,
+            "fn": 0,
+            "precision": 0.9761904761904762,
+            "recall": 1.0,
+            "f1": 0.9879518072289156,
+            "per_group": {
+              "PERSON": {
+                "tp": 1,
+                "fp": 0,
+                "fn": 0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0
+              },
+              "PHONE": {
+                "tp": 1,
+                "fp": 0,
+                "fn": 0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0
+              },
+              "MEDICAL": {
+                "tp": 39,
+                "fp": 0,
+                "fn": 0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0
+              },
+              "QUASI": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 20,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0,
+            "tn": 19,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 37,
+            "required_total": 37,
+            "required_retained_rate": 1.0,
+            "sensitive_removed_count": 2,
+            "sensitive_total": 41,
+            "sensitive_removed_rate": 0.04878048780487805
+          },
+          "low_confidence": false
+        },
+        "utility_tasks": {
+          "n": 21,
+          "entity_metrics": {
+            "tp": 1,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "per_group": {
+              "QUASI": {
+                "tp": 1,
+                "fp": 0,
+                "fn": 0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1": 1.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 21,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 21,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "fpr": 0.0,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 62,
+            "required_total": 62,
+            "required_retained_rate": 1.0,
+            "sensitive_removed_count": 0,
+            "sensitive_total": 1,
+            "sensitive_removed_rate": 0.0
+          },
+          "low_confidence": false
+        },
+        "hard_negatives": {
+          "n": 35,
+          "entity_metrics": {
+            "tp": 0,
+            "fp": 17,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "per_group": {
+              "PHONE": {
+                "tp": 0,
+                "fp": 11,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "QUASI": {
+                "tp": 0,
+                "fp": 2,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "PERSON": {
+                "tp": 0,
+                "fp": 4,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            }
+          },
+          "flagged_metrics": {
+            "n": 35,
+            "tp": 0,
+            "fp": 11,
+            "fn": 0,
+            "tn": 24,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "fpr": 0.3142857142857143,
+            "combo_risk_recall": 0.0,
+            "combo_total": 0,
+            "combo_flagged": 0
+          },
+          "utility": {
+            "required_retained_count": 25,
+            "required_total": 36,
+            "required_retained_rate": 0.6944444444444444,
+            "sensitive_removed_count": 0,
+            "sensitive_total": 0,
+            "sensitive_removed_rate": null
+          },
+          "low_confidence": false
+        }
+      },
+      "latency": {
+        "p50_ms": 15.09439997607842,
+        "p95_ms": 26.392700034193695,
+        "n_measurements": 699,
+        "passes": 3,
+        "warmup_calls": 5
+      }
+    }
+  }
+}
