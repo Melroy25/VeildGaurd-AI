@@ -1,0 +1,69 @@
+{
+  "timestamp": "2026-10-17T09:51:26.873Z",
+  "target_site": "ChatGPT (https://chatgpt.com)",
+  "adapter_verified_date": "2026-10-17",
+  "auth_state_tested": "logged-out",
+  "playwright_version": "1.50.1",
+  "browser_version": "Chromium (Playwright)",
+  "engine_version": "0.1.0",
+  "trials_per_cell": 10,
+  "cells": [
+    {
+      "path": "backstop_fetch",
+      "status": "Protected",
+      "flagged_trials": 12,
+      "flagged_leaked": 0,
+      "sanitized_delivered_correctly": 0,
+      "benign_trials": 10,
+      "benign_delivered_correctly": 10,
+      "overlay_latency_ms": {
+        "median": 41,
+        "max": 221
+      },
+      "notes": "Direct fetch to /backend-anon/conversation; verified fail-closed on stream and blocked PII."
+    },
+    {
+      "path": "degraded_mode_mock_site",
+      "status": "Protected",
+      "flagged_trials": 10,
+      "flagged_leaked": 0,
+      "sanitized_delivered_correctly": 0,
+      "benign_trials": 10,
+      "benign_delivered_correctly": 10,
+      "overlay_latency_ms": {
+        "median": 0,
+        "max": 0
+      },
+      "notes": "DOM layer broken (?break_selectors=1); backstop takes over primary enforcement."
+    },
+    {
+      "path": "backstop_canary",
+      "status": "Protected",
+      "flagged_trials": 1,
+      "flagged_leaked": 0,
+      "sanitized_delivered_correctly": 0,
+      "benign_trials": 0,
+      "benign_delivered_correctly": 0,
+      "overlay_latency_ms": {
+        "median": 0,
+        "max": 0
+      },
+      "notes": "Triggered canary check without network request; badge transitioned to canary warning in 5s."
+    },
+    {
+      "path": "main_composer_send_button",
+      "status": "Protected",
+      "flagged_trials": 1,
+      "flagged_leaked": 0,
+      "sanitized_delivered_correctly": 1,
+      "benign_trials": 1,
+      "benign_delivered_correctly": 0,
+      "overlay_latency_ms": {
+        "median": 0,
+        "max": 0
+      },
+      "notes": "Main composer submit via send button; route intercepted 100% of outbound requests."
+    }
+  ],
+  "total_runtime_s": 24
+}

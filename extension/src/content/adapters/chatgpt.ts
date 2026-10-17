@@ -22,11 +22,15 @@ export const CHATGPT_SELECTORS = {
   // Main prompt composers: Test IDs and stable IDs first, then roles, then structural classes
   mainComposers: [
     "#prompt-textarea",
+    "#mobile-composer-prompt",
+    "textarea[placeholder='Ask ChatGPT']",
+    "textarea[aria-label='Chat with ChatGPT']",
     "[data-testid='prompt-textarea']",
     "div.ProseMirror#prompt-textarea",
     "div.ProseMirror[contenteditable='true']",
     "textarea#prompt-textarea",
     "textarea[data-testid='prompt-textarea']",
+    "textarea",
   ],
 
   // Main send buttons: Test IDs first, then ARIA labels, then fallback IDs
@@ -111,10 +115,10 @@ export class ChatGPTAdapter implements SiteAdapter {
 
   /**
    * Outbound chat endpoints for ChatGPT.
-   * Matches both standard authenticated `/backend-api/conversation`
-   * and anonymous `/backend-anon/conversation`.
+   * Matches authenticated `/backend-api/conversation`,
+   * anonymous `/backend-anon/conversation`, and unauth `/unauth-mweb/conversation`.
    */
-  readonly chatEndpoint = /https?:\/\/[^/]+\/(backend-api|backend-anon)\/conversation/;
+  readonly chatEndpoint = /https?:\/\/[^/]+\/(backend-api|backend-anon|unauth-mweb)\/conversation/;
 
   /** Tracks the last matched selector for observability/diagnostics (metadata only). */
   private lastMatchedSelector: string | null = null;
@@ -299,13 +303,31 @@ export class ChatGPTAdapter implements SiteAdapter {
    */
   private writeToElement(element: HTMLElement, text: string): boolean {
     if (element instanceof HTMLTextAreaElement) {
+      element.focus();
+      // Reset React internal valueTracker so React onChange/onInput detects the update
+      const tracker = (element as unknown as { _valueTracker?: { setValue(v: string): void } })._valueTracker;
+      if (tracker) {
+        tracker.setValue("");
+      }
+
       const nativeSetter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set;
       if (nativeSetter) {
         nativeSetter.call(element, text);
       } else {
         element.value = text;
       }
-      element.dispatchEvent(new Event("input", { bubbles: true }));
+      try {
+        element.dispatchEvent(
+          new InputEvent("input", {
+            bubbles: true,
+            composed: true,
+            inputType: "insertText",
+            data: text,
+          })
+        );
+      } catch {
+        element.dispatchEvent(new Event("input", { bubbles: true }));
+      }
       element.dispatchEvent(new Event("change", { bubbles: true }));
       return normalizeForCompare(element.value) === normalizeForCompare(text);
     }
@@ -362,7 +384,7 @@ export class ChatGPTAdapter implements SiteAdapter {
 
   triggerSend(): void {
     const btn = this.getSendButton();
-    if (btn) {
+    if (btn && !(btn as HTMLButtonElement).disabled) {
       btn.click();
       return;
     }
@@ -375,10 +397,15 @@ export class ChatGPTAdapter implements SiteAdapter {
           key: "Enter",
           code: "Enter",
           keyCode: 13,
+          which: 13,
           bubbles: true,
           cancelable: true,
         })
       );
+    }
+
+    if (btn) {
+      btn.click();
     }
   }
 

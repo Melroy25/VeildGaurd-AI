@@ -27,10 +27,14 @@
 | **Popup Status** | Phase 3c | **Implemented** | `tests/e2e/dashboard-popup.spec.ts` (Test 10 — connected, active profile, protected on mock site, engine unreachable when down, not active on about:blank) |
 | **Event Export and Clear** | Phase 3c | **Implemented** | `tests/e2e/dashboard-popup.spec.ts` (Tests 5, 6 — whitelist-only JSON/CSV download, two-click confirmation purge) |
 | **Recording Pause Switch** | Phase 3c | **Implemented** | `tests/e2e/dashboard-popup.spec.ts` (Test 7 — pause stops event recording while review overlay and interception remain active) |
+| **Target AI Site Adapter — ChatGPT** | Phase 4 | **Implemented** | `extension/src/content/adapters/chatgpt.ts` — live selectors, ProseMirror & textarea write, React `_valueTracker` reset, `resolveContext()`, payload extraction; verified 2026-10-17 on `https://chatgpt.com` |
+| **Degraded Mode & Limited-Protection Badge** | Phase 4 | **Implemented** | `tests/e2e/degraded-canary.spec.ts` — `?break_selectors=1` backstop enforcement, sensitive blocked with 0 leaks, benign allowed; `bench/results/enforcement_real_site.json` cell `degraded_mode_mock_site` (Protected, 10/10 trials) |
+| **Backstop Canary Warning** | Phase 4 | **Implemented** | `tests/e2e/degraded-canary.spec.ts` — canary badge timeout verified ≤15.2s; `bench/results/enforcement_real_site.json` cell `backstop_canary` (Protected) |
+| **Real-Site Network-Boundary Harness** | Phase 4 | **Implemented** | `tests/e2e-real/chatgpt.spec.ts`, `playwright.real.config.ts`, `scripts/run-real-site.mjs`; opt-in via `VG_REAL_SITE=1`; 100% of chat requests stubbed via `page.route`; results in `bench/results/enforcement_real_site.json` |
+| **ChatGPT Real-Site Enforcement** | Phase 4 | **Implemented** | `bench/results/enforcement_real_site.json` — backstop_fetch: Protected (0 leaks / 12 flagged); degraded_mode_mock_site: Protected; backstop_canary: Protected; main_composer_send_button: Protected (1 trial, 0 leaks, sanitized delivered) |
 | **Task Intent & Necessity Matrix** | Phase 5 | **Planned** | — |
 | **Quasi-Identifier & Re-ID Scorer** | Phase 5 | **Planned** | — |
 | **Utility-Preserving Sanitizer (task-aware)** | Phase 5 | **Planned** | — |
-| **Target AI Site Adapter** | Phase 4 | **Planned** | — |
 | **Reproducible Benchmark Suite** | Phase 6 | **Planned** | — |
 | **PyMuPDF Document Redaction** | Phase 7 | **Planned** | — |
 | **Vault & Response Rehydration** | Phase 8 | **Planned** | — |

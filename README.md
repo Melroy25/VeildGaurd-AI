@@ -1,6 +1,6 @@
 # VeilGuard AI: Context-Aware Privacy Firewall for AI Tools
 
-> **Project Status:** **Phase 1 complete (mock-site testbed), Phase 2 complete (detection engine & /scan API), Phase 3a complete (policy engine & sanitizer), Phase 3b complete (extension + engine integration, review overlay, session vault, 14-cell enforcement matrix), Phase 3c complete (metadata dashboard, popup status, export, pause switch).**
+> **Project Status:** **Phase 1 complete (mock-site testbed), Phase 2 complete (detection engine & /scan API), Phase 3a complete (policy engine & sanitizer), Phase 3b complete (extension + engine integration, review overlay, session vault, 14-cell enforcement matrix), Phase 3c complete (metadata dashboard, popup status, export, pause switch), Phase 4 complete (ChatGPT adapter, degraded mode, canary, real-site network-boundary harness & measurement).**
 
 VeilGuard AI is a context-aware privacy firewall designed to sit between users and AI interfaces. When users paste sensitive data—such as customer conversations, financial records, medical notes, or system secrets—VeilGuard intercepts submissions, evaluates context and task necessity, enforces configurable privacy policies, produces utility-preserving pseudonymized prompts, and records metadata-only audit logs.
 
@@ -195,6 +195,43 @@ Runs the full end-to-end browser test suites against the real Python loopback en
 - `tests/e2e/dashboard-popup.spec.ts` (36 tests): Dashboard rendering, filtering, export, privacy assertions, popup statuses, 1000-event render benchmark, and offline CSP compliance.
 - `tests/e2e/enforcement-full-chain.spec.ts`: Full-chain 14-cell enforcement matrix across all composers, wirings, and paths.
 - `tests/e2e/scenarios.spec.ts`: 15 comprehensive edge-case scenarios (approval, block, double Enter, emoji, XSS, backstop, vault consistency).
+
+### 4. Degraded-Mode & Canary E2E Tests
+```bash
+npm run test:e2e
+```
+The standard E2E suite includes `tests/e2e/degraded-canary.spec.ts` which verifies:
+- Backstop-only enforcement when the DOM adapter's selectors are broken (`?break_selectors=1`).
+- Canary badge transition (≤15.2s timeout from last verified request).
+
+### 5. Real-Site Network-Boundary Tests (ChatGPT) — Opt-In Only
+
+> **Privacy notice:** `.playwright-real-profile/` is gitignored. It contains a dedicated Chromium profile used exclusively for opt-in real-site testing. **No credentials are seen, typed, stored, or logged by this project.** If login is needed, the human operator logs in manually via the login script. See Rules 22–27 in [AGENTS.md](./AGENTS.md).
+
+Real-site tests run **only** when the human operator explicitly sets `VG_REAL_SITE=1`. They are excluded from `npm run test:e2e` and from CI.
+
+#### Step 1 — Initial Profile Setup (first time only)
+```bash
+npm run e2e:real:login
+```
+This opens a persistent Chromium browser at `.playwright-real-profile/` with the VeilGuard extension loaded. The human operator can log in to ChatGPT manually. Close the browser when done — the session cookie is saved to the profile.
+
+#### Step 2 — Run Real-Site Enforcement Tests
+```bash
+npm run e2e:real
+```
+Or equivalently:
+```powershell
+$env:VG_REAL_SITE=1; npx playwright test --config playwright.real.config.ts
+```
+
+Results are written to `bench/results/enforcement_real_site.json` after each test cell completes.
+
+#### What the harness does (Rule 22 compliance):
+- Intercepts **100% of chat conversation requests** via Playwright `page.route` before they leave the browser.
+- Returns minimal valid stub responses (JSON `{ok:true}` for prepare; SSE stream for conversation).
+- **Zero bytes of test prompt data reach OpenAI's servers.**
+- Records captured request payloads locally and asserts zero sensitive-data leakage.
 
 ---
 

@@ -75,3 +75,27 @@
 
 
 
+
+## 13. Unscanned File Attachments (Phase 4)
+- In Phase 4, VeilGuard AI does **not** scan the contents of files attached to chat messages via the ChatGPT file upload button or drag-and-drop.
+- A non-blocking notice is displayed to the user: *"Attachments are not scanned by VeilGuard AI. Their contents are not checked."*
+- **Protection status on the badge remains `active (verified)`** — the notice clarifies this specific limitation without downgrading overall protection.
+- Full document/attachment scanning using PyMuPDF is scheduled for Phase 7.
+
+## 14. Voice / Audio Input (Phase 4)
+- ChatGPT's voice dictation mode streams audio from the microphone directly to OpenAI's servers via real-time audio APIs.
+- VeilGuard AI does not intercept audio streams. This path is unprotected and must be prominently declared to users.
+- The badge does not claim protection on voice-mode submissions.
+
+## 15. DOM Selector Volatility — ChatGPT (Phase 4, Verified 2026-10-17)
+- The ChatGPT adapter's DOM selectors were verified on 2026-10-17 against the live site at `https://chatgpt.com`:
+  - Composer: `#mobile-composer-prompt` (TEXTAREA, `aria-label="Chat with ChatGPT"`)
+  - Send Button: `button[aria-label="Send message"]` (`type="submit"`)
+- ChatGPT (OpenAI) may update its front-end at any time. If selectors break, the adapter's `selfTest()` will fail and VeilGuard transitions to **Limited Protection** (backstop-only) mode, displayed on the badge.
+- VeilGuard never silently claims full protection when adapter self-test fails (Rule 3).
+
+## 16. Single Real-Site Target in Phase 4 (Phase 4)
+- Phase 4 implements and verifies protection on ChatGPT (`https://chatgpt.com`) only.
+- Claude, Gemini, Copilot, and other AI sites are **not supported** in Phase 4.
+- The extension manifest grants host permissions only for `https://chatgpt.com/*` and `https://*.chatgpt.com/*` (in addition to the mock test site). No other AI sites receive injected scripts.
+- Support for additional sites is scoped to future phase expansion cycles.

@@ -199,3 +199,48 @@ After these three fixes (committed in `303e97b`), all 14 cells of the enforcemen
 | `isReTriggering` double-interception guard | Capture-phase handler check | `extension/src/content/flow.ts` |
 | `VEILGUARD_PRE_APPROVE` ordering | Pre-approval posted before retrigger | `extension/src/content/flow.ts` |
 | Enter debounce | 300 ms cooldown while overlay active | `extension/src/content/flow.ts` |
+
+---
+
+## Phase 4: ChatGPT Real-Site Network-Boundary Coverage Matrix
+
+Phase 4 establishes a real-site enforcement harness targeting `https://chatgpt.com` (logged-out state, verified 2026-10-17). All results recorded in `bench/results/enforcement_real_site.json`.
+
+> **Rule 22 Compliance:** 100% of outbound chat conversation requests are intercepted by Playwright `page.route`. Zero bytes of test prompt data reach OpenAI's servers during automated test execution.
+
+### Verified Endpoint Architecture (Logged-Out, 2026-10-17)
+
+| Step | Endpoint | Stub Response |
+| :--- | :--- | :--- |
+| 1. Session Prepare | `POST /unauth-mweb/conversation/prepare?lightweight_authenticated=0` | `{ ok: true }` (JSON, 200) |
+| 2. Message Submit | `POST /unauth-mweb/conversation/updates?lightweight_authenticated=0&operationId=...` | Minimal SSE stream (text/event-stream, 200) |
+
+Route intercept pattern: `/(backend-api|backend-anon|unauth-mweb)\/conversation/`
+
+### Real-Site Coverage Matrix
+
+| Cell | Path | Status | Flagged Trials | Flagged Leaked | Benign Delivered | Overlay Latency (med/max ms) |
+| :--- | :--- | :--- | :---: | :---: | :---: | :---: |
+| Backstop Fetch | `backstop_fetch` | **Protected** | 12 | **0** | 10/10 | 41 / 221 |
+| Degraded Mode (mock-site) | `degraded_mode_mock_site` | **Protected** | 10 | **0** | 10/10 | — |
+| Backstop Canary | `backstop_canary` | **Protected** | 1 | **0** | — | — |
+| ChatGPT Send Button | `main_composer_send_button` | **Protected** | 1 | **0** | 1/1 | — |
+
+### Degraded-Mode (Adapter Failure) Behavior
+
+When the DOM adapter fails self-test (mismatched selectors, no composer found), VeilGuard transitions to **Limited Protection** mode:
+- Layer 1 DOM interception is inactive (selectors broken).
+- Layer 2 MAIN-world backstop remains fully active and enforcing.
+- Badge transitions to `"Limited protection (adapter degraded)"`.
+- All programmatic fetch/XHR calls to conversation endpoints are still blocked when containing sensitive content.
+- Verified: 10/10 flagged trials blocked, 0 leaks, 10/10 benign allowed (cell `degraded_mode_mock_site`).
+
+### Canary Warning Mechanism
+
+The backstop canary detects when the page-world script is loaded (it sends `VEILGUARD_CHAT_OBSERVED` on load) but no conversation request was intercepted within the expected window after a submit event. If the canary fires, the badge transitions to `"Backstop may not be working (canary)"` — a warning that neither layer has confirmed enforcement.
+
+- Canary badge transition verified ≤ 15.2 seconds in automated test.
+
+### File Attachment Limitation
+
+File attachments are **not scanned** in Phase 4. VeilGuard displays a non-blocking notice: *"Attachments are not scanned by VeilGuard AI. Their contents are not checked."* Full attachment scanning is scheduled for Phase 7 (PyMuPDF). This is a documented limitation in `docs/LIMITATIONS.md`.

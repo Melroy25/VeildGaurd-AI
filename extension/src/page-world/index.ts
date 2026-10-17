@@ -34,7 +34,8 @@
     return (
       url.includes("/api/chat") ||
       url.includes("/backend-api/conversation") ||
-      url.includes("/backend-anon/conversation")
+      url.includes("/backend-anon/conversation") ||
+      url.includes("/unauth-mweb/conversation")
     );
   }
 

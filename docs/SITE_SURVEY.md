@@ -106,8 +106,18 @@ Setting `.value` or `.textContent` directly breaks React/ProseMirror internal st
 
 ## 5. Network Request Format & Extraction
 
-### 5.1 Outgoing Endpoint
-- **URL Pattern:** `*://chatgpt.com/backend-api/conversation*` and `*://chatgpt.com/backend-anon/conversation*`
+### 5.1 Outgoing Endpoint (Verified 2026-10-17)
+
+ChatGPT operates two distinct endpoint architectures depending on authentication state:
+
+| Auth State | Preparation Endpoint | Submission Endpoint |
+| :--- | :--- | :--- |
+| **Logged-Out (Unauthenticated)** | `POST /unauth-mweb/conversation/prepare?lightweight_authenticated=0` → `{ ok: true }` | `POST /unauth-mweb/conversation/updates?lightweight_authenticated=0&operationId=...` |
+| **Logged-In (Authenticated)** | N/A (no prepare step) | `POST /backend-api/conversation` |
+| **Anon (Legacy)** | N/A | `POST /backend-anon/conversation` |
+
+> **Route-Stub Coverage (Rule 22):** The Playwright `page.route` pattern `/(backend-api|backend-anon|unauth-mweb)\/conversation/` intercepts all three variants. The prepare endpoint (`/prepare`) receives `{ ok: true }` stubs; the submission endpoint (`/updates` or `/conversation`) receives minimal SSE stubs. Zero bytes reach OpenAI.
+
 - **Method:** `POST`
 - **Content-Type:** `application/json`
 
@@ -142,7 +152,27 @@ Setting `.value` or `.textContent` directly breaks React/ProseMirror internal st
 4. **Readable Streams:** If `body instanceof ReadableStream` or body is locked/streaming, the text cannot be inspected ahead of dispatch.
    - **Fail-Closed Invariant (Rule 6):** Fail closed. Throw `TypeError("Failed to fetch: request blocked by VeilGuard AI backstop (unreadable streaming body).")`.
 
-### 5.4 Response Streaming
+### 5.4 Live Selector Verification (Verified 2026-10-17)
+
+| Element | Selector | Notes |
+| :--- | :--- | :--- |
+| Composer (textarea) | `#mobile-composer-prompt` | `TEXTAREA`, placeholder `"Ask ChatGPT"`, `aria-label="Chat with ChatGPT"` |
+| Send Button | `button[aria-label="Send message"]` | `type="submit"` |
+
+The ChatGPT adapter also probes fallback selectors:
+- Composer: `#prompt-textarea`, `textarea[placeholder='Ask ChatGPT']`, `div.ProseMirror[contenteditable='true']`
+- Send: `button[data-testid="send-button"]`, `button[aria-label="Send prompt"]`, `#composer-submit-button`
+
+### 5.5 React `_valueTracker` Reset (Verified 2026-10-17)
+
+Setting a controlled React textarea's `.value` directly silently breaks React's change detection, keeping the send button disabled. The correct write sequence:
+1. Set `element._valueTracker?.setValue("")` to clear React's prior-value snapshot.
+2. Set `element.value = newText`.
+3. Dispatch `new InputEvent("input", { bubbles: true, inputType: "insertText", data: newText })`.
+
+This causes React to detect a "change" from `""` to `newText` and re-enable the submit button.
+
+### 5.6 Response Streaming
 - ChatGPT streams responses using Server-Sent Events (`text/event-stream`).
 - VeilGuard's backstop operates strictly on the **request** (outbound user payload). Response parsing for rehydration is scheduled for Phase 8.
 
