@@ -65,9 +65,38 @@ MASKABLE_ENTITY_TYPES: Set[str] = {
     "IN_AADHAAR",
 }
 
+# Role noun mappings for role-based person placeholders (Phase 5 Part C3)
+ROLE_NOUN_MAP: Dict[str, str] = {
+    "customer": "CUSTOMER",
+    "client": "CLIENT",
+    "patient": "PATIENT",
+    "employee": "EMPLOYEE",
+    "staff": "EMPLOYEE",
+    "applicant": "CANDIDATE",
+    "candidate": "CANDIDATE",
+    "student": "STUDENT",
+    "user": "USER",
+    "borrower": "BORROWER",
+    "tenant": "TENANT",
+    "member": "MEMBER",
+}
+
 # Known canonical placeholder labels
-KNOWN_PLACEHOLDER_LABELS: Set[str] = set(ENTITY_LABEL_MAP.values())
+KNOWN_PLACEHOLDER_LABELS: Set[str] = set(ENTITY_LABEL_MAP.values()) | set(ROLE_NOUN_MAP.values())
 PLACEHOLDER_TOKEN_PATTERN = re.compile(r"^\[([A-Z0-9_]+)_(\d+)\]$")
+
+
+def find_preceding_role(text: str, start_offset: int) -> Optional[str]:
+    """Find the nearest preceding role noun within 3 tokens before start_offset."""
+    prefix = text[:start_offset]
+    tokens = re.findall(r"\b[A-Za-z0-9_-]+\b", prefix)
+    if not tokens:
+        return None
+    for tok in reversed(tokens[-3:]):
+        role_label = ROLE_NOUN_MAP.get(tok.lower())
+        if role_label:
+            return role_label
+    return None
 
 
 def is_generated_placeholder(token: str) -> bool:
@@ -106,12 +135,22 @@ def mask_value(val: str) -> str:
 class Sanitizer:
     """Utility-preserving prompt sanitizer producing consistent placeholders, masks, or removals."""
 
-    def __init__(self, scanner: Optional["Scanner"] = None):
+    def __init__(
+        self,
+        scanner: Optional["Scanner"] = None,
+        role_placeholders: Optional[bool] = None,
+    ):
         if scanner is None:
             from veilguard_engine.scanner import Scanner
             self.scanner = Scanner()
         else:
             self.scanner = scanner
+
+        if role_placeholders is None:
+            import os
+            self.role_placeholders = os.getenv("VEILGUARD_ROLE_PH", "0").lower() in ("1", "true", "yes")
+        else:
+            self.role_placeholders = role_placeholders
 
     def sanitize(
         self,
@@ -119,22 +158,29 @@ class Sanitizer:
         findings: List[Finding],
         policy_result: PolicyResult,
         known_placeholders: Optional[List[KnownPlaceholder]] = None,
+        role_placeholders: Optional[bool] = None,
     ) -> SanitizeResult:
         """Sanitize text according to policy actions with strict consistency and verification."""
+        use_role_ph = self.role_placeholders if role_placeholders is None else role_placeholders
+
         # 1. Initialize placeholder registry for cross-turn and intra-turn consistency
         existing_mappings: Dict[Tuple[str, str], str] = {}
         label_max_index: Dict[str, int] = {}
+        entity_role_labels: Dict[str, str] = {}
 
         if known_placeholders:
             for kp in known_placeholders:
-                label = ENTITY_LABEL_MAP.get(kp.entity_type, kp.entity_type.upper())
-                norm_val = " ".join(kp.value.lower().split())
-                existing_mappings[(label, norm_val)] = kp.placeholder
-                # Extract numeric suffix if matches [LABEL_N]
                 m = re.match(r"^\[([A-Z0-9_]+)_(\d+)\]$", kp.placeholder)
                 if m:
+                    label = m.group(1)
                     idx = int(m.group(2))
                     label_max_index[label] = max(label_max_index.get(label, 0), idx)
+                else:
+                    label = ENTITY_LABEL_MAP.get(kp.entity_type, kp.entity_type.upper())
+                norm_val = " ".join(kp.value.lower().split())
+                existing_mappings[(label, norm_val)] = kp.placeholder
+                if kp.entity_type == "PERSON":
+                    entity_role_labels[norm_val] = label
 
         # 2. Plan replacements for findings that require sanitization
         # Sort findings strictly by start offset ascending
@@ -177,10 +223,20 @@ class Sanitizer:
                 placeholder_val = replacement_str
                 reversible = False
             elif action == Action.PSEUDONYMIZE:
-                label = ENTITY_LABEL_MAP.get(
-                    f.entity_type, re.sub(r"[^A-Z0-9]", "_", f.entity_type.upper())
-                )
                 norm_val = " ".join(orig_val.lower().split())
+
+                if f.entity_type == "PERSON" and use_role_ph:
+                    if norm_val in entity_role_labels:
+                        label = entity_role_labels[norm_val]
+                    else:
+                        role = find_preceding_role(text, f.start)
+                        label = role if role else "PERSON"
+                        entity_role_labels[norm_val] = label
+                else:
+                    label = ENTITY_LABEL_MAP.get(
+                        f.entity_type, re.sub(r"[^A-Z0-9]", "_", f.entity_type.upper())
+                    )
+
                 norm_key = (label, norm_val)
 
                 if norm_key in existing_mappings:

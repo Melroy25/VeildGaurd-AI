@@ -142,7 +142,7 @@ class _VeilGuardBase:
         )
 
         # Sanitize
-        sanitizer = Sanitizer(scanner=scanner)
+        sanitizer = Sanitizer(scanner=scanner, role_placeholders=self._flags.role_ph)
         if policy_result.decision == Decision.ALLOW:
             sanitized_text = text
         else:
