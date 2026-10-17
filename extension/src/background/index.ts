@@ -31,7 +31,7 @@ import {
   vaultClear,
 } from "./vault";
 
-import { recordAuditEvent } from "./audit";
+import { defaultEventStore } from "./events-store";
 
 import {
   isVeilGuardRequest,
@@ -169,7 +169,7 @@ async function handleRequest(
 
     case "RECORD_EVENT": {
       // Fire-and-forget audit recording — metadata only (Rule 7)
-      await recordAuditEvent(message.event);
+      await defaultEventStore.appendEvent(message.event);
       return { ok: true } satisfies AckResponse;
     }
 
