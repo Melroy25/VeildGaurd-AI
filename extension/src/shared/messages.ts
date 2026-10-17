@@ -125,6 +125,7 @@ export type PingResponse = PingSuccess | PingFailure;
 export interface ProfilesSuccess {
   ok: true;
   profiles: string[];
+  ruleReasons?: Record<string, string>;
 }
 export interface ProfilesFailure {
   ok: false;
@@ -132,6 +133,18 @@ export interface ProfilesFailure {
   errorMessage: string;
 }
 export type ProfilesResponse = ProfilesSuccess | ProfilesFailure;
+
+/** Content script site status. */
+export type SiteProtectionStatus = "active" | "adapter self-test failed" | "engine unreachable";
+
+export interface GetStatusRequest {
+  type: "GET_STATUS";
+}
+
+export interface GetStatusResponse {
+  ok: boolean;
+  status: SiteProtectionStatus;
+}
 
 /** Vault GET response. */
 export interface VaultGetResponse {

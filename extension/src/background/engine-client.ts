@@ -77,9 +77,10 @@ export interface EngineHealthResponse {
   version?: string;
 }
 
-/** /analyze/profiles response. */
+/** /policy/profiles response. */
 export interface EngineProfilesResponse {
   profiles: string[];
+  ruleReasons: Record<string, string>;
 }
 
 // ---------------------------------------------------------------------------
@@ -336,10 +337,23 @@ export async function fetchProfiles(): Promise<EngineProfilesResponse> {
 
   try {
     const data = await response.json();
+    const ruleReasons: Record<string, string> = {};
     if (Array.isArray(data)) {
-      return { profiles: data.map((p: { profile: string }) => p.profile) };
+      for (const item of data) {
+        if (Array.isArray(item?.rules)) {
+          for (const r of item.rules) {
+            if (typeof r?.rule_id === "string" && typeof r?.reason === "string") {
+              ruleReasons[r.rule_id] = r.reason;
+            }
+          }
+        }
+      }
+      return {
+        profiles: data.map((p: { profile: string }) => p.profile),
+        ruleReasons,
+      };
     }
-    return { profiles: ["company", "personal", "finance"] };
+    return { profiles: ["company", "personal", "finance"], ruleReasons: {} };
   } catch {
     throw new EngineError("parse_error", "Engine profiles response was not valid JSON");
   }

@@ -157,7 +157,11 @@ async function handleRequest(
     case "FETCH_PROFILES": {
       try {
         const data = await fetchProfiles();
-        const response: ProfilesResponse = { ok: true, profiles: data.profiles };
+        const response: ProfilesResponse = {
+          ok: true,
+          profiles: data.profiles,
+          ruleReasons: data.ruleReasons,
+        };
         return response;
       } catch (err: unknown) {
         if (err instanceof EngineError) {

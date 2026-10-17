@@ -11,6 +11,40 @@
 
 import { getAdapterForLocation } from "./adapters";
 import { handleInterception, handleBackstopBlocked, mountBadge } from "./flow";
+import type { GetStatusResponse } from "../shared/messages";
+
+// ---------------------------------------------------------------------------
+// GET_STATUS: popup queries this content script for the page's protection state.
+// Accepted only from the extension itself (background validates sender.id).
+// ---------------------------------------------------------------------------
+
+chrome.runtime.onMessage.addListener(
+  (
+    message: unknown,
+    _sender: chrome.runtime.MessageSender,
+    sendResponse: (r: GetStatusResponse) => void
+  ): boolean => {
+    if (
+      message &&
+      typeof message === "object" &&
+      (message as { type?: string }).type === "GET_STATUS"
+    ) {
+      const adapter = getAdapterForLocation(window.location);
+      if (!adapter) {
+        sendResponse({ ok: true, status: "active" });
+        return false;
+      }
+      adapter.selfTest().then((passed) => {
+        sendResponse({
+          ok: true,
+          status: passed ? "active" : "adapter self-test failed",
+        });
+      });
+      return true; // keep channel open for async response
+    }
+    return false;
+  }
+);
 
 (() => {
   const adapter = getAdapterForLocation(window.location);

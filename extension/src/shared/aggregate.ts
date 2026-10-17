@@ -96,20 +96,18 @@ function build14DaySkeleton(refDate: Date): Map<string, number> {
 }
 
 /**
- * Aggregates a list of events into dashboard summary metrics.
- * Safely ignores and counts malformed events without throwing.
+ * Filters raw events against criteria and returns validated StoredEvents.
+ * Malformed entries are counted as skipped.
  */
-export function summarize(
+export function filterEvents(
   rawEvents: unknown[],
   filter: EventFilter = {}
-): SummaryResult {
+): { validEvents: StoredEvent[]; skipped: number } {
   let skipped = 0;
   const validEvents: StoredEvent[] = [];
 
   const sinceTime = filter.since ? new Date(filter.since).getTime() : null;
-  const refDate = filter.referenceDate || new Date();
 
-  // Validate and filter
   if (Array.isArray(rawEvents)) {
     for (const item of rawEvents) {
       const clean = sanitizeEvent(item);
@@ -150,6 +148,20 @@ export function summarize(
       validEvents.push(clean);
     }
   }
+
+  return { validEvents, skipped };
+}
+
+/**
+ * Aggregates a list of events into dashboard summary metrics.
+ * Safely ignores and counts malformed events without throwing.
+ */
+export function summarize(
+  rawEvents: unknown[],
+  filter: EventFilter = {}
+): SummaryResult {
+  const { validEvents, skipped } = filterEvents(rawEvents, filter);
+  const refDate = filter.referenceDate || new Date();
 
   // Initialize aggregates
   const by_decision: Record<EventDecision, number> = {
