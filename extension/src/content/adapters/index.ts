@@ -1,7 +1,8 @@
 import { SiteAdapter } from "./types";
 import { mockSiteAdapter } from "./mock-site";
+import { chatgptAdapter } from "./chatgpt";
 
-const REGISTERED_ADAPTERS: SiteAdapter[] = [mockSiteAdapter];
+const REGISTERED_ADAPTERS: SiteAdapter[] = [mockSiteAdapter, chatgptAdapter];
 
 /**
  * Resolves the appropriate site adapter for the current browser location.
@@ -17,3 +18,4 @@ export function getAdapterForLocation(location: Location = window.location): Sit
 
 export * from "./types";
 export * from "./mock-site";
+export * from "./chatgpt";

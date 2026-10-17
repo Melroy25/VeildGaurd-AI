@@ -4,21 +4,43 @@
  */
 
 export interface AdapterSelectorConfig {
-  readonly textareaComposer: string;
-  readonly contenteditableComposer: string;
-  readonly sendButton: string;
+  readonly textareaComposer?: string;
+  readonly contenteditableComposer?: string;
+  readonly sendButton?: string;
   readonly form?: string;
   readonly programmaticButton?: string;
+  readonly [key: string]: string | string[] | undefined;
+}
+
+export type ComposerKind = "main" | "edit";
+
+/**
+ * Event-time context resolved from a submission event.
+ * Represents the specific composer (main prompt area or an inline message edit)
+ * and its dedicated actions. Never cached across events.
+ */
+export interface ComposerContext {
+  readonly kind: ComposerKind;
+  getText(): string;
+  setText(text: string): boolean;
+  triggerSend(): void;
 }
 
 export interface SiteAdapter {
   readonly id: string;
   readonly selectors: AdapterSelectorConfig;
+  readonly chatEndpoint?: RegExp | string;
 
   /**
    * Evaluates if this adapter handles the current browser URL location.
    */
   matches(location: Location): boolean;
+
+  /**
+   * Resolves a ComposerContext at event time from the event target using closest().
+   * Returns null if the event does not target a recognized composer or send button.
+   */
+  resolveContext(event: Event): ComposerContext | null;
 
   /**
    * Locates the active composer element (textarea or contenteditable).
@@ -35,18 +57,6 @@ export interface SiteAdapter {
    * Programmatically sets text in the active composer, then fires a
    * bubbling "input" event so that React controlled components (or the
    * mock-site controlled state mode) pick up the new value.
-   *
-   * For textarea: uses the native HTMLInputElement descriptor setter +
-   * bubbling InputEvent to bypass React's synthetic value tracking.
-   *
-   * For contenteditable: uses execCommand("insertText") first (with
-   * selection-all + delete prefix) to fire compositionend-compatible events,
-   * then falls back to direct textContent + input event dispatch.
-   *
-   * After setting, calls verifyText() to confirm the composer reflects
-   * the expected value.
-   *
-   * Returns true when text was verified to have been set; false on failure.
    */
   setText(text: string): boolean;
 
@@ -66,10 +76,7 @@ export interface SiteAdapter {
   getForm(): HTMLFormElement | null;
 
   /**
-   * Programmatically triggers a send, simulating the appropriate submission
-   * path (form submit, button click, or Enter keydown depending on wiring).
-   *
-   * Used by the review overlay's "Send Sanitized" path after user approval.
+   * Programmatically triggers a send, simulating the appropriate submission path.
    */
   triggerSend(): void;
 
@@ -78,4 +85,22 @@ export interface SiteAdapter {
    * Resolves true if elements exist, false if timed out.
    */
   selfTest(timeoutMs?: number): Promise<boolean>;
+
+  /**
+   * Normalizes text for comparing composer contents before/after setText.
+   * Collapses runs of blank lines, normalizes \r\n to \n, and trims.
+   */
+  normalizeForCompare?(text: string): string;
+
+  /**
+   * Normalizes text for comparing backstop outbound text against approved text.
+   * Collapses all whitespace sequences to single space and trims.
+   */
+  normalizeForApproval?(text: string): string;
+
+  /**
+   * Extracts the user prompt string from an outbound chat request payload body.
+   * Returns null if the body is unparseable or cannot be extracted.
+   */
+  extractUserText?(body: unknown): Promise<string | null> | string | null;
 }

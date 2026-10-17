@@ -1,4 +1,4 @@
-import { SiteAdapter, AdapterSelectorConfig } from "./types";
+import { SiteAdapter, AdapterSelectorConfig, ComposerContext } from "./types";
 
 /**
  * Centralized DOM selector configuration for the Mock AI Chat site.
@@ -15,6 +15,7 @@ const MOCK_SITE_SELECTORS: AdapterSelectorConfig = {
 export class MockSiteAdapter implements SiteAdapter {
   readonly id = "mock-ai-site";
   readonly selectors = MOCK_SITE_SELECTORS;
+  readonly chatEndpoint = /\/api\/chat/;
 
   matches(location: Location): boolean {
     const isMockHost = location.hostname === "127.0.0.1" || location.hostname === "localhost";
@@ -22,11 +23,46 @@ export class MockSiteAdapter implements SiteAdapter {
     return isMockHost && isMockPort;
   }
 
+  private isBrokenByTest(): boolean {
+    if (typeof window === "undefined") return false;
+    return window.location.search.includes("break_selectors=1");
+  }
+
+  resolveContext(event: Event): ComposerContext | null {
+    if (this.isBrokenByTest()) return null;
+
+    const target = event.target as Node | null;
+    const composer = this.getComposer();
+    const sendBtn = this.getSendButton();
+    const form = this.getForm();
+
+    const isInsideComposer = Boolean(
+      composer && target && (composer === target || composer.contains(target))
+    );
+    const isInsideSendBtn = Boolean(
+      sendBtn && target && (sendBtn === target || sendBtn.contains(target))
+    );
+    const isInsideForm = Boolean(
+      form && target && (form === target || form.contains(target))
+    );
+
+    if (isInsideComposer || isInsideSendBtn || isInsideForm) {
+      return {
+        kind: "main",
+        getText: () => this.getText(),
+        setText: (text: string) => this.setText(text),
+        triggerSend: () => this.triggerSend(),
+      };
+    }
+    return null;
+  }
+
   getComposer(): HTMLElement | null {
+    if (this.isBrokenByTest()) return null;
     // Dynamic lookup: never cache across events to handle SPA re-renders
     return (
-      document.querySelector<HTMLTextAreaElement>(this.selectors.textareaComposer) ||
-      document.querySelector<HTMLDivElement>(this.selectors.contenteditableComposer)
+      document.querySelector<HTMLTextAreaElement>(this.selectors.textareaComposer ?? "") ||
+      document.querySelector<HTMLDivElement>(this.selectors.contenteditableComposer ?? "")
     );
   }
 
@@ -112,18 +148,20 @@ export class MockSiteAdapter implements SiteAdapter {
   }
 
   getSendButton(): HTMLElement | null {
-    return document.querySelector<HTMLElement>(this.selectors.sendButton);
+    if (this.isBrokenByTest()) return null;
+    return document.querySelector<HTMLElement>(this.selectors.sendButton ?? "");
   }
 
   isSendButton(target: EventTarget | null): boolean {
+    if (this.isBrokenByTest()) return false;
     if (!target || !(target instanceof Element)) {
       return false;
     }
-    return Boolean(target.closest(this.selectors.sendButton));
+    return Boolean(this.selectors.sendButton && target.closest(this.selectors.sendButton));
   }
 
   getForm(): HTMLFormElement | null {
-    if (!this.selectors.form) return null;
+    if (this.isBrokenByTest() || !this.selectors.form) return null;
     return document.querySelector<HTMLFormElement>(this.selectors.form);
   }
 
@@ -146,6 +184,26 @@ export class MockSiteAdapter implements SiteAdapter {
     if (btn) {
       btn.click();
     }
+  }
+
+  normalizeForCompare(text: string): string {
+    return text.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  }
+
+  normalizeForApproval(text: string): string {
+    return text.replace(/\s+/g, " ").trim();
+  }
+
+  extractUserText(body: unknown): string | null {
+    if (typeof body === "string") {
+      try {
+        const parsed = JSON.parse(body);
+        return parsed.message ?? parsed.text ?? parsed.prompt ?? body;
+      } catch {
+        return body;
+      }
+    }
+    return null;
   }
 
   async selfTest(timeoutMs: number = 3000): Promise<boolean> {

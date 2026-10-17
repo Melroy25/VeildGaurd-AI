@@ -22,12 +22,13 @@
  *  - Vault seeding for multi-turn consistency.
  */
 
-import type { SiteAdapter } from "./adapters/types";
+import type { SiteAdapter, ComposerContext } from "./adapters/types";
 import type { AnalyzeResponse, AuditEventMetadata } from "../shared/messages";
 import type { EngineAnalyzeResponse } from "../shared/messages";
 import {
   showReviewOverlay,
   showEngineErrorOverlay,
+  showAttachmentNotice,
   hideOverlay,
 } from "./ui/overlay";
 import { renderProtectionBadge, updateBadgeState } from "./ui/badge";
@@ -42,6 +43,36 @@ let flowState: FlowState = "idle";
 let analyzeDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const DEBOUNCE_MS = 80; // Prevents double-fire on Enter + form submit
 let isReTriggering = false; // Prevents extension from intercepting its own re-triggered submissions
+
+// ---------------------------------------------------------------------------
+// Backstop Canary (Phase 4 Part C)
+// ---------------------------------------------------------------------------
+
+let canaryTimer: ReturnType<typeof setTimeout> | null = null;
+
+export function startBackstopCanary(): void {
+  if (canaryTimer) clearTimeout(canaryTimer);
+  canaryTimer = setTimeout(() => {
+    canaryTimer = null;
+    updateBadgeState("canary", "Backstop may not be working (canary)");
+  }, 5000);
+}
+
+export function observeBackstopRequest(): void {
+  if (canaryTimer) {
+    clearTimeout(canaryTimer);
+    canaryTimer = null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Attachment Notice (Phase 4 Part B, Section 6.3)
+// ---------------------------------------------------------------------------
+
+export function handleAttachmentNotice(): void {
+  showAttachmentNotice();
+}
+
 
 // ---------------------------------------------------------------------------
 // Vault helpers (via background messages)
@@ -67,7 +98,8 @@ async function getTabId(): Promise<number | null> {
 export function handleInterception(
   adapter: SiteAdapter,
   event: Event,
-  path: "enter" | "click" | "submit"
+  path: "enter" | "click" | "submit",
+  explicitContext?: ComposerContext
 ): void {
   // If this event was dispatched by VeilGuard itself to re-trigger an allowed submission,
   // let it pass directly to the host page's event listener.
@@ -75,7 +107,14 @@ export function handleInterception(
     return;
   }
 
-  const text = adapter.getText();
+  const context: ComposerContext = explicitContext ?? adapter.resolveContext(event) ?? {
+    kind: "main",
+    getText: () => adapter.getText(),
+    setText: (t: string) => adapter.setText(t),
+    triggerSend: () => adapter.triggerSend(),
+  };
+
+  const text = context.getText();
 
   if (flowState !== "idle") {
     // Already analyzing or blocked — cancel the re-entrancy
@@ -99,7 +138,7 @@ export function handleInterception(
   }
   analyzeDebounceTimer = setTimeout(() => {
     analyzeDebounceTimer = null;
-    runAnalysis(adapter, text, path);
+    runAnalysis(context, text, path);
   }, DEBOUNCE_MS);
 }
 
@@ -108,7 +147,7 @@ export function handleInterception(
 // ---------------------------------------------------------------------------
 
 async function runAnalysis(
-  adapter: SiteAdapter,
+  context: ComposerContext,
   text: string,
   path: "enter" | "click" | "submit" | "backstop_fetch" | "backstop_xhr"
 ): Promise<void> {
@@ -192,7 +231,7 @@ async function runAnalysis(
         outcome: "auto_allowed",
         destination,
       });
-      retriggerSubmission(adapter, text);
+      retriggerSubmission(context, text);
       break;
 
     case "redact":
@@ -209,7 +248,7 @@ async function runAnalysis(
           hideOverlay();
           flowState = "idle";
           updateBadgeState("active");
-          await handleSendSanitized(adapter, engineResult, path, destination);
+          await handleSendSanitized(context, engineResult, path, destination);
         },
         onEdit: () => {
           hideOverlay();
@@ -245,7 +284,7 @@ async function runAnalysis(
           hideOverlay();
           flowState = "idle";
           updateBadgeState("active");
-          retriggerSubmission(adapter, text);
+          retriggerSubmission(context, text);
           recordEvent({
             timestamp: new Date().toISOString(),
             category: engineResult.primary_rule_id ?? "UNKNOWN",
@@ -269,10 +308,10 @@ async function runAnalysis(
 /**
  * Allows the submission to proceed by re-triggering it once the extension
  * has stepped out of the capture-phase intercept.
- * Uses adapter.triggerSend() to fire the appropriate DOM event.
+ * Uses context.triggerSend() to fire the appropriate DOM event.
  */
 function retriggerSubmission(
-  adapter: SiteAdapter,
+  context: ComposerContext,
   text: string
 ): void {
   // Pre-approve the text for the MAIN-world backstop so it doesn't re-query
@@ -281,10 +320,13 @@ function retriggerSubmission(
     window.dispatchEvent(new CustomEvent("veilguard_pre_approve", { detail: { text } }));
   } catch {}
 
+  // Feed Canary: expect to observe matching chat request within 5s
+  startBackstopCanary();
+
   setTimeout(() => {
     isReTriggering = true;
     try {
-      adapter.triggerSend();
+      context.triggerSend();
     } finally {
       setTimeout(() => {
         isReTriggering = false;
@@ -299,13 +341,13 @@ function retriggerSubmission(
 // ---------------------------------------------------------------------------
 
 async function handleSendSanitized(
-  adapter: SiteAdapter,
+  context: ComposerContext,
   engineResult: EngineAnalyzeResponse,
   _path: "enter" | "click" | "submit" | "backstop_fetch" | "backstop_xhr",
   destination: string
 ): Promise<void> {
-  adapter.setText(engineResult.sanitized_text);
-  retriggerSubmission(adapter, engineResult.sanitized_text);
+  context.setText(engineResult.sanitized_text);
+  retriggerSubmission(context, engineResult.sanitized_text);
   recordEvent({
     timestamp: new Date().toISOString(),
     category: engineResult.primary_rule_id ?? "UNKNOWN",
@@ -370,7 +412,16 @@ export function handleBackstopBlocked(transport: "fetch" | "xhr"): void {
 
 export function mountBadge(adapter: SiteAdapter): void {
   adapter.selfTest().then((passed) => {
-    renderProtectionBadge(passed);
+    if (passed) {
+      if (adapter.id === "chatgpt") {
+        renderProtectionBadge(true, "Protection active (verified 2026-10-17)");
+      } else {
+        renderProtectionBadge(true);
+      }
+    } else {
+      // Degraded mode (Phase 4 Part C, Section 7.1)
+      updateBadgeState("limited", "Limited protection (site layout changed)");
+    }
   });
 }
 

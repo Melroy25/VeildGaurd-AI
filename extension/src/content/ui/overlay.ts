@@ -611,3 +611,62 @@ export function showBlockedOverlay(): void {
     hideOverlay
   );
 }
+
+let attachmentNoticeTimeout: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * Non-blocking notice for file attachments (Phase 4 Part B, Section 6.3).
+ * Shows a floating toast indicating attachments are not yet scanned.
+ */
+export function showAttachmentNotice(): void {
+  const root = ensureHost();
+  let notice = root.getElementById("vg-attachment-notice");
+  if (!notice) {
+    notice = document.createElement("div");
+    notice.id = "vg-attachment-notice";
+    notice.style.position = "fixed";
+    notice.style.bottom = "24px";
+    notice.style.right = "24px";
+    notice.style.maxWidth = "360px";
+    notice.style.padding = "12px 16px";
+    notice.style.borderRadius = "8px";
+    notice.style.backgroundColor = "#1e293b";
+    notice.style.color = "#f8fafc";
+    notice.style.border = "1px solid #f59e0b";
+    notice.style.boxShadow = "0 10px 15px -3px rgba(0, 0, 0, 0.4)";
+    notice.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    notice.style.fontSize = "13px";
+    notice.style.lineHeight = "1.4";
+    notice.style.zIndex = "2147483647";
+    notice.style.pointerEvents = "auto";
+    notice.style.display = "flex";
+    notice.style.alignItems = "center";
+    notice.style.gap = "10px";
+
+    const textSpan = document.createElement("span");
+    textSpan.textContent = "Attachments are not scanned by VeilGuard yet. Their contents are not checked.";
+    notice.appendChild(textSpan);
+
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "×";
+    closeBtn.style.background = "none";
+    closeBtn.style.border = "none";
+    closeBtn.style.color = "#94a3b8";
+    closeBtn.style.fontSize = "18px";
+    closeBtn.style.cursor = "pointer";
+    closeBtn.style.padding = "0 4px";
+    closeBtn.onclick = () => {
+      notice?.remove();
+    };
+    notice.appendChild(closeBtn);
+
+    root.appendChild(notice);
+  }
+
+  if (attachmentNoticeTimeout) clearTimeout(attachmentNoticeTimeout);
+  attachmentNoticeTimeout = setTimeout(() => {
+    notice?.remove();
+    attachmentNoticeTimeout = null;
+  }, 5000);
+}
+

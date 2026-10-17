@@ -30,6 +30,7 @@ policies/watchlist.yaml
 playwright-report/
 test-results/
 .playwright/
+.playwright-real-profile/
 
 # OS and IDE
 .DS_Store

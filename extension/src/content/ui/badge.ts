@@ -5,7 +5,15 @@
  * into the page's input elements, and reflects the current analysis state.
  */
 
-type BadgeState = "active" | "analyzing" | "review" | "error" | "inactive";
+export type BadgeState =
+  | "active"
+  | "limited"
+  | "canary"
+  | "engine_unreachable"
+  | "error"
+  | "inactive"
+  | "analyzing"
+  | "review";
 
 let badgeHost: HTMLElement | null = null;
 let badgeShadow: ShadowRoot | null = null;
@@ -27,16 +35,20 @@ function ensureBadgeHost(): ShadowRoot {
 }
 
 const STATE_CONFIG: Record<BadgeState, { dot: string; border: string; text: string; label: string }> = {
-  active:    { dot: "#22c55e", border: "#15803d", text: "#86efac", label: "VeilGuard: protection active" },
-  analyzing: { dot: "#f59e0b", border: "#b45309", text: "#fcd34d", label: "VeilGuard: analyzing…" },
-  review:    { dot: "#38bdf8", border: "#0369a1", text: "#7dd3fc", label: "VeilGuard: review required" },
-  error:     { dot: "#ef4444", border: "#b91c1c", text: "#fca5a5", label: "VeilGuard: engine unreachable" },
-  inactive:  { dot: "#ef4444", border: "#b91c1c", text: "#fca5a5", label: "VeilGuard: protection inactive" },
+  active:             { dot: "#22c55e", border: "#15803d", text: "#86efac", label: "VeilGuard: protection active" },
+  limited:            { dot: "#f59e0b", border: "#b45309", text: "#fcd34d", label: "Limited protection (site layout changed)" },
+  canary:             { dot: "#f59e0b", border: "#b45309", text: "#fcd34d", label: "Backstop may not be working (canary)" },
+  engine_unreachable: { dot: "#ef4444", border: "#b91c1c", text: "#fca5a5", label: "Engine not reachable, sending is blocked" },
+  error:              { dot: "#ef4444", border: "#b91c1c", text: "#fca5a5", label: "Engine not reachable, sending is blocked" },
+  inactive:           { dot: "#ef4444", border: "#b91c1c", text: "#fca5a5", label: "Inactive on this page (adapter self-test failed)" },
+  analyzing:          { dot: "#f59e0b", border: "#b45309", text: "#fcd34d", label: "VeilGuard: analyzing…" },
+  review:             { dot: "#38bdf8", border: "#0369a1", text: "#7dd3fc", label: "VeilGuard: review required" },
 };
 
-function renderBadge(state: BadgeState): void {
+function renderBadge(state: BadgeState, customLabel?: string): void {
   const root = ensureBadgeHost();
-  const cfg = STATE_CONFIG[state];
+  const cfg = STATE_CONFIG[state] ?? STATE_CONFIG.active;
+  const displayLabel = customLabel || cfg.label;
 
   root.innerHTML = `
     <style>
@@ -71,19 +83,20 @@ function renderBadge(state: BadgeState): void {
     </style>
     <div class="badge ${state}" id="veilguard-badge" role="status" aria-live="polite">
       <span class="dot"></span>
-      <span class="text" id="veilguard-badge-text">${cfg.label}</span>
+      <span class="text" id="veilguard-badge-text">${displayLabel}</span>
     </div>
   `;
 }
 
-export function renderProtectionBadge(isActive: boolean): void {
-  renderBadge(isActive ? "active" : "inactive");
+export function renderProtectionBadge(isActive: boolean, customLabel?: string): void {
+  renderBadge(isActive ? "active" : "inactive", customLabel);
 }
 
 /**
  * Updates the badge to reflect the current analysis/flow state.
  * Called from flow.ts as the state machine transitions.
  */
-export function updateBadgeState(state: BadgeState): void {
-  renderBadge(state);
+export function updateBadgeState(state: BadgeState, customLabel?: string): void {
+  renderBadge(state, customLabel);
 }
+

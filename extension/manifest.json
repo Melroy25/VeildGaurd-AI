@@ -13,7 +13,9 @@
     {
       "matches": [
         "http://127.0.0.1:4310/*",
-        "http://localhost:4310/*"
+        "http://localhost:4310/*",
+        "https://chatgpt.com/*",
+        "https://*.chatgpt.com/*"
       ],
       "js": [
         "page-world.js"
@@ -25,7 +27,9 @@
     {
       "matches": [
         "http://127.0.0.1:4310/*",
-        "http://localhost:4310/*"
+        "http://localhost:4310/*",
+        "https://chatgpt.com/*",
+        "https://*.chatgpt.com/*"
       ],
       "js": [
         "content.js"

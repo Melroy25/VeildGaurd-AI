@@ -10,7 +10,14 @@
  */
 
 import { getAdapterForLocation } from "./adapters";
-import { handleInterception, handleBackstopBlocked, mountBadge } from "./flow";
+import {
+  handleInterception,
+  handleBackstopBlocked,
+  mountBadge,
+  handleAttachmentNotice,
+  observeBackstopRequest,
+  startBackstopCanary,
+} from "./flow";
 import type { GetStatusResponse } from "../shared/messages";
 
 // ---------------------------------------------------------------------------
@@ -62,9 +69,15 @@ chrome.runtime.onMessage.addListener(
       }
 
       if (e.key === "Enter") {
+        const ctx = adapter.resolveContext(e);
+        if (ctx) {
+          handleInterception(adapter, e, "enter", ctx);
+          return;
+        }
+
+        // Fallback for mock site or standard composer
         const composer = adapter.getComposer();
         const target = e.target as Node | null;
-
         if (composer && target && (composer === target || composer.contains(target))) {
           handleInterception(adapter, e, "enter");
         }
@@ -78,7 +91,8 @@ chrome.runtime.onMessage.addListener(
     "click",
     (e: MouseEvent) => {
       if (adapter.isSendButton(e.target)) {
-        handleInterception(adapter, e, "click");
+        const ctx = adapter.resolveContext(e);
+        handleInterception(adapter, e, "click", ctx ?? undefined);
       }
     },
     { capture: true }
@@ -88,9 +102,14 @@ chrome.runtime.onMessage.addListener(
   window.addEventListener(
     "submit",
     (e: SubmitEvent) => {
+      const ctx = adapter.resolveContext(e);
+      if (ctx) {
+        handleInterception(adapter, e, "submit", ctx);
+        return;
+      }
+
       const form = adapter.getForm();
       const target = e.target as Node | null;
-
       if (form && target && (form === target || form.contains(target))) {
         handleInterception(adapter, e, "submit");
       }
@@ -98,7 +117,31 @@ chrome.runtime.onMessage.addListener(
     { capture: true }
   );
 
-  // 4. Backstop Notification Listener (from MAIN-world page-world script via postMessage)
+  // 4. Attachment Detection (Phase 4 Part B, Section 6.3 - notice only)
+  window.addEventListener(
+    "change",
+    (e: Event) => {
+      const target = e.target as HTMLElement | null;
+      if (target && target instanceof HTMLInputElement && target.type === "file") {
+        if (target.files && target.files.length > 0) {
+          handleAttachmentNotice();
+        }
+      }
+    },
+    { capture: true }
+  );
+
+  window.addEventListener(
+    "drop",
+    (e: DragEvent) => {
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleAttachmentNotice();
+      }
+    },
+    { capture: true }
+  );
+
+  // 5. Backstop Notifications & Canary Listener
   window.addEventListener("message", (event: MessageEvent) => {
     // Only accept messages from our own frame — never from cross-origin frames
     if (event.source !== window) return;
@@ -106,9 +149,14 @@ chrome.runtime.onMessage.addListener(
     if (event.data && event.data.type === "VEILGUARD_BACKSTOP_BLOCKED") {
       const transport = event.data.transport === "xhr" ? "xhr" : "fetch";
       handleBackstopBlocked(transport);
+    } else if (event.data && event.data.type === "VEILGUARD_CHAT_OBSERVED") {
+      observeBackstopRequest();
+    } else if (event.data && event.data.type === "VEILGUARD_TRIGGER_TEST_CANARY") {
+      startBackstopCanary();
     }
   });
 
-  // 5. Mount adapter self-test and protection badge
+  // 6. Mount adapter self-test and protection badge
   mountBadge(adapter);
 })();
+
