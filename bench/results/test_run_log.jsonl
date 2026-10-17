@@ -1,0 +1,1 @@
+{"run_number": 1, "timestamp": "2026-10-17T16:43:53Z", "git_commit": "41b9fc1", "dev_sha256": "716bf6bc80310eeea602406d275d679e5a583f2b422bfe2e5856fc79ef804572", "test_sha256": "335a7ad7739b86f71c062fc51ff43fdc239d9a4d198302c7700138ee3e28242d", "n_records": 286, "systems": ["keyword", "presidio_default", "presidio_all_stock", "veilguard_type_based", "veilguard_full"]}
