@@ -90,10 +90,10 @@ export class MockSiteAdapter implements SiteAdapter {
       // execCommand fires compositionend, input, and other required events
       const inserted = document.execCommand("insertText", false, text);
       if (!inserted) {
-        // Fallback: direct textContent assignment + manual event
+        // Fallback: direct textContent assignment
         composer.textContent = text;
-        composer.dispatchEvent(new Event("input", { bubbles: true }));
       }
+      composer.dispatchEvent(new Event("input", { bubbles: true }));
       return this.verifyText(composer, text);
     }
   }

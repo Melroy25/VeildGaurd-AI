@@ -202,6 +202,7 @@ function attachEscapeHandler(onEsc: () => void): () => void {
  */
 function buildDiffBox(text: string, findings: EngineFinding[]): HTMLDivElement {
   const box = document.createElement("div");
+  box.id = "vg-original-text";
   box.className = "diff-box";
   box.setAttribute("aria-label", "Original text with sensitive content highlighted");
 
@@ -240,6 +241,7 @@ function buildDiffBox(text: string, findings: EngineFinding[]): HTMLDivElement {
 
 function buildSanitizedBox(sanitizedText: string, findings: EngineFinding[]): HTMLDivElement {
   const box = document.createElement("div");
+  box.id = "vg-sanitized-text";
   box.className = "diff-box";
   box.setAttribute("aria-label", "Sanitized text with replacements highlighted");
 

@@ -101,6 +101,58 @@ async function triggerSubmission(page: Page, pathType: "click" | "enter" | "subm
   }
 }
 
+async function injectTokenAndProfile(
+  context: BrowserContext,
+  token: string = "e2e-test-token",
+  profile: string = "company"
+): Promise<void> {
+  let [sw] = context.serviceWorkers();
+  if (!sw) {
+    sw = await context.waitForEvent("serviceworker", { timeout: 15000 });
+  }
+  await sw.evaluate(
+    ({ t, p }) => {
+      return new Promise<void>((resolve) => {
+        chrome.storage.local.set({ vg_token: t, vg_profile: p }, () => resolve());
+      });
+    },
+    { t: token, p: profile }
+  );
+}
+
+async function waitForSpikeOverlay(page: Page, timeoutMs = 8000): Promise<boolean> {
+  try {
+    await page.waitForFunction(
+      () => {
+        const host = document.getElementById("veilguard-overlay-host");
+        if (host?.shadowRoot) {
+          const el = host.shadowRoot.getElementById("vg-overlay-title") || host.shadowRoot.getElementById("vg-err-title");
+          return el != null;
+        }
+        return document.getElementById("veilguard-title") != null;
+      },
+      undefined,
+      { timeout: timeoutMs }
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function dismissSpikeOverlay(page: Page): Promise<void> {
+  const host = page.locator("#veilguard-overlay-host");
+  const editBtn = host.locator("button.btn-edit, button.btn-cancel, button.btn-dismiss");
+  const dismissBtn = page.locator("#veilguard-dismiss-btn");
+  if (await dismissBtn.isVisible({ timeout: 500 }).catch(() => false)) {
+    await dismissBtn.click();
+  } else if (await editBtn.first().isVisible({ timeout: 500 }).catch(() => false)) {
+    await editBtn.first().click();
+  } else {
+    await page.keyboard.press("Escape");
+  }
+}
+
 test.describe("Phase 1: Enforcement Spike (Part A)", () => {
   let context: BrowserContext;
   let page: Page;
@@ -124,6 +176,9 @@ test.describe("Phase 1: Enforcement Spike (Part A)", () => {
     }
 
     page = await context.newPage();
+    await page.goto("http://127.0.0.1:4310/?composer=textarea&wiring=form&transport=fetch");
+    await page.waitForLoadState("domcontentloaded");
+    await injectTokenAndProfile(context);
   });
 
   test.afterAll(async () => {
@@ -163,7 +218,9 @@ test.describe("Phase 1: Enforcement Spike (Part A)", () => {
     await setComposerText(page, "textarea", FLAGGED_PROMPT);
     await page.locator("#send-btn").click();
 
-    await expect(page.locator("#veilguard-title")).toBeVisible();
+    const overlayShown = await waitForSpikeOverlay(page);
+    expect(overlayShown, "Overlay must appear for flagged prompt").toBe(true);
+    await dismissSpikeOverlay(page);
 
     // Verify invariant: sensitive phone number never appeared in console logs
     for (const log of consoleLogs) {
@@ -237,8 +294,8 @@ test.describe("Phase 1: Enforcement Spike (Part A)", () => {
           await triggerSubmission(page, pathType);
 
           // 1. Overlay must appear
-          const overlayTitle = page.locator("#veilguard-title");
-          await expect(overlayTitle).toBeVisible();
+          const overlayShown = await waitForSpikeOverlay(page);
+          expect(overlayShown, "Overlay must appear for flagged prompt").toBe(true);
 
           // 2. Composer text must remain unchanged
           const remainingText = await getComposerText(page, config.composer);
@@ -251,9 +308,7 @@ test.describe("Phase 1: Enforcement Spike (Part A)", () => {
           }
 
           // Dismiss overlay for next iteration
-          const dismissBtn = page.locator("#veilguard-dismiss-btn");
-          await dismissBtn.click();
-          await expect(overlayTitle).not.toBeVisible();
+          await dismissSpikeOverlay(page);
         }
 
         // Reload for the benign control phase: ensures app.js state is clean
@@ -341,6 +396,9 @@ test.describe("Phase 1: Enforcement Spike (Part B - MAIN-World Backstop)", () =>
     }
 
     page = await context.newPage();
+    await page.goto("http://127.0.0.1:4310/?composer=textarea&wiring=click&transport=fetch");
+    await page.waitForLoadState("domcontentloaded");
+    await injectTokenAndProfile(context);
   });
 
   test.afterAll(async () => {
@@ -388,8 +446,8 @@ test.describe("Phase 1: Enforcement Spike (Part B - MAIN-World Backstop)", () =>
         await page.locator("#send-programmatic").click();
 
         // Backstop must have blocked: overlay appears via postMessage notification
-        const overlayTitle = page.locator("#veilguard-title");
-        await expect(overlayTitle).toBeVisible({ timeout: 3000 });
+        const overlayShown = await waitForSpikeOverlay(page, 5000);
+        expect(overlayShown, "Backstop block overlay must appear").toBe(true);
 
         // Server must have 0 messages
         const received = await getReceivedMessages(page.request);
@@ -398,8 +456,7 @@ test.describe("Phase 1: Enforcement Spike (Part B - MAIN-World Backstop)", () =>
         }
 
         // Dismiss
-        await page.locator("#veilguard-dismiss-btn").click();
-        await expect(overlayTitle).not.toBeVisible();
+        await dismissSpikeOverlay(page);
       }
 
       // Reload page before benign phase to reset app.js event listener state

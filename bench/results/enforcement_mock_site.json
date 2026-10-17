@@ -1,9 +1,9 @@
 {
-  "timestamp": "2026-10-16T10:51:03.022Z",
+  "timestamp": "2026-10-17T05:34:17.540Z",
   "playwright_version": "1.50.1",
   "chromium_version": "156.0.8078.4",
   "trials_per_cell": 20,
-  "note": "These measurements apply strictly to the deterministic mock AI chat site and do not represent pass rates on any production third-party AI website.",
+  "note": "Phase 1 historical baseline results (stub detector). These measurements apply strictly to the deterministic mock AI chat site and do not represent pass rates on any production third-party AI website.",
   "cells": [
     {
       "composer": "textarea",

@@ -1,275 +1,290 @@
 {
-  "timestamp": "2026-10-16T16:54:08.864Z",
-  "playwright_version": "1.50.x",
+  "timestamp": "2026-10-17T05:32:21.630Z",
+  "playwright_version": "1.50.1",
   "chromium_channel": "chromium",
-  "engine_token": "e2e-test-token",
   "trials_per_cell": 20,
   "flagged_prompt_type": "PERSON+PHONE combination (Indian PII)",
   "note": "Phase 3b full-chain: real Python engine at 127.0.0.1:8765. All data synthetic.",
   "cells": [
     {
+      "name": "textarea/form/click",
+      "status": "pass",
       "composer": "textarea",
       "wiring": "form",
       "path": "click",
+      "state": "dom",
       "transport": "fetch",
       "engine_decision_observed": "redact",
       "flagged_trials": 20,
       "flagged_leaked": 0,
       "flagged_blocked": 20,
+      "sanitized_delivered_correctly": 20,
       "benign_trials": 20,
-      "benign_delivered_correctly": 20
+      "benign_delivered_correctly": 20,
+      "overlay_latency_ms": {
+        "median": 160,
+        "max": 272
+      }
     },
     {
+      "name": "textarea/form/enter",
+      "status": "pass",
       "composer": "textarea",
       "wiring": "form",
       "path": "enter",
+      "state": "dom",
       "transport": "fetch",
       "engine_decision_observed": "redact",
       "flagged_trials": 20,
       "flagged_leaked": 0,
       "flagged_blocked": 20,
+      "sanitized_delivered_correctly": 20,
       "benign_trials": 20,
-      "benign_delivered_correctly": 20
+      "benign_delivered_correctly": 20,
+      "overlay_latency_ms": {
+        "median": 130,
+        "max": 139
+      }
     },
     {
+      "name": "textarea/form/requestSubmit",
+      "status": "pass",
       "composer": "textarea",
       "wiring": "form",
-      "path": "submit",
+      "path": "requestSubmit",
+      "state": "dom",
       "transport": "fetch",
       "engine_decision_observed": "redact",
       "flagged_trials": 20,
       "flagged_leaked": 0,
       "flagged_blocked": 20,
+      "sanitized_delivered_correctly": 20,
       "benign_trials": 20,
-      "benign_delivered_correctly": 20
+      "benign_delivered_correctly": 20,
+      "overlay_latency_ms": {
+        "median": 121,
+        "max": 139
+      }
     },
     {
+      "name": "textarea/click/click",
+      "status": "pass",
       "composer": "textarea",
       "wiring": "click",
       "path": "click",
+      "state": "dom",
       "transport": "fetch",
       "engine_decision_observed": "redact",
       "flagged_trials": 20,
       "flagged_leaked": 0,
       "flagged_blocked": 20,
+      "sanitized_delivered_correctly": 20,
       "benign_trials": 20,
-      "benign_delivered_correctly": 20
+      "benign_delivered_correctly": 20,
+      "overlay_latency_ms": {
+        "median": 161,
+        "max": 171
+      }
     },
     {
+      "name": "textarea/click/enter",
+      "status": "pass",
       "composer": "textarea",
       "wiring": "click",
       "path": "enter",
+      "state": "dom",
       "transport": "fetch",
       "engine_decision_observed": "redact",
       "flagged_trials": 20,
       "flagged_leaked": 0,
       "flagged_blocked": 20,
+      "sanitized_delivered_correctly": 20,
       "benign_trials": 20,
-      "benign_delivered_correctly": 20
+      "benign_delivered_correctly": 20,
+      "overlay_latency_ms": {
+        "median": 129,
+        "max": 154
+      }
     },
     {
+      "name": "contenteditable/form/click",
+      "status": "pass",
+      "composer": "contenteditable",
+      "wiring": "form",
+      "path": "click",
+      "state": "dom",
+      "transport": "fetch",
+      "engine_decision_observed": "redact",
+      "flagged_trials": 20,
+      "flagged_leaked": 0,
+      "flagged_blocked": 20,
+      "sanitized_delivered_correctly": 20,
+      "benign_trials": 20,
+      "benign_delivered_correctly": 20,
+      "overlay_latency_ms": {
+        "median": 143,
+        "max": 159
+      }
+    },
+    {
+      "name": "contenteditable/form/enter",
+      "status": "pass",
+      "composer": "contenteditable",
+      "wiring": "form",
+      "path": "enter",
+      "state": "dom",
+      "transport": "fetch",
+      "engine_decision_observed": "redact",
+      "flagged_trials": 20,
+      "flagged_leaked": 0,
+      "flagged_blocked": 20,
+      "sanitized_delivered_correctly": 20,
+      "benign_trials": 20,
+      "benign_delivered_correctly": 20,
+      "overlay_latency_ms": {
+        "median": 124,
+        "max": 137
+      }
+    },
+    {
+      "name": "contenteditable/form/requestSubmit",
+      "status": "pass",
+      "composer": "contenteditable",
+      "wiring": "form",
+      "path": "requestSubmit",
+      "state": "dom",
+      "transport": "fetch",
+      "engine_decision_observed": "redact",
+      "flagged_trials": 20,
+      "flagged_leaked": 0,
+      "flagged_blocked": 20,
+      "sanitized_delivered_correctly": 20,
+      "benign_trials": 20,
+      "benign_delivered_correctly": 20,
+      "overlay_latency_ms": {
+        "median": 124,
+        "max": 140
+      }
+    },
+    {
+      "name": "contenteditable/click/click",
+      "status": "pass",
       "composer": "contenteditable",
       "wiring": "click",
       "path": "click",
+      "state": "dom",
       "transport": "fetch",
       "engine_decision_observed": "redact",
       "flagged_trials": 20,
       "flagged_leaked": 0,
       "flagged_blocked": 20,
+      "sanitized_delivered_correctly": 20,
       "benign_trials": 20,
-      "benign_delivered_correctly": 20
+      "benign_delivered_correctly": 20,
+      "overlay_latency_ms": {
+        "median": 153,
+        "max": 171
+      }
     },
     {
+      "name": "contenteditable/click/enter",
+      "status": "pass",
       "composer": "contenteditable",
       "wiring": "click",
       "path": "enter",
+      "state": "dom",
       "transport": "fetch",
       "engine_decision_observed": "redact",
       "flagged_trials": 20,
       "flagged_leaked": 0,
       "flagged_blocked": 20,
+      "sanitized_delivered_correctly": 20,
       "benign_trials": 20,
-      "benign_delivered_correctly": 20
+      "benign_delivered_correctly": 20,
+      "overlay_latency_ms": {
+        "median": 125,
+        "max": 135
+      }
     },
     {
-      "composer": "textarea",
-      "wiring": "form",
-      "path": "click",
-      "transport": "fetch",
-      "engine_decision_observed": "redact",
-      "flagged_trials": 3,
-      "flagged_leaked": 0,
-      "flagged_blocked": 3,
-      "benign_trials": 3,
-      "benign_delivered_correctly": 3
-    },
-    {
-      "composer": "textarea",
-      "wiring": "form",
-      "path": "enter",
-      "transport": "fetch",
-      "engine_decision_observed": "redact",
-      "flagged_trials": 3,
-      "flagged_leaked": 0,
-      "flagged_blocked": 3,
-      "benign_trials": 3,
-      "benign_delivered_correctly": 3
-    },
-    {
-      "composer": "textarea",
-      "wiring": "form",
-      "path": "submit",
-      "transport": "fetch",
-      "engine_decision_observed": "redact",
-      "flagged_trials": 3,
-      "flagged_leaked": 0,
-      "flagged_blocked": 3,
-      "benign_trials": 3,
-      "benign_delivered_correctly": 3
-    },
-    {
+      "name": "textarea/click/click (state=controlled)",
+      "status": "pass",
       "composer": "textarea",
       "wiring": "click",
       "path": "click",
+      "state": "controlled",
       "transport": "fetch",
       "engine_decision_observed": "redact",
-      "flagged_trials": 3,
+      "flagged_trials": 20,
       "flagged_leaked": 0,
-      "flagged_blocked": 3,
-      "benign_trials": 3,
-      "benign_delivered_correctly": 3
+      "flagged_blocked": 20,
+      "sanitized_delivered_correctly": 20,
+      "benign_trials": 20,
+      "benign_delivered_correctly": 20,
+      "overlay_latency_ms": {
+        "median": 156,
+        "max": 177
+      }
     },
     {
-      "composer": "textarea",
-      "wiring": "click",
-      "path": "enter",
-      "transport": "fetch",
-      "engine_decision_observed": "redact",
-      "flagged_trials": 3,
-      "flagged_leaked": 0,
-      "flagged_blocked": 3,
-      "benign_trials": 3,
-      "benign_delivered_correctly": 3
-    },
-    {
+      "name": "contenteditable/click/click (state=controlled)",
+      "status": "pass",
       "composer": "contenteditable",
       "wiring": "click",
       "path": "click",
+      "state": "controlled",
       "transport": "fetch",
       "engine_decision_observed": "redact",
-      "flagged_trials": 3,
+      "flagged_trials": 20,
       "flagged_leaked": 0,
-      "flagged_blocked": 3,
-      "benign_trials": 3,
-      "benign_delivered_correctly": 3
+      "flagged_blocked": 20,
+      "sanitized_delivered_correctly": 20,
+      "benign_trials": 20,
+      "benign_delivered_correctly": 20,
+      "overlay_latency_ms": {
+        "median": 142,
+        "max": 171
+      }
     },
     {
-      "composer": "contenteditable",
-      "wiring": "click",
-      "path": "enter",
-      "transport": "fetch",
-      "engine_decision_observed": "redact",
-      "flagged_trials": 3,
-      "flagged_leaked": 0,
-      "flagged_blocked": 3,
-      "benign_trials": 3,
-      "benign_delivered_correctly": 3
-    },
-    {
-      "composer": "textarea",
-      "wiring": "form",
-      "path": "click",
-      "transport": "fetch",
-      "engine_decision_observed": "redact",
-      "flagged_trials": 3,
-      "flagged_leaked": 0,
-      "flagged_blocked": 3,
-      "benign_trials": 3,
-      "benign_delivered_correctly": 3
-    },
-    {
-      "composer": "textarea",
-      "wiring": "form",
-      "path": "enter",
-      "transport": "fetch",
-      "engine_decision_observed": "redact",
-      "flagged_trials": 3,
-      "flagged_leaked": 0,
-      "flagged_blocked": 3,
-      "benign_trials": 3,
-      "benign_delivered_correctly": 3
-    },
-    {
-      "composer": "textarea",
-      "wiring": "form",
-      "path": "submit",
-      "transport": "fetch",
-      "engine_decision_observed": "redact",
-      "flagged_trials": 3,
-      "flagged_leaked": 0,
-      "flagged_blocked": 3,
-      "benign_trials": 3,
-      "benign_delivered_correctly": 3
-    },
-    {
+      "name": "backstop/fetch",
+      "status": "pass",
       "composer": "textarea",
       "wiring": "click",
-      "path": "click",
+      "path": "programmatic_fetch",
+      "state": "dom",
       "transport": "fetch",
-      "engine_decision_observed": "redact",
-      "flagged_trials": 3,
+      "engine_decision_observed": "block/require_approval",
+      "flagged_trials": 20,
       "flagged_leaked": 0,
-      "flagged_blocked": 3,
-      "benign_trials": 3,
-      "benign_delivered_correctly": 3
+      "flagged_blocked": 20,
+      "sanitized_delivered_correctly": null,
+      "benign_trials": 20,
+      "benign_delivered_correctly": 20,
+      "overlay_latency_ms": {
+        "median": 81,
+        "max": 111
+      }
     },
     {
+      "name": "backstop/xhr",
+      "status": "pass",
       "composer": "textarea",
       "wiring": "click",
-      "path": "enter",
-      "transport": "fetch",
-      "engine_decision_observed": "redact",
-      "flagged_trials": 3,
+      "path": "programmatic_xhr",
+      "state": "dom",
+      "transport": "xhr",
+      "engine_decision_observed": "block/require_approval",
+      "flagged_trials": 20,
       "flagged_leaked": 0,
-      "flagged_blocked": 3,
-      "benign_trials": 3,
-      "benign_delivered_correctly": 3
-    },
-    {
-      "composer": "contenteditable",
-      "wiring": "click",
-      "path": "click",
-      "transport": "fetch",
-      "engine_decision_observed": "redact",
-      "flagged_trials": 3,
-      "flagged_leaked": 0,
-      "flagged_blocked": 3,
-      "benign_trials": 3,
-      "benign_delivered_correctly": 3
-    },
-    {
-      "composer": "contenteditable",
-      "wiring": "click",
-      "path": "enter",
-      "transport": "fetch",
-      "engine_decision_observed": "redact",
-      "flagged_trials": 3,
-      "flagged_leaked": 0,
-      "flagged_blocked": 3,
-      "benign_trials": 3,
-      "benign_delivered_correctly": 3
-    },
-    {
-      "composer": "textarea",
-      "wiring": "form",
-      "path": "click",
-      "transport": "fetch",
-      "engine_decision_observed": "redact",
-      "flagged_trials": 1,
-      "flagged_leaked": 0,
-      "flagged_blocked": 1,
-      "benign_trials": 1,
-      "benign_delivered_correctly": 1
+      "flagged_blocked": 20,
+      "sanitized_delivered_correctly": null,
+      "benign_trials": 20,
+      "benign_delivered_correctly": 20,
+      "overlay_latency_ms": {
+        "median": 124,
+        "max": 148
+      }
     }
   ]
 }

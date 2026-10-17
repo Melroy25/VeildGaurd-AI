@@ -76,6 +76,7 @@
     const text = getComposerText();
     if (!text) return;
 
+    window.__vg_last_sent_text = text;
     appendMessage("user", text);
 
     if (transportType === "fetch") {
