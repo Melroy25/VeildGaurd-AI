@@ -113,3 +113,13 @@ rules:
       decision: require_approval
       action: pseudonymize
     reason: "Confidential watchlist term detected; explicit user confirmation required."
+
+  - id: APPROVE_REID_HIGH
+    description: "High re-identification risk requires confirmation."
+    when:
+      reid_levels: [high]
+    min_count: 1
+    then:
+      decision: require_approval
+      action: reduce_reid
+    reason: "Combination of quasi-identifiers poses high re-identification risk; confirmation required."

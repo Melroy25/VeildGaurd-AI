@@ -1,0 +1,113 @@
+# Common roles and job titles for quasi-identifier detection
+hr manager
+human resources manager
+product manager
+software engineer
+senior engineer
+lead architect
+sales director
+vp of operations
+vice president
+director of engineering
+operations manager
+marketing manager
+chief executive officer
+chief technology officer
+chief financial officer
+chief marketing officer
+ceo
+cto
+cfo
+cmo
+senior analyst
+data analyst
+financial analyst
+business analyst
+consultant
+project manager
+program manager
+engineering manager
+general manager
+account executive
+customer support agent
+support specialist
+technical lead
+devops engineer
+qa engineer
+scrum master
+branch manager
+managing director
+legal counsel
+compliance officer
+physician
+surgeon
+nurse
+pharmacist
+therapist
+lawyer
+attorney
+paralegal
+accountant
+auditor
+recruiter
+talent acquisition specialist
+administrator
+executive assistant
+office manager
+intern
+apprentice
+trainee
+fellow
+researcher
+scientist
+professor
+lecturer
+teacher
+instructor
+supervisor
+team lead
+coordinator
+specialist
+strategist
+advisor
+officer
+developer
+programmer
+designer
+ux designer
+ui designer
+architect
+manager
+engineer
+analyst
+director
+lead
+head
+vp
+associate
+representative
+executive
+agent
+assistant
+specialist
+consultant
+counsel
+officer
+admin
+technician
+operator
+clerk
+driver
+worker
+mechanic
+electrician
+plumber
+carpenter
+chef
+cook
+waiter
+cashier
+security guard
+janitor
+custodian
+cleaner

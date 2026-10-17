@@ -81,8 +81,15 @@ ROLE_NOUN_MAP: Dict[str, str] = {
     "member": "MEMBER",
 }
 
+# Re-identification generalization placeholder labels (Phase 5 Part C4)
+REID_GENERALIZATION_LABELS: Set[str] = {"COMPANY", "CITY", "EVENT", "ROLE"}
+
 # Known canonical placeholder labels
-KNOWN_PLACEHOLDER_LABELS: Set[str] = set(ENTITY_LABEL_MAP.values()) | set(ROLE_NOUN_MAP.values())
+KNOWN_PLACEHOLDER_LABELS: Set[str] = (
+    set(ENTITY_LABEL_MAP.values())
+    | set(ROLE_NOUN_MAP.values())
+    | REID_GENERALIZATION_LABELS
+)
 PLACEHOLDER_TOKEN_PATTERN = re.compile(r"^\[([A-Z0-9_]+)_(\d+)\]$")
 
 
@@ -159,6 +166,7 @@ class Sanitizer:
         policy_result: PolicyResult,
         known_placeholders: Optional[List[KnownPlaceholder]] = None,
         role_placeholders: Optional[bool] = None,
+        generalizations: Optional[Dict[str, str]] = None,
     ) -> SanitizeResult:
         """Sanitize text according to policy actions with strict consistency and verification."""
         use_role_ph = self.role_placeholders if role_placeholders is None else role_placeholders
@@ -220,6 +228,10 @@ class Sanitizer:
                 reversible = False
             elif action == Action.MASK:
                 replacement_str = mask_value(orig_val)
+                placeholder_val = replacement_str
+                reversible = False
+            elif action == Action.GENERALIZE:
+                replacement_str = (generalizations or {}).get(f.id, "[GENERALIZED]")
                 placeholder_val = replacement_str
                 reversible = False
             elif action == Action.PSEUDONYMIZE:

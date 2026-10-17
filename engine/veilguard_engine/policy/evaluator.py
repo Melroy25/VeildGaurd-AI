@@ -1,6 +1,6 @@
 """Policy evaluation engine implementing deterministic rule matching and decision precedence."""
 
-from typing import Dict, List, Set
+from typing import Dict, List, Optional, Set, Tuple
 from veilguard_engine.models import Finding
 from veilguard_engine.policy.models import (
     ACTION_RANKS,
@@ -45,6 +45,7 @@ def _matches_condition(
     default_min_score: float,
     source: str,
     destination_trust: DestinationTrust,
+    reid_level: Optional[str] = None,
 ) -> bool:
     """Check if a finding and request context satisfy a RuleCondition."""
     # Context checks
@@ -53,6 +54,10 @@ def _matches_condition(
 
     if cond.destination_trust and destination_trust not in cond.destination_trust:
         return False
+
+    if cond.reid_levels:
+        if not reid_level or reid_level not in cond.reid_levels:
+            return False
 
     # Finding checks
     min_score = cond.min_score if cond.min_score is not None else default_min_score
@@ -80,13 +85,14 @@ class PolicyEvaluator:
         source: str,
         destination_trust: DestinationTrust,
         profile: PolicyProfile,
+        reid_level: Optional[str] = None,
     ) -> PolicyResult:
         """Evaluate a list of findings against a PolicyProfile.
 
         Deterministic: identical findings and context produce identical decisions and actions.
         Precedence:
           Decisions: allow < redact < require_approval < block (strongest wins)
-          Actions: keep < pseudonymize < mask < remove (strongest wins per finding)
+          Actions: keep < generalize < pseudonymize < mask < remove (strongest wins per finding)
         """
         current_decision = Decision.ALLOW
         per_finding_actions: Dict[str, Action] = {}
@@ -108,6 +114,7 @@ class PolicyEvaluator:
                         default_min_score,
                         source,
                         destination_trust,
+                        reid_level=reid_level,
                     ):
                         matching_findings.append(f)
             else:

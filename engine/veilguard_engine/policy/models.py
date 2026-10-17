@@ -36,16 +36,20 @@ DECISION_OPTIONS_MAP: Dict[Decision, List[str]] = {
 
 class Action(str, Enum):
     KEEP = "keep"
+    GENERALIZE = "generalize"
     PSEUDONYMIZE = "pseudonymize"
     MASK = "mask"
     REMOVE = "remove"
+    REDUCE_REID = "reduce_reid"
 
 
 ACTION_RANKS: Dict[Action, int] = {
     Action.KEEP: 1,
-    Action.PSEUDONYMIZE: 2,
-    Action.MASK: 3,
-    Action.REMOVE: 4,
+    Action.GENERALIZE: 2,
+    Action.REDUCE_REID: 2,
+    Action.PSEUDONYMIZE: 3,
+    Action.MASK: 4,
+    Action.REMOVE: 5,
 }
 
 
@@ -77,6 +81,7 @@ class RuleCondition(StrictBaseModel):
     sources: List[str] = Field(default_factory=list)
     destination_trust: List[DestinationTrust] = Field(default_factory=list)
     requires_none: List[RuleSelector] = Field(default_factory=list)
+    reid_levels: List[str] = Field(default_factory=list)
 
 
 

@@ -110,3 +110,13 @@ rules:
       decision: block
       action: remove
     reason: "Confidential proprietary business terms cannot be transmitted in financial mode."
+
+  - id: REDACT_REID_HIGH
+    description: "High re-identification risk triggers generalization via reducer."
+    when:
+      reid_levels: [high]
+    min_count: 1
+    then:
+      decision: redact
+      action: reduce_reid
+    reason: "Combination of quasi-identifiers poses high re-identification risk; unnecessary details generalized."

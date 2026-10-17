@@ -1,0 +1,20 @@
+# VeilGuard Re-identification Risk Weights and Thresholds (Phase 5 Part C4)
+# Note: Weights are heuristic expert guesses, not statistical probabilities.
+# The re-identification score is calculated via noisy-OR over distinct quasi types present:
+# Score = 1.0 - product(1.0 - w_type)
+
+version: 1
+
+weights:
+  QUASI_AGE: 0.25
+  QUASI_ROLE: 0.20
+  QUASI_ORG: 0.35
+  QUASI_LOCATION: 0.25
+  QUASI_EVENT: 0.30
+  QUASI_GENDER: 0.05
+
+thresholds:
+  medium: 0.5
+  high: 0.7
+
+target: 0.5

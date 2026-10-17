@@ -16,7 +16,8 @@ class Category(str, Enum):
     GOVERNMENT_ID = "GOVERNMENT_ID"
     SECRET = "SECRET"
     CONFIDENTIAL = "CONFIDENTIAL"
-    MEDICAL = "MEDICAL"  # Reserved for future phases
+    MEDICAL = "MEDICAL"
+    QUASI_IDENTIFIER = "QUASI_IDENTIFIER"
 
 
 ENTITY_CATEGORY_MAP: dict[str, Category] = {
@@ -63,8 +64,19 @@ ENTITY_CATEGORY_MAP: dict[str, Category] = {
     "WATCHLIST_TERM": Category.CONFIDENTIAL,
     "CONFIDENTIAL_TERM": Category.CONFIDENTIAL,
 
-    # Medical (reserved)
+    # Medical (Phase 5)
+    "MEDICAL_CONDITION": Category.MEDICAL,
+    "MEDICATION": Category.MEDICAL,
+    "MEDICAL_PROCEDURE": Category.MEDICAL,
     "MEDICAL_LICENSE": Category.MEDICAL,
+
+    # Quasi-identifiers (Phase 5)
+    "QUASI_AGE": Category.QUASI_IDENTIFIER,
+    "QUASI_ROLE": Category.QUASI_IDENTIFIER,
+    "QUASI_ORG": Category.QUASI_IDENTIFIER,
+    "QUASI_LOCATION": Category.QUASI_IDENTIFIER,
+    "QUASI_EVENT": Category.QUASI_IDENTIFIER,
+    "QUASI_GENDER": Category.QUASI_IDENTIFIER,
 }
 
 

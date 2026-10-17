@@ -1,0 +1,87 @@
+# Sensitive personal and employment events for quasi-identifier detection
+maternity leave
+paternity leave
+parental leave
+medical leave
+sick leave
+bereavement leave
+leave of absence
+promotion
+promoted
+got promoted
+was promoted
+received a promotion
+termination
+terminated
+was terminated
+got terminated
+resignation
+resigned
+handed in resignation
+layoff
+laid off
+was laid off
+downsizing
+lawsuit
+sued
+suing
+filed a lawsuit
+legal dispute
+arbitration
+surgery
+surgeries
+underwent surgery
+surgical procedure
+operation
+divorce
+divorced
+filing for divorce
+separation
+disciplinary action
+performance improvement plan
+pip
+put on pip
+on a pip
+probation
+on probation
+arrest
+arrested
+charged with
+indictment
+indicted
+bankruptcy
+bankrupt
+filed for bankruptcy
+insolvency
+rehab
+rehabilitation
+admitted to rehab
+substance abuse treatment
+detox
+psychiatric evaluation
+hospitalized
+hospitalization
+quarantine
+quarantined
+eviction
+evicted
+foreclosure
+foreclosed
+repossession
+settlement agreement
+severance package
+whistleblowing
+whistleblower complaint
+internal investigation
+audit finding
+security clearance revoked
+suspended
+suspension
+without pay
+strike
+picket line
+workers compensation
+workplace injury
+disability claim
+long-term disability
+short-term disability
