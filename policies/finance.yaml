@@ -93,12 +93,26 @@ rules:
       min_score: 0.4
       requires_none:
         - entity_types: [PHONE_NUMBER, IN_MOBILE, EMAIL, EMAIL_ADDRESS, IN_AADHAAR, IN_PAN, IN_GSTIN, US_SSN, CREDIT_CARD, IN_BANK_ACCOUNT, UPI_ID, IN_IFSC]
-        - categories: [SECRET, GOVERNMENT_ID, FINANCIAL]
+        - categories: [SECRET, GOVERNMENT_ID, FINANCIAL, MEDICAL]
     min_count: 1
     then:
       decision: allow
       action: keep
     reason: "Isolated personal name without linked identifying attributes is permitted."
+
+  - id: HEALTH_WITH_IDENTITY
+    description: "Identity findings combined with medical details must be pseudonymized while preserving medical information."
+    when:
+      entity_types: [PERSON, PHONE_NUMBER, IN_MOBILE, EMAIL, EMAIL_ADDRESS, IN_AADHAAR, IN_PAN, IN_GSTIN, US_SSN]
+      min_score: 0.4
+    requires_any:
+      - categories: [MEDICAL]
+    min_count: 1
+    then:
+      decision: redact
+      action: pseudonymize
+      also_apply_to_requires: false
+    reason: "Medical information linked to an identifiable individual poses privacy risk; identity pseudonymized while medical terms are preserved."
 
   - id: BLOCK_CONFIDENTIAL
     description: "Confidential watchlist terms are strictly blocked in financial environments."

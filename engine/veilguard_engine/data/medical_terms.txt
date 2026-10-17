@@ -1,0 +1,265 @@
+# VeilGuard Non-Exhaustive Clinical Lexicon (Phase 5 Part C5)
+# Category: MEDICAL
+# Format: TERM:ENTITY_TYPE
+# Entity types: MEDICAL_CONDITION, MEDICATION, MEDICAL_PROCEDURE
+# Note: This lexicon is intentionally non-exhaustive and curated for demonstration and benchmarking.
+
+# --- Conditions & Diagnoses (MEDICAL_CONDITION) ---
+type 1 diabetes:MEDICAL_CONDITION
+type 2 diabetes:MEDICAL_CONDITION
+gestational diabetes:MEDICAL_CONDITION
+diabetes mellitus:MEDICAL_CONDITION
+diabetes:MEDICAL_CONDITION
+hypertension:MEDICAL_CONDITION
+hypotension:MEDICAL_CONDITION
+asthma:MEDICAL_CONDITION
+chronic bronchitis:MEDICAL_CONDITION
+emphysema:MEDICAL_CONDITION
+copd:MEDICAL_CONDITION
+tuberculosis:MEDICAL_CONDITION
+pneumonia:MEDICAL_CONDITION
+covid-19:MEDICAL_CONDITION
+coronavirus:MEDICAL_CONDITION
+malaria:MEDICAL_CONDITION
+dengue:MEDICAL_CONDITION
+typhoid:MEDICAL_CONDITION
+hepatitis a:MEDICAL_CONDITION
+hepatitis b:MEDICAL_CONDITION
+hepatitis c:MEDICAL_CONDITION
+hepatitis:MEDICAL_CONDITION
+cirrhosis:MEDICAL_CONDITION
+fatty liver disease:MEDICAL_CONDITION
+chronic kidney disease:MEDICAL_CONDITION
+kidney failure:MEDICAL_CONDITION
+renal failure:MEDICAL_CONDITION
+nephropathy:MEDICAL_CONDITION
+urinary tract infection:MEDICAL_CONDITION
+uti:MEDICAL_CONDITION
+breast cancer:MEDICAL_CONDITION
+lung cancer:MEDICAL_CONDITION
+colon cancer:MEDICAL_CONDITION
+prostate cancer:MEDICAL_CONDITION
+cervical cancer:MEDICAL_CONDITION
+ovarian cancer:MEDICAL_CONDITION
+leukemia:MEDICAL_CONDITION
+lymphoma:MEDICAL_CONDITION
+melanoma:MEDICAL_CONDITION
+carcinoma:MEDICAL_CONDITION
+sarcoma:MEDICAL_CONDITION
+cancer:MEDICAL_CONDITION
+tumor:MEDICAL_CONDITION
+myocardial infarction:MEDICAL_CONDITION
+heart attack:MEDICAL_CONDITION
+coronary artery disease:MEDICAL_CONDITION
+heart failure:MEDICAL_CONDITION
+arrhythmia:MEDICAL_CONDITION
+atrial fibrillation:MEDICAL_CONDITION
+stroke:MEDICAL_CONDITION
+transient ischemic attack:MEDICAL_CONDITION
+deep vein thrombosis:MEDICAL_CONDITION
+pulmonary embolism:MEDICAL_CONDITION
+anemia:MEDICAL_CONDITION
+sickle cell disease:MEDICAL_CONDITION
+hemophilia:MEDICAL_CONDITION
+rheumatoid arthritis:MEDICAL_CONDITION
+osteoarthritis:MEDICAL_CONDITION
+arthritis:MEDICAL_CONDITION
+osteoporosis:MEDICAL_CONDITION
+systemic lupus:MEDICAL_CONDITION
+lupus:MEDICAL_CONDITION
+multiple sclerosis:MEDICAL_CONDITION
+parkinson's disease:MEDICAL_CONDITION
+parkinson's:MEDICAL_CONDITION
+alzheimer's disease:MEDICAL_CONDITION
+alzheimer's:MEDICAL_CONDITION
+dementia:MEDICAL_CONDITION
+epilepsy:MEDICAL_CONDITION
+seizure disorder:MEDICAL_CONDITION
+migraine:MEDICAL_CONDITION
+cluster headache:MEDICAL_CONDITION
+psoriasis:MEDICAL_CONDITION
+eczema:MEDICAL_CONDITION
+dermatitis:MEDICAL_CONDITION
+celiac disease:MEDICAL_CONDITION
+crohn's disease:MEDICAL_CONDITION
+ulcerative colitis:MEDICAL_CONDITION
+irritable bowel syndrome:MEDICAL_CONDITION
+gastritis:MEDICAL_CONDITION
+peptic ulcer:MEDICAL_CONDITION
+hypothyroidism:MEDICAL_CONDITION
+hyperthyroidism:MEDICAL_CONDITION
+hashimoto's thyroiditis:MEDICAL_CONDITION
+grave's disease:MEDICAL_CONDITION
+endometriosis:MEDICAL_CONDITION
+polycystic ovary syndrome:MEDICAL_CONDITION
+pcos:MEDICAL_CONDITION
+uterine fibroids:MEDICAL_CONDITION
+pelvic inflammatory disease:MEDICAL_CONDITION
+glaucoma:MEDICAL_CONDITION
+cataracts:MEDICAL_CONDITION
+macular degeneration:MEDICAL_CONDITION
+hearing loss:MEDICAL_CONDITION
+tinnitus:MEDICAL_CONDITION
+
+# --- Mental Health Conditions (MEDICAL_CONDITION) ---
+major depressive disorder:MEDICAL_CONDITION
+clinical depression:MEDICAL_CONDITION
+depression:MEDICAL_CONDITION
+generalized anxiety disorder:MEDICAL_CONDITION
+anxiety disorder:MEDICAL_CONDITION
+anxiety:MEDICAL_CONDITION
+bipolar disorder:MEDICAL_CONDITION
+bipolar:MEDICAL_CONDITION
+schizophrenia:MEDICAL_CONDITION
+schizoaffective disorder:MEDICAL_CONDITION
+post-traumatic stress disorder:MEDICAL_CONDITION
+ptsd:MEDICAL_CONDITION
+obsessive-compulsive disorder:MEDICAL_CONDITION
+ocd:MEDICAL_CONDITION
+panic disorder:MEDICAL_CONDITION
+panic attacks:MEDICAL_CONDITION
+social anxiety disorder:MEDICAL_CONDITION
+agoraphobia:MEDICAL_CONDITION
+attention deficit hyperactivity disorder:MEDICAL_CONDITION
+adhd:MEDICAL_CONDITION
+autism spectrum disorder:MEDICAL_CONDITION
+anorexia nervosa:MEDICAL_CONDITION
+bulimia nervosa:MEDICAL_CONDITION
+binge eating disorder:MEDICAL_CONDITION
+insomnia:MEDICAL_CONDITION
+sleep apnea:MEDICAL_CONDITION
+substance use disorder:MEDICAL_CONDITION
+alcohol use disorder:MEDICAL_CONDITION
+postpartum depression:MEDICAL_CONDITION
+
+# --- Common Medications by Generic Name (MEDICATION) ---
+metformin:MEDICATION
+insulin glargine:MEDICATION
+insulin:MEDICATION
+lisinopril:MEDICATION
+amlodipine:MEDICATION
+losartan:MEDICATION
+atorvastatin:MEDICATION
+simvastatin:MEDICATION
+rosuvastatin:MEDICATION
+omeprazole:MEDICATION
+pantoprazole:MEDICATION
+esomeprazole:MEDICATION
+ibuprofen:MEDICATION
+paracetamol:MEDICATION
+acetaminophen:MEDICATION
+aspirin:MEDICATION
+naproxen:MEDICATION
+amoxicillin:MEDICATION
+azithromycin:MEDICATION
+ciprofloxacin:MEDICATION
+doxycycline:MEDICATION
+cephalexin:MEDICATION
+levofloxacin:MEDICATION
+metronidazole:MEDICATION
+sertraline:MEDICATION
+fluoxetine:MEDICATION
+escitalopram:MEDICATION
+citalopram:MEDICATION
+duloxetine:MEDICATION
+venlafaxine:MEDICATION
+bupropion:MEDICATION
+alprazolam:MEDICATION
+diazepam:MEDICATION
+lorazepam:MEDICATION
+clonazepam:MEDICATION
+zolpidem:MEDICATION
+levothyroxine:MEDICATION
+albuterol:MEDICATION
+salbutamol:MEDICATION
+fluticasone:MEDICATION
+budesonide:MEDICATION
+montelukast:MEDICATION
+gabapentin:MEDICATION
+pregabalin:MEDICATION
+hydrochlorothiazide:MEDICATION
+furosemide:MEDICATION
+carvedilol:MEDICATION
+metoprolol:MEDICATION
+atenolol:MEDICATION
+prednisone:MEDICATION
+prednisolone:MEDICATION
+dexamethasone:MEDICATION
+methotrexate:MEDICATION
+hydroxychloroquine:MEDICATION
+adalimumab:MEDICATION
+warfarin:MEDICATION
+apixaban:MEDICATION
+rivaroxaban:MEDICATION
+clopidogrel:MEDICATION
+tramadol:MEDICATION
+codeine:MEDICATION
+morphine:MEDICATION
+fentanyl:MEDICATION
+buprenorphine:MEDICATION
+naloxone:MEDICATION
+
+# --- Medical Procedures & Treatments (MEDICAL_PROCEDURE) ---
+chemotherapy:MEDICAL_PROCEDURE
+radiation therapy:MEDICAL_PROCEDURE
+radiotherapy:MEDICAL_PROCEDURE
+immunotherapy:MEDICAL_PROCEDURE
+hemodialysis:MEDICAL_PROCEDURE
+peritoneal dialysis:MEDICAL_PROCEDURE
+dialysis:MEDICAL_PROCEDURE
+angioplasty:MEDICAL_PROCEDURE
+stent placement:MEDICAL_PROCEDURE
+coronary artery bypass:MEDICAL_PROCEDURE
+bypass surgery:MEDICAL_PROCEDURE
+cardiac catheterization:MEDICAL_PROCEDURE
+pacemaker implantation:MEDICAL_PROCEDURE
+endoscopy:MEDICAL_PROCEDURE
+colonoscopy:MEDICAL_PROCEDURE
+bronchoscopy:MEDICAL_PROCEDURE
+biopsy:MEDICAL_PROCEDURE
+lumbar puncture:MEDICAL_PROCEDURE
+amniocentesis:MEDICAL_PROCEDURE
+appendectomy:MEDICAL_PROCEDURE
+cholecystectomy:MEDICAL_PROCEDURE
+mastectomy:MEDICAL_PROCEDURE
+lumpectomy:MEDICAL_PROCEDURE
+hysterectomy:MEDICAL_PROCEDURE
+cesarean section:MEDICAL_PROCEDURE
+c-section:MEDICAL_PROCEDURE
+vasectomy:MEDICAL_PROCEDURE
+tubal ligation:MEDICAL_PROCEDURE
+in vitro fertilization:MEDICAL_PROCEDURE
+ivf:MEDICAL_PROCEDURE
+intrauterine insemination:MEDICAL_PROCEDURE
+joint replacement:MEDICAL_PROCEDURE
+knee replacement:MEDICAL_PROCEDURE
+hip replacement:MEDICAL_PROCEDURE
+cataract surgery:MEDICAL_PROCEDURE
+lasik:MEDICAL_PROCEDURE
+organ transplant:MEDICAL_PROCEDURE
+kidney transplant:MEDICAL_PROCEDURE
+liver transplant:MEDICAL_PROCEDURE
+bone marrow transplant:MEDICAL_PROCEDURE
+stem cell transplant:MEDICAL_PROCEDURE
+physical therapy:MEDICAL_PROCEDURE
+physiotherapy:MEDICAL_PROCEDURE
+psychotherapy:MEDICAL_PROCEDURE
+cognitive behavioral therapy:MEDICAL_PROCEDURE
+cbt:MEDICAL_PROCEDURE
+electroconvulsive therapy:MEDICAL_PROCEDURE
+intubation:MEDICAL_PROCEDURE
+mechanical ventilation:MEDICAL_PROCEDURE
+tracheostomy:MEDICAL_PROCEDURE
+blood transfusion:MEDICAL_PROCEDURE
+mri scan:MEDICAL_PROCEDURE
+ct scan:MEDICAL_PROCEDURE
+pet scan:MEDICAL_PROCEDURE
+ultrasound:MEDICAL_PROCEDURE
+mammogram:MEDICAL_PROCEDURE
+electrocardiogram:MEDICAL_PROCEDURE
+ecg:MEDICAL_PROCEDURE
+ekg:MEDICAL_PROCEDURE
+echocardiogram:MEDICAL_PROCEDURE
+electroencephalogram:MEDICAL_PROCEDURE
+eeg:MEDICAL_PROCEDURE
+polysomnography:MEDICAL_PROCEDURE

@@ -19,9 +19,12 @@ def get_finding_priority_tier(finding: Finding) -> int:
     Tier 5: Checksum-validated own findings (IN_AADHAAR, IN_GSTIN, IN_PAN, etc.)
     Tier 4: Secrets detector findings
     Tier 3: Watchlist detector findings
-    Tier 2: Other own findings (e.g. IN_MOBILE pattern)
+    Tier 2: Other own findings (e.g. IN_MOBILE pattern, Medical findings)
     Tier 1: Presidio statistical/pattern findings
+    Tier 0: Quasi-identifier findings
     """
+    if finding.detector == "quasi":
+        return 0
     if finding.detector != "presidio":
         if finding.category == Category.SECRET:
             return 4
@@ -146,18 +149,38 @@ class Scanner:
         self,
         detectors: Optional[List[Detector]] = None,
         spacy_model: Optional[str] = None,
+        include_medical: Optional[bool] = None,
+        include_quasi: Optional[bool] = None,
     ):
         self.spacy_model = spacy_model or config.SPACY_MODEL
         if detectors is not None:
             self.detectors = detectors
         else:
+            import os
             # Default production detector pipeline
-            self.detectors = [
+            pipe: List[Detector] = [
                 IndiaDetector(),
                 SecretsDetector(),
                 WatchlistDetector(),
                 PresidioDetector(spacy_model=self.spacy_model),
             ]
+            med_flag = (
+                include_medical
+                if include_medical is not None
+                else os.getenv("VEILGUARD_MEDICAL", "1").lower() in ("1", "true", "yes")
+            )
+            quasi_flag = (
+                include_quasi
+                if include_quasi is not None
+                else os.getenv("VEILGUARD_REID", "1").lower() in ("1", "true", "yes")
+            )
+            if med_flag:
+                from veilguard_engine.detectors.medical import MedicalDetector
+                pipe.append(MedicalDetector())
+            if quasi_flag:
+                from veilguard_engine.detectors.quasi import QuasiDetector
+                pipe.append(QuasiDetector(spacy_model=self.spacy_model))
+            self.detectors = pipe
 
     def scan(self, text: str, source: str = "prompt") -> ScanResponse:
         """Execute all detectors and return resolved findings with latency metrics."""
