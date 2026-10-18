@@ -46,19 +46,29 @@ AI_KEYWORDS = [
 
 
 def get_auth_token() -> str:
-    """Read local bearer token from standard location if present."""
-    token_path = Path.home() / ".veilguard" / "token"
-    if token_path.is_file():
-        try:
-            return token_path.read_text(encoding="utf-8").strip()
-        except Exception:
-            pass
-    local_token = Path(__file__).resolve().parent.parent / ".veilguard" / "token"
-    if local_token.is_file():
-        try:
-            return local_token.read_text(encoding="utf-8").strip()
-        except Exception:
-            pass
+    """Read local bearer token from standard locations if present."""
+    # 1. Environment variable
+    env_token = os.getenv("VEILGUARD_TOKEN")
+    if env_token:
+        return env_token.strip()
+
+    # 2. Candidate paths
+    candidates = [
+        Path.home() / ".veilguard" / "token",
+        Path.cwd() / ".veilguard" / "token",
+        Path(__file__).resolve().parent.parent / ".veilguard" / "token",
+        Path(__file__).resolve().parent / ".veilguard" / "token",
+        Path(sys.executable).resolve().parent / ".veilguard" / "token",
+        Path(sys.executable).resolve().parent.parent / ".veilguard" / "token",
+    ]
+    for p in candidates:
+        if p.is_file():
+            try:
+                t = p.read_text(encoding="utf-8").strip()
+                if t:
+                    return t
+            except Exception:
+                pass
     return "dev-local-token"
 
 

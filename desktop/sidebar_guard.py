@@ -113,23 +113,31 @@ class VeilGuardClient:
             return False
 
     def analyze_prompt(self, text: str, profile: str = DEFAULT_PROFILE) -> dict | None:
-        try:
-            payload = json.dumps({
-                "text": text,
-                "profile": profile,
-                "source": "prompt",
-                "destination": "chatgpt.com",
-            }).encode("utf-8")
-            req = urllib.request.Request(
-                f"{self.base_url}/analyze",
-                data=payload,
-                headers=self._headers(),
-                method="POST",
-            )
-            with urllib.request.urlopen(req, timeout=4.0) as resp:
-                return json.loads(resp.read().decode("utf-8"))
-        except Exception:
-            return None
+        for attempt in range(2):
+            try:
+                payload = json.dumps({
+                    "text": text,
+                    "profile": profile,
+                    "source": "prompt",
+                    "destination": "chatgpt.com",
+                }).encode("utf-8")
+                req = urllib.request.Request(
+                    f"{self.base_url}/analyze",
+                    data=payload,
+                    headers=self._headers(),
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=5.0) as resp:
+                    return json.loads(resp.read().decode("utf-8"))
+            except urllib.error.HTTPError as e:
+                if e.code == 401 and attempt == 0:
+                    # Token mismatch - re-read latest persistent token and retry
+                    self.token = get_auth_token()
+                    continue
+                return None
+            except Exception:
+                return None
+        return None
 
     def redact_pdf(self, pdf_bytes: bytes, profile: str = DEFAULT_PROFILE) -> bytes | None:
         try:

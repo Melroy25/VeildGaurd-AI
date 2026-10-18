@@ -44,6 +44,12 @@ def get_or_create_api_token() -> str:
             token = token_file.read_text(encoding="utf-8").strip()
             if token:
                 logger.info("Loaded persistent API token from %s", token_file.resolve())
+                try:
+                    home_token = Path.home() / ".veilguard" / "token"
+                    home_token.parent.mkdir(parents=True, exist_ok=True)
+                    home_token.write_text(token, encoding="utf-8")
+                except Exception:
+                    pass
                 return token
         except Exception as e:
             logger.warning("Could not read token from %s: %s", token_file, e)
@@ -54,6 +60,12 @@ def get_or_create_api_token() -> str:
         token_file.parent.mkdir(parents=True, exist_ok=True)
         token_file.write_text(token, encoding="utf-8")
         logger.info("Generated new API token and persisted to %s", token_file.resolve())
+        try:
+            home_token = Path.home() / ".veilguard" / "token"
+            home_token.parent.mkdir(parents=True, exist_ok=True)
+            home_token.write_text(token, encoding="utf-8")
+        except Exception:
+            pass
     except Exception as e:
         logger.warning("Could not persist API token to %s: %s", token_file, e)
 
