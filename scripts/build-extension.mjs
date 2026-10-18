@@ -33,6 +33,7 @@ async function buildExtension() {
         input: {
           popup: resolve(extensionDir, "popup.html"),
           options: resolve(extensionDir, "options.html"),
+          onboarding: resolve(extensionDir, "onboarding.html"),
           background: resolve(extensionDir, "src/background/index.ts"),
         },
         output: {

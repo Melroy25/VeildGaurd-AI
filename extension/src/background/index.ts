@@ -46,6 +46,16 @@ import {
 console.log("[VeilGuard AI] Background service worker initialized (Phase 3b).");
 
 // ---------------------------------------------------------------------------
+// Installation lifecycle: open onboarding welcome page on first install
+// ---------------------------------------------------------------------------
+
+chrome.runtime.onInstalled.addListener((details) => {
+  if (details.reason === "install") {
+    chrome.tabs.create({ url: chrome.runtime.getURL("onboarding.html") });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Tab lifecycle: clear vault when tab closes
 // ---------------------------------------------------------------------------
 

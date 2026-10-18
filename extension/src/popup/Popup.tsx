@@ -1,23 +1,12 @@
 /**
- * VeilGuard AI - Popup Status UI (Part C)
+ * VeilGuard AI - Popup Status UI
  *
- * Shows engine status, active profile, today's counts, this-page status,
- * and an Open Dashboard button.
+ * Blue Glass aesthetic with frosted panels, glowing indicators,
+ * live engine status, active profile, today's counts, and dashboard link.
  *
  * Privacy invariants (Rule 7):
  *   - No raw prompt text, entity values, or token strings rendered.
  *   - Counts come from metadata-only StoredEvent objects.
- *
- * Permission constraints:
- *   - Does NOT use the `tabs` permission.
- *   - Production: uses chrome.tabs.query({active:true, currentWindow:true})
- *     which does not require the `tabs` permission in MV3.
- *   - Content-script status query via chrome.tabs.sendMessage without `tabs`.
- *
- * Test seam (Decision 31):
- *   Open popup.html?tabId=<n> to query a specific tab directly.
- *   This keeps the production code path clean while allowing Playwright tests
- *   to target the correct tab without the removed sibling-tab heuristic.
  */
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -43,7 +32,6 @@ interface PingMsg {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** ISO date string for local today (YYYY-MM-DD). */
 function localTodayStr(): string {
   const d = new Date();
   const y = d.getFullYear();
@@ -80,15 +68,15 @@ function computeTodayCounts(events: StoredEvent[]): TodayCounts {
 const StatusDot: React.FC<{ status: "ok" | "warn" | "err" | "idle" }> = ({
   status,
 }) => {
-  const colors = {
-    ok: "bg-emerald-400",
-    warn: "bg-amber-400 animate-pulse",
-    err: "bg-red-500",
-    idle: "bg-slate-500 animate-pulse",
+  const styles = {
+    ok: "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]",
+    warn: "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.7)] animate-pulse",
+    err: "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.7)]",
+    idle: "bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.7)] animate-pulse",
   };
   return (
     <span
-      className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${colors[status]}`}
+      className={`inline-block w-2.5 h-2.5 rounded-full flex-shrink-0 ${styles[status]}`}
       aria-hidden="true"
     />
   );
@@ -99,11 +87,11 @@ const StatusDot: React.FC<{ status: "ok" | "warn" | "err" | "idle" }> = ({
 const CountBadge: React.FC<{ label: string; value: number; accent?: string }> = ({
   label,
   value,
-  accent = "text-slate-200",
+  accent = "text-slate-100",
 }) => (
-  <div className="flex flex-col items-center">
-    <span className={`text-xl font-bold font-mono ${accent}`}>{value}</span>
-    <span className="text-[10px] text-slate-500">{label}</span>
+  <div className="flex flex-col items-center flex-1 py-1">
+    <span className={`text-xl font-bold font-mono tracking-tight ${accent}`}>{value}</span>
+    <span className="text-[10px] font-medium uppercase tracking-wider text-slate-400 mt-0.5">{label}</span>
   </div>
 );
 
@@ -120,7 +108,7 @@ export const Popup: React.FC = () => {
   });
   const [pageStatus, setPageStatus] = useState<PageStatus>("checking");
 
-  // ── Load stored profile ──
+  // Load stored profile
   useEffect(() => {
     chrome.storage.local.get("vg_profile", (res) => {
       if (typeof res["vg_profile"] === "string") {
@@ -129,7 +117,7 @@ export const Popup: React.FC = () => {
     });
   }, []);
 
-  // ── Load today's event counts ──
+  // Load today's event counts
   useEffect(() => {
     chrome.storage.local.get(EVENTS_STORAGE_KEY, (res) => {
       const raw = res[EVENTS_STORAGE_KEY];
@@ -139,7 +127,7 @@ export const Popup: React.FC = () => {
     });
   }, []);
 
-  // ── Ping engine ──
+  // Ping engine
   const pingEngine = useCallback(() => {
     setEngineStatus("checking");
     chrome.runtime.sendMessage({ type: "PING" }, (response: PingMsg) => {
@@ -158,9 +146,7 @@ export const Popup: React.FC = () => {
     pingEngine();
   }, [pingEngine]);
 
-  // ── Query active tab content script ──
-  // Production path: chrome.tabs.query({active:true, currentWindow:true})
-  // Test seam (Decision 31): ?tabId=<n> in URL → query that specific tab
+  // Query active tab content script
   const queryContentScript = useCallback(() => {
     const sendStatusQuery = (targetTabId: number | undefined) => {
       if (!targetTabId) {
@@ -173,7 +159,6 @@ export const Popup: React.FC = () => {
           { type: "GET_STATUS" },
           (response: GetStatusResponse | undefined) => {
             if (chrome.runtime.lastError || !response) {
-              // No content script on this page
               setPageStatus("not active");
               return;
             }
@@ -185,8 +170,6 @@ export const Popup: React.FC = () => {
       }
     };
 
-    // Check for the documented test seam: popup.html?tabId=<n> (Decision 31)
-    // Ignored unless it matches an existing tab.
     const params = new URLSearchParams(window.location.search);
     const seamTabId = params.get("tabId");
     if (seamTabId !== null) {
@@ -204,12 +187,11 @@ export const Popup: React.FC = () => {
           });
           return;
         } catch {
-          // Fall through to production query
+          // fallback
         }
       }
     }
 
-    // Production: query active tab in the browser window
     chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
       if (tabs?.[0]?.id != null) {
         sendStatusQuery(tabs[0].id);
@@ -225,7 +207,6 @@ export const Popup: React.FC = () => {
     queryContentScript();
   }, [queryContentScript]);
 
-  // ── Page status display ──
   const pageStatusInfo = (): { label: string; dot: "ok" | "warn" | "err" | "idle"; sub?: string } => {
     switch (pageStatus) {
       case "checking":
@@ -263,22 +244,43 @@ export const Popup: React.FC = () => {
       : "err";
 
   return (
-    <div className="w-80 font-sans bg-slate-900 text-slate-100 flex flex-col">
+    <div className="w-[340px] font-sans bg-[#060b14] text-slate-100 flex flex-col border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+      {/* Blue Glass Glow Ambient Background */}
+      <div className="absolute top-0 right-0 w-36 h-36 bg-sky-500/10 rounded-full blur-3xl pointer-events-none -z-0" />
+      <div className="absolute bottom-0 left-0 w-36 h-36 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none -z-0" />
+
       {/* Header */}
-      <header className="border-b border-slate-800 px-4 py-3 flex items-center justify-between">
-        <h1 className="text-base font-bold text-sky-400">VeilGuard AI</h1>
-        <span className="text-[10px] text-slate-500 font-mono">Phase 3c</span>
+      <header className="relative z-10 border-b border-white/[0.08] px-4 py-3.5 flex items-center justify-between bg-white/[0.02] backdrop-blur-md">
+        <div className="flex items-center gap-2.5">
+          <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-sky-500 to-cyan-400 flex items-center justify-center shadow-[0_0_12px_rgba(56,189,248,0.4)]">
+            <svg className="w-3.5 h-3.5 text-slate-950 font-bold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
+              VeilGuard <span className="text-sky-400">AI</span>
+            </h1>
+          </div>
+        </div>
+        <span className="text-[10px] font-semibold tracking-wider text-sky-400 bg-sky-950/60 border border-sky-500/30 px-2 py-0.5 rounded-full">
+          FIREWALL ACTIVE
+        </span>
       </header>
 
-      <div className="px-4 pt-3 pb-2 space-y-4">
-        {/* Engine status */}
-        <section aria-label="Engine status">
-          <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-1">
-            Engine
-          </p>
-          <div className="flex items-center gap-2">
+      {/* Body Cards */}
+      <div className="relative z-10 px-4 pt-3.5 pb-2.5 space-y-3">
+        {/* Engine status card */}
+        <section aria-label="Engine status" className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              Local Engine
+            </span>
+            <span className="text-[10px] font-mono text-slate-400">127.0.0.1:8765</span>
+          </div>
+          <div className="flex items-center gap-2.5">
             <StatusDot status={engineDot} />
-            <span className="text-sm text-slate-200">
+            <span className="text-sm font-medium text-slate-100">
               {engineStatus === "connected"
                 ? `Connected${engineVersion ? ` (v${engineVersion})` : ""}`
                 : engineStatus === "checking"
@@ -287,53 +289,56 @@ export const Popup: React.FC = () => {
             </span>
           </div>
           {engineStatus === "unreachable" && (
-            <p className="text-xs text-red-400 mt-1">
+            <p className="text-xs text-rose-300 bg-rose-950/40 border border-rose-800/40 rounded-lg p-2 mt-2">
               Sending is blocked while the engine is unreachable.
             </p>
           )}
         </section>
 
-        {/* Active profile */}
-        <section aria-label="Active policy profile">
-          <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-1">
-            Active profile
-          </p>
-          <span className="text-sm font-medium text-slate-200">{activeProfile}</span>
+        {/* Active profile card */}
+        <section aria-label="Active policy profile" className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">
+              Active Policy
+            </p>
+            <span className="text-sm font-semibold text-sky-400 capitalize">{activeProfile}</span>
+          </div>
+          <span className="text-[11px] text-slate-400 bg-white/[0.04] px-2.5 py-1 rounded-md border border-white/[0.06]">
+            Strict Rule Core
+          </span>
         </section>
 
         {/* Today's counts */}
-        <section aria-label="Today's counts">
-          <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-2">
-            Today
+        <section aria-label="Today's counts" className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md">
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            Activity Today
           </p>
-          <div className="flex justify-between px-2 py-3 bg-slate-800 rounded-lg">
+          <div className="flex justify-between divide-x divide-white/[0.08] bg-black/30 rounded-lg p-1.5 border border-white/[0.04]">
             <CountBadge label="Checked" value={todayCounts.checked} />
-            <div className="w-px bg-slate-700" />
             <CountBadge
               label="Sanitized"
               value={todayCounts.sanitized}
-              accent="text-emerald-300"
+              accent="text-sky-300"
             />
-            <div className="w-px bg-slate-700" />
             <CountBadge
               label="Blocked"
               value={todayCounts.blocked}
-              accent={todayCounts.blocked > 0 ? "text-red-400" : "text-slate-200"}
+              accent={todayCounts.blocked > 0 ? "text-rose-400" : "text-slate-300"}
             />
           </div>
         </section>
 
         {/* This page */}
-        <section aria-label="This page protection status">
-          <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-1">
-            This page
+        <section aria-label="This page protection status" className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md">
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+            Active Tab Protection
           </p>
-          <div className="flex items-start gap-2">
+          <div className="flex items-start gap-2.5">
             <StatusDot status={pageDot} />
             <div>
-              <span className="text-sm text-slate-200">{pageLabel}</span>
+              <span className="text-sm font-medium text-slate-100">{pageLabel}</span>
               {pageSub && (
-                <p className="text-xs text-slate-400 mt-0.5">{pageSub}</p>
+                <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{pageSub}</p>
               )}
             </div>
           </div>
@@ -341,19 +346,22 @@ export const Popup: React.FC = () => {
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800 px-4 py-3 flex items-center justify-between">
+      <footer className="relative z-10 border-t border-white/[0.08] px-4 py-3 flex items-center justify-between bg-white/[0.02] backdrop-blur-md">
         <button
           type="button"
           onClick={pingEngine}
-          className="text-xs text-slate-400 hover:text-slate-200 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
+          className="text-xs font-medium text-slate-300 hover:text-white transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 flex items-center gap-1.5 cursor-pointer"
           aria-label="Re-check engine status"
         >
-          ↻ Refresh
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Re-check
         </button>
         <button
           type="button"
           onClick={() => chrome.runtime.openOptionsPage?.()}
-          className="px-3 py-1.5 rounded bg-sky-700 hover:bg-sky-600 text-xs font-semibold text-white transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
+          className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-xs font-semibold text-slate-950 transition-all shadow-[0_2px_12px_rgba(56,189,248,0.35)] hover:shadow-[0_4px_16px_rgba(56,189,248,0.5)] cursor-pointer"
         >
           Open Dashboard
         </button>
