@@ -149,6 +149,9 @@ class VeilGuardSidebar(tk.Tk):
         self.client = VeilGuardClient()
         self.detector = ForegroundDetector()
 
+        # Enforce single instance so multiple sidebars NEVER open concurrently
+        self._single_instance_mutex = ensure_single_instance()
+
         # State
         self.is_expanded = False
         self.guard_active = True  # Master On/Off switch
@@ -170,10 +173,10 @@ class VeilGuardSidebar(tk.Tk):
         self.hover_sliver_width = 24
         self.collapsed_height = 96
         self.expanded_width = 380
-        self.expanded_height = 600
+        self.expanded_height = 635
 
         # Position docked to right screen edge
-        self.win_y = max(60, (self.screen_h - self.expanded_height) // 2)
+        self.win_y = max(50, (self.screen_h - self.expanded_height) // 2)
 
         # Style & Configuration
         self.configure(bg=BG_PANEL)
@@ -229,12 +232,13 @@ class VeilGuardSidebar(tk.Tk):
             font=("Segoe UI", 8, "bold"),
         )
 
-        # Bind hover and drag events to sliver
+        # Bind hover, drag, and right-click menu to sliver
         for widget in (self.handle_frame, self.handle_icon, self.handle_grip):
             widget.bind("<Enter>", self._on_handle_hover_enter)
             widget.bind("<Leave>", self._on_handle_hover_leave)
             widget.bind("<Button-1>", self._on_handle_click)
             widget.bind("<B1-Motion>", self._on_drag)
+            widget.bind("<Button-3>", self._on_sliver_context_menu)
 
         # ---------------- 2. EXPANDED PANEL ----------------
         self.content_frame = tk.Frame(self.main_container, bg=BG_PANEL)
@@ -269,17 +273,29 @@ class VeilGuardSidebar(tk.Tk):
         )
         self.master_btn.pack(side="left", padx=8)
 
-        # Close / Dismiss Button
+        # Close & Exit Button (✕ completely shuts down and removes sidebar)
         close_btn = tk.Label(
             header,
             text="✕",
+            fg="#f87171",
+            bg=BG_PANEL,
+            font=("Segoe UI", 11, "bold"),
+            cursor="hand2",
+        )
+        close_btn.pack(side="right")
+        close_btn.bind("<Button-1>", lambda e: self.destroy())
+
+        # Minimize / Collapse Button (— collapses back into 6px edge sliver)
+        min_btn = tk.Label(
+            header,
+            text="—",
             fg=TEXT_MUTED,
             bg=BG_PANEL,
             font=("Segoe UI", 10, "bold"),
             cursor="hand2",
         )
-        close_btn.pack(side="right")
-        close_btn.bind("<Button-1>", lambda e: self.collapse())
+        min_btn.pack(side="right", padx=(0, 10))
+        min_btn.bind("<Button-1>", lambda e: self.collapse())
 
         # Drag handle
         drag_handle = tk.Label(
@@ -515,6 +531,26 @@ class VeilGuardSidebar(tk.Tk):
             command=self._do_open_dashboard,
         )
         self.btn_open_dashboard.pack(fill="x")
+
+        # Turn Off / Remove Sidebar Button (Completely removes sidebar from screen)
+        exit_row = tk.Frame(self.content_frame, bg=BG_PANEL)
+        exit_row.pack(fill="x", padx=12, pady=(0, 10))
+
+        self.btn_turn_off = tk.Button(
+            exit_row,
+            text="🛑 Turn Off & Remove Sidebar",
+            bg="#1c111a",
+            fg="#f87171",
+            activebackground="#450a0a",
+            activeforeground="#fca5a5",
+            relief="flat",
+            padx=10,
+            pady=4,
+            font=("Segoe UI", 9, "bold"),
+            cursor="hand2",
+            command=self.destroy,
+        )
+        self.btn_turn_off.pack(fill="x")
 
         # Start in ultra-thin collapsed state
         self.collapse()
@@ -1003,10 +1039,22 @@ class VeilGuardSidebar(tk.Tk):
         except Exception as e:
             messagebox.showerror("Error", f"Failed: {e}")
 
+    def _on_sliver_context_menu(self, event):
+        """Right-click menu on the edge sliver to open or turn off sidebar."""
+        try:
+            menu = tk.Menu(self, tearoff=0, bg=BG_CARD, fg=TEXT_PRIMARY, activebackground=ACCENT_INDIGO, activeforeground="#ffffff")
+            menu.add_command(label="🛡️ Open VeilGuard Sidebar", command=self.expand)
+            menu.add_command(label="📊 Open Privacy Dashboard", command=self._do_open_dashboard)
+            menu.add_separator()
+            menu.add_command(label="🛑 Turn Off & Remove Sidebar", command=self.destroy)
+            menu.tk_popup(event.x_root, event.y_root)
+        except Exception:
+            pass
+
     def _do_open_dashboard(self):
         """Open the VeilGuard Privacy Dashboard in the browser."""
         import webbrowser
-        dashboard_url = "https://veilguard-ai.vercel.app"
+        dashboard_url = "https://veilguard-ai.vercel.app/?tab=dashboard"
         try:
             webbrowser.open(dashboard_url)
             self.result_summary.config(text="📊 Opened VeilGuard Dashboard in browser!", fg=ACCENT_GREEN)
@@ -1027,7 +1075,14 @@ class VeilGuardSidebar(tk.Tk):
             pass
         self.last_clipboard = ""
         self.last_sanitized_text = ""
+        if hasattr(self, "_single_instance_mutex") and self._single_instance_mutex:
+            try:
+                ctypes.windll.kernel32.CloseHandle(self._single_instance_mutex)
+            except Exception:
+                pass
+            self._single_instance_mutex = None
         super().destroy()
+        sys.exit(0)
 
 
 def ensure_single_instance():
@@ -1036,6 +1091,7 @@ def ensure_single_instance():
         ERROR_ALREADY_EXISTS = 183
         mutex = ctypes.windll.kernel32.CreateMutexW(None, False, "Local\\VeilGuardSidebarSingleInstance")
         if ctypes.windll.kernel32.GetLastError() == ERROR_ALREADY_EXISTS:
+            print("[VeilGuard AI] Another sidebar is already running. Exiting duplicate instance.")
             sys.exit(0)
         return mutex
     except Exception:

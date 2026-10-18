@@ -1,0 +1,13 @@
+.venv
+release
+build
+dist
+engine
+tests
+bench
+.playwright
+.playwright-real-profile
+node_modules
+*.zip
+*.exe
+*.pyd

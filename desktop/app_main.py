@@ -145,8 +145,10 @@ def run_full_app():
             if ping_engine():
                 break
 
-    # Initialize Sidebar
-    from desktop.sidebar_guard import VeilGuardSidebar
+    # Ensure single instance before starting GUI
+    from desktop.sidebar_guard import VeilGuardSidebar, ensure_single_instance
+    _instance_mutex = ensure_single_instance()
+
     sidebar = VeilGuardSidebar()
 
     # Try setting up system tray icon

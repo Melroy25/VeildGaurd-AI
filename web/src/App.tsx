@@ -5,15 +5,41 @@
  * Built for Vercel deployment with zero external network dependencies.
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Dashboard } from "./components/Dashboard";
 import { Playground } from "./components/Playground";
 import { BenchmarkExplorer } from "./components/BenchmarkExplorer";
 import { ArchitectureGuide } from "./components/ArchitectureGuide";
 
-type ActiveTab = "playground" | "benchmark" | "architecture";
+type ActiveTab = "dashboard" | "playground" | "benchmark" | "architecture";
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<ActiveTab>("playground");
+  const getInitialTab = (): ActiveTab => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      if (tabParam === "dashboard" || tabParam === "playground" || tabParam === "benchmark" || tabParam === "architecture") {
+        return tabParam;
+      }
+      if (window.location.hash === "#dashboard") return "dashboard";
+      if (window.location.hash === "#benchmark") return "benchmark";
+      if (window.location.hash === "#architecture") return "architecture";
+    }
+    return "dashboard"; // Default to Privacy Dashboard!
+  };
+
+  const [activeTab, setActiveTab] = useState<ActiveTab>(getInitialTab);
+
+  useEffect(() => {
+    const handleHash = () => {
+      if (window.location.hash === "#dashboard") setActiveTab("dashboard");
+      else if (window.location.hash === "#playground") setActiveTab("playground");
+      else if (window.location.hash === "#benchmark") setActiveTab("benchmark");
+      else if (window.location.hash === "#architecture") setActiveTab("architecture");
+    };
+    window.addEventListener("hashchange", handleHash);
+    return () => window.removeEventListener("hashchange", handleHash);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#060b14] text-slate-100 font-sans relative overflow-x-hidden">
@@ -46,6 +72,17 @@ export const App: React.FC = () => {
 
           {/* Frosted Glass Segmented Navigation */}
           <nav className="flex items-center gap-1.5 bg-white/[0.04] border border-white/10 rounded-xl p-1.5 backdrop-blur-md">
+            <button
+              type="button"
+              onClick={() => setActiveTab("dashboard")}
+              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === "dashboard"
+                  ? "bg-gradient-to-r from-sky-500 to-sky-600 text-slate-950 font-bold shadow-[0_2px_12px_rgba(56,189,248,0.4)]"
+                  : "text-slate-300 hover:text-white hover:bg-white/[0.04]"
+              }`}
+            >
+              📊 Dashboard
+            </button>
             <button
               type="button"
               onClick={() => setActiveTab("playground")}
@@ -85,6 +122,7 @@ export const App: React.FC = () => {
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-6 lg:px-12 py-8 relative z-10">
+        {activeTab === "dashboard" && <Dashboard />}
         {activeTab === "playground" && <Playground />}
         {activeTab === "benchmark" && <BenchmarkExplorer />}
         {activeTab === "architecture" && <ArchitectureGuide />}
