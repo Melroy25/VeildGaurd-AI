@@ -376,24 +376,10 @@ function recordEvent(event: AuditEventMetadata): void {
 /**
  * Handles VEILGUARD_BACKSTOP_BLOCKED notifications from the MAIN-world
  * page-world script when a programmatic fetch/XHR is intercepted.
+ * Silently records the block event without disturbing the user with a modal popup.
  */
 export function handleBackstopBlocked(transport: "fetch" | "xhr"): void {
-  if (flowState !== "idle") return;
-
   const path = transport === "fetch" ? "backstop_fetch" : "backstop_xhr";
-  // We don't have the text here (it was intercepted in page-world), so we
-  // just record the block and show the engine-error overlay to inform the user
-  flowState = "blocked";
-  updateBadgeState("review");
-  showEngineErrorOverlay(
-    "backstop",
-    "A programmatic API submission was intercepted and blocked. No content was transmitted.",
-    () => {
-      hideOverlay();
-      flowState = "idle";
-      updateBadgeState("active");
-    }
-  );
   recordEvent({
     timestamp: new Date().toISOString(),
     category: "BACKSTOP_BLOCK",

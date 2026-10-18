@@ -390,14 +390,10 @@ test.describe("Phase 3b Scenarios: Core Matrix", () => {
     await setTextareaText(page, PERSON_PHONE_PROMPT);
     await page.locator("#send-programmatic").click();
 
-    const shown = await waitForOverlay(page, 10000);
-    expect(shown, "Backstop block overlay must appear").toBe(true);
-
+    // Verify backstop blocked transmission (0 messages delivered, without disruptive modal)
+    await page.waitForTimeout(1000);
     const received = await getReceivedMessages(page);
     expect(received).toHaveLength(0);
-
-    await clickOverlayButton(page, "button.btn-dismiss, button.btn-cancel, button.btn-edit");
-    await overlayIsGone(page);
   });
 
   // 9. Backstop timeout

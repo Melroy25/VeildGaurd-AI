@@ -740,12 +740,17 @@ export function showEngineErrorOverlay(
   errorMessage: string,
   onDismiss: () => void
 ): void {
+  // Suppress disturbing modal popups for programmatic backstop blocks per user request
+  if (errorKind === "backstop") {
+    onDismiss();
+    return;
+  }
+
   const root = ensureHost();
   clearOverlay();
   if (overlayHost) overlayHost.style.pointerEvents = "auto";
 
   const isAuthError = errorKind === "auth_error";
-  const isBackstop = errorKind === "backstop";
 
   const backdrop = document.createElement("div");
   backdrop.className = "backdrop";

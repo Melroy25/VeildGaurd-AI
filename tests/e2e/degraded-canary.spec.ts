@@ -118,25 +118,10 @@ test.describe("Phase 4 Part C: Degraded Mode & Backstop Canary", () => {
     await page.locator("#broken-composer-textarea").fill(FLAGGED_PROMPT);
     await page.locator("#broken-send-btn").click();
 
-    // 3. Backstop must intercept and show error overlay
-    await page.waitForFunction(
-      () => {
-        const host = document.getElementById("veilguard-overlay-host");
-        if (!host?.shadowRoot) return false;
-        const titleEl = host.shadowRoot.getElementById("vg-err-title");
-        const backdropEl = host.shadowRoot.querySelector(".backdrop");
-        return titleEl != null || backdropEl != null;
-      },
-      undefined,
-      { timeout: 8000 }
-    );
-
-    // 4. Verify no message reached the server
+    // 3. Backstop must intercept (fail closed with 0 messages to server)
+    await page.waitForTimeout(1000);
     const receivedAfterFlagged = await getReceivedMessages();
     expect(receivedAfterFlagged.length).toBe(0);
-
-    // 5. Dismiss overlay via Playwright trusted click
-    await page.locator("#veilguard-overlay-host").locator("button.btn-dismiss").click();
 
     // 6. Submit benign text via broken elements
     await page.locator("#broken-composer-textarea").fill(BENIGN_PROMPT);
