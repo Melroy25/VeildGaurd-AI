@@ -13,6 +13,7 @@ Invariants & Constraints:
 from __future__ import annotations
 
 import io
+import re
 from typing import Dict, List, Set, Tuple
 
 import fitz  # PyMuPDF
@@ -40,16 +41,32 @@ class RedactionVerificationError(RuntimeError):
     pass
 
 
-def _get_placeholder(entity_type: str, type_counters: Dict[str, int]) -> str:
+def _get_placeholder(
+    entity_type: str,
+    type_counters: Dict[str, int],
+    text: str = "",
+    start: int = 0,
+) -> str:
     """Generate consistent placeholder labels."""
     type_upper = entity_type.upper()
     if type_upper == "PERSON":
-        type_counters["CUSTOMER"] = type_counters.get("CUSTOMER", 0) + 1
-        return f"[CUSTOMER_{type_counters['CUSTOMER']}]"
+        role = None
+        if text and start > 0:
+            prefix = text[:start]
+            tokens = re.findall(r"\b[A-Za-z0-9_-]+\b", prefix)
+            if tokens:
+                window = [t.lower() for t in tokens[-3:]]
+                for tok in reversed(window):
+                    if tok in ("patient", "client", "customer", "employee", "candidate", "student", "user"):
+                        role = tok.upper()
+                        break
+        label = role if role else "CUSTOMER"
+        type_counters[label] = type_counters.get(label, 0) + 1
+        return f"[{label}_{type_counters[label]}]"
     elif type_upper in ("PHONE_NUMBER", "IN_MOBILE"):
         type_counters["PHONE"] = type_counters.get("PHONE", 0) + 1
         return f"[PHONE_{type_counters['PHONE']}]"
-    elif type_upper == "EMAIL_ADDRESS":
+    elif type_upper in ("EMAIL", "EMAIL_ADDRESS"):
         type_counters["EMAIL"] = type_counters.get("EMAIL", 0) + 1
         return f"[EMAIL_{type_counters['EMAIL']}]"
     elif type_upper == "IN_AADHAAR":
@@ -59,13 +76,20 @@ def _get_placeholder(entity_type: str, type_counters: Dict[str, int]) -> str:
         type_counters["PAN"] = type_counters.get("PAN", 0) + 1
         return f"[PAN_{type_counters['PAN']}]"
     elif "SECRET" in type_upper or "KEY" in type_upper or "TOKEN" in type_upper:
-        return "[CRITICAL_SECRET]"
+        type_counters["SECRET"] = type_counters.get("SECRET", 0) + 1
+        return f"[SECRET_{type_counters['SECRET']}]"
     elif "CREDIT" in type_upper or "CARD" in type_upper:
-        return "[CARD_MASKED]"
-    elif "MEDICAL" in type_upper:
-        return "[HEALTH_DETAIL]"
+        type_counters["CARD"] = type_counters.get("CARD", 0) + 1
+        return f"[CARD_{type_counters['CARD']}]"
+    elif "ACCOUNT" in type_upper or "BANK" in type_upper:
+        type_counters["ACCOUNT"] = type_counters.get("ACCOUNT", 0) + 1
+        return f"[ACCOUNT_{type_counters['ACCOUNT']}]"
+    elif "MEDICAL" in type_upper or "HEALTH" in type_upper:
+        type_counters["HEALTH"] = type_counters.get("HEALTH", 0) + 1
+        return f"[HEALTH_{type_counters['HEALTH']}]"
     else:
-        return f"[{type_upper}]"
+        type_counters[type_upper] = type_counters.get(type_upper, 0) + 1
+        return f"[{type_upper}_{type_counters[type_upper]}]"
 
 
 def validate_pdf_limits(pdf_bytes: bytes) -> fitz.Document:
@@ -114,7 +138,7 @@ def scan_pdf(
             scan_res = scanner.scan(page_text, source="document")
             for f in scan_res.findings:
                 raw_entity = page_text[f.start:f.end]
-                placeholder = _get_placeholder(f.entity_type, type_counters)
+                placeholder = _get_placeholder(f.entity_type, type_counters, text=page_text, start=f.start)
                 rects = page.search_for(raw_entity)
                 for r in rects:
                     findings.append(
@@ -149,6 +173,7 @@ def redact_pdf(
     """Apply true redactions, scrub metadata, and dual-verify sanitization."""
     doc = validate_pdf_limits(pdf_bytes)
     targets_to_verify: Set[str] = set()
+    type_counters: Dict[str, int] = {}
 
     try:
         for page in doc:
@@ -162,9 +187,25 @@ def redact_pdf(
                 if not raw_entity:
                     continue
                 targets_to_verify.add(raw_entity)
+                placeholder = _get_placeholder(
+                    f.entity_type,
+                    type_counters,
+                    text=page_text,
+                    start=f.start,
+                )
                 rects = page.search_for(raw_entity)
                 for r in rects:
-                    page.add_redact_annot(r, fill=(0, 0, 0))
+                    base_len = fitz.get_text_length(placeholder, fontname="helv", fontsize=9.0)
+                    fs = min(9.0, max(5.0, 9.0 * ((r.width - 2) / max(base_len, 1.0)))) if base_len > 0 else 9.0
+                    page.add_redact_annot(
+                        r,
+                        text=placeholder,
+                        fontname="helv",
+                        fontsize=fs,
+                        fill=(0.94, 0.96, 0.99),
+                        text_color=(0.12, 0.35, 0.75),
+                        align=fitz.TEXT_ALIGN_CENTER,
+                    )
 
             # PyMuPDF removes underlying vector paths, text characters, and stream bytes
             page.apply_redactions(images=fitz.PDF_REDACT_IMAGE_NONE)

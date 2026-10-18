@@ -136,6 +136,29 @@ def test_pdf_true_redaction_and_dual_extractor_verification(scanner: Scanner):
     assert "9876543210" not in pypdf_text
     assert "5857 0839 3474" not in pypdf_text
     assert "AKIAIOSFODNN7EXAMPLE" not in pypdf_text
+    # Bracketed pseudonym placeholders present instead of black blocks
+    assert "[" in fitz_text and "]" in fitz_text
+
+
+def test_pdf_semantic_pseudonym_placeholders(scanner: Scanner):
+    """Verify PDF replaces sensitive entities with bracketed pseudonym placeholders."""
+    patient_text = [
+        "Patient Rahul Sharma, phone 9876543210 and Aadhaar 5857 0839 3474, has severe diabetes."
+    ]
+    pdf_bytes = create_synthetic_pdf(patient_text, title="Medical Record")
+    sanitized_bytes, count = redact_pdf(pdf_bytes, scanner, profile="healthcare")
+    assert count >= 3
+
+    doc_fitz = fitz.open(stream=sanitized_bytes, filetype="pdf")
+    fitz_text = " ".join(p.get_text() for p in doc_fitz)
+    doc_fitz.close()
+
+    assert "Rahul Sharma" not in fitz_text
+    assert "9876543210" not in fitz_text
+    assert "5857 0839 3474" not in fitz_text
+    assert "[PATIENT_1]" in fitz_text
+    assert "[PHONE_1]" in fitz_text
+    assert "[AADHAAR_1]" in fitz_text
 
 
 def test_pdf_dual_extractor_catches_residual_leak():

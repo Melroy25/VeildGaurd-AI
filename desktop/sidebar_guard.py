@@ -83,6 +83,45 @@ def get_auth_token() -> str:
     return "dev-local-token"
 
 
+def find_veilguard_extension_url() -> tuple[str | None, str | None]:
+    """Find the extension ID and browser binary to open the VeilGuard options dashboard."""
+    user_data_dirs = [
+        ("brave", os.path.expandvars(r"%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data"), [
+            r"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe",
+            os.path.expandvars(r"%LOCALAPPDATA%\BraveSoftware\Brave-Browser\Application\brave.exe"),
+        ]),
+        ("chrome", os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\User Data"), [
+            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+            r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+            os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
+        ]),
+        ("edge", os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\Edge\User Data"), [
+            r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+            r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+        ]),
+    ]
+    for browser_name, base_dir, bin_candidates in user_data_dirs:
+        if not os.path.isdir(base_dir):
+            continue
+        bin_path = next((b for b in bin_candidates if os.path.isfile(b)), None)
+        for root, dirs, files in os.walk(base_dir):
+            if "Preferences" in files or "Secure Preferences" in files:
+                for fname in ("Secure Preferences", "Preferences"):
+                    p = os.path.join(root, fname)
+                    if os.path.isfile(p):
+                        try:
+                            with open(p, "r", encoding="utf-8", errors="ignore") as f:
+                                data = json.load(f)
+                            settings = data.get("extensions", {}).get("settings", {})
+                            for ext_id, ext_data in settings.items():
+                                path_val = ext_data.get("path", "")
+                                if "veilguard" in path_val.lower() or "devhost_2026" in path_val.lower():
+                                    return f"chrome-extension://{ext_id}/options.html", bin_path
+                        except Exception:
+                            continue
+    return None, None
+
+
 class ForegroundDetector:
     """Detects active focused window title using Windows Win32 API."""
 
@@ -201,7 +240,7 @@ class VeilGuardSidebar(tk.Tk):
         self.hover_sliver_width = 24
         self.collapsed_height = 96
         self.expanded_width = 370
-        self.expanded_height = 540
+        self.expanded_height = 585
 
         # Position docked to right screen edge
         self.win_y = max(80, (self.screen_h - self.expanded_height) // 2)
@@ -518,6 +557,26 @@ class VeilGuardSidebar(tk.Tk):
             command=self._do_copy_clean,
         )
         self.btn_copy_clean.pack(side="right")
+
+        # Dashboard Navigation Button (opens Privacy Dashboard in browser)
+        dashboard_row = tk.Frame(self.content_frame, bg=BG_PANEL)
+        dashboard_row.pack(fill="x", padx=12, pady=(0, 10))
+
+        self.btn_open_dashboard = tk.Button(
+            dashboard_row,
+            text="📊 Open VeilGuard Dashboard",
+            bg=BG_CARD,
+            fg=ACCENT_INDIGO,
+            activebackground=BORDER_COLOR,
+            activeforeground="#A5B4FC",
+            relief="flat",
+            padx=10,
+            pady=4,
+            font=("Segoe UI", 9, "bold"),
+            cursor="hand2",
+            command=self._do_open_dashboard,
+        )
+        self.btn_open_dashboard.pack(fill="x")
 
         # Start in ultra-thin collapsed state
         self.collapse()
@@ -945,6 +1004,30 @@ class VeilGuardSidebar(tk.Tk):
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed: {e}")
+
+    def _do_open_dashboard(self):
+        """Open the VeilGuard Privacy Dashboard in the browser."""
+        url, bbin = find_veilguard_extension_url()
+        if url and bbin and os.path.isfile(bbin):
+            try:
+                subprocess.Popen([bbin, url])
+                self.result_summary.config(text="📊 Opened VeilGuard Dashboard in browser!", fg=ACCENT_GREEN)
+                return
+            except Exception:
+                pass
+        if url:
+            try:
+                import webbrowser
+                webbrowser.open(url)
+                self.result_summary.config(text="📊 Opened VeilGuard Dashboard in browser!", fg=ACCENT_GREEN)
+                return
+            except Exception:
+                pass
+
+        # Fallback: Open local engine health
+        import webbrowser
+        webbrowser.open("http://127.0.0.1:8765/health")
+        self.result_summary.config(text="📊 Opened VeilGuard status in browser!", fg=ACCENT_GREEN)
 
 
 def ensure_single_instance():
