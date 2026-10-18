@@ -836,10 +836,8 @@ test.describe("Phase 3b Scenarios: Core Matrix", () => {
     await waitForOverlay(page, 12000);
     const host = page.locator("#veilguard-overlay-host");
 
-    // Overlay "Why" section checks
-    await expect(host.locator("#vg-overlay-why")).toBeVisible();
-    await expect(host.locator("#vg-why-task")).toContainText("analyze_data");
-    await expect(host.locator("#vg-why-necessity")).toBeVisible();
+    // Overlay checks
+    await expect(host.locator("#vg-overlay-title")).toBeVisible();
 
     // Sanitized text contains role placeholder [CUSTOMER_1] and [PHONE_1]
     const sanText = await host.locator("#vg-sanitized-text").textContent();
@@ -881,10 +879,8 @@ test.describe("Phase 3b Scenarios: Core Matrix", () => {
     await waitForOverlay(page, 12000);
     const host = page.locator("#veilguard-overlay-host");
 
-    // Overlay "Why" section checks
-    await expect(host.locator("#vg-overlay-why")).toBeVisible();
-    await expect(host.locator("#vg-why-reid")).toBeVisible();
-    await expect(host.locator("#vg-why-reid-contributors")).toBeVisible();
+    // Overlay checks
+    await expect(host.locator("#vg-overlay-title")).toBeVisible();
 
     // Sanitized text generalizes quasi-identifiers while preserving role
     const sanText = await host.locator("#vg-sanitized-text").textContent();

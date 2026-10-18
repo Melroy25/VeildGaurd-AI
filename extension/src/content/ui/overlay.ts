@@ -75,61 +75,164 @@ function buildStyleEl(): HTMLStyleElement {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
     .modal {
-      background: rgba(10, 17, 32, 0.90);
+      background: rgba(10, 17, 32, 0.94);
       color: #f8fafc;
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      border-radius: 16px; padding: 28px;
-      max-width: 580px; width: 94%;
-      box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.7), 0 0 35px rgba(56, 189, 248, 0.12);
-      display: flex; flex-direction: column; gap: 16px;
-      max-height: 92vh; overflow-y: auto;
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      padding: 20px 24px;
+      max-width: 660px;
+      width: 94%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 30px rgba(56, 189, 248, 0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 90vh;
+      overflow-y: auto;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
     }
-    .modal-header { display: flex; align-items: center; gap: 12px; }
+    .modal-header { display: flex; align-items: center; gap: 10px; }
     .icon {
-      width: 28px; height: 28px; border-radius: 50%;
+      width: 26px; height: 26px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-weight: bold; color: #fff; font-size: 14px; flex-shrink: 0;
+      font-weight: bold; color: #fff; font-size: 13px; flex-shrink: 0;
     }
-    .icon-warn { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); box-shadow: 0 0 14px rgba(239, 68, 68, 0.4); }
-    .icon-info { background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); box-shadow: 0 0 14px rgba(56, 189, 248, 0.4); }
-    .icon-err  { background: linear-gradient(135deg, #f97316 0%, #c2410c 100%); box-shadow: 0 0 14px rgba(249, 115, 22, 0.4); }
-    h2 { margin: 0; font-size: 1.15rem; font-weight: 700; letter-spacing: -0.01em; }
+    .icon-warn { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); box-shadow: 0 0 12px rgba(239, 68, 68, 0.4); }
+    .icon-info { background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); box-shadow: 0 0 12px rgba(56, 189, 248, 0.4); }
+    .icon-err  { background: linear-gradient(135deg, #f97316 0%, #c2410c 100%); box-shadow: 0 0 12px rgba(249, 115, 22, 0.4); }
+    h2 { margin: 0; font-size: 1.1rem; font-weight: 700; letter-spacing: -0.01em; }
     .title-warn { color: #fca5a5; }
     .title-info { color: #38bdf8; }
     .title-err  { color: #fdba74; }
-    p { margin: 0; font-size: 0.92rem; line-height: 1.55; color: #cbd5e1; }
+    p { margin: 0; font-size: 0.86rem; line-height: 1.5; color: #cbd5e1; }
+    .subtitle { color: #94a3b8; font-size: 0.84rem; line-height: 1.45; }
+    .policy-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: #7dd3fc;
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 6px;
+      padding: 3px 8px;
+      width: fit-content;
+    }
+    .diff-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 2px 0;
+    }
+    @media (max-width: 580px) {
+      .diff-grid { grid-template-columns: 1fr; }
+    }
+    .diff-column {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
     .section-label {
-      font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.08em; color: #94a3b8; margin-bottom: 5px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #94a3b8;
     }
     .diff-box {
-      background: rgba(15, 23, 42, 0.75);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      padding: 14px; font-size: 0.86rem; line-height: 1.6;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.81rem;
+      line-height: 1.5;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      white-space: pre-wrap; word-break: break-word;
-      max-height: 160px; overflow-y: auto; color: #e2e8f0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 52px;
+      max-height: 110px;
+      overflow-y: auto;
+      color: #e2e8f0;
       backdrop-filter: blur(8px);
     }
-    .diff-removed { background: rgba(244, 63, 94, 0.28); color: #fecdd3; border-radius: 4px; padding: 2px 5px; border-bottom: 1px solid rgba(244, 63, 94, 0.5); }
-    .diff-added   { background: rgba(16, 185, 129, 0.24); color: #a7f3d0; border-radius: 4px; padding: 2px 5px; border-bottom: 1px solid rgba(16, 185, 129, 0.5); }
+    .diff-removed {
+      background: rgba(244, 63, 94, 0.28);
+      color: #fecdd3;
+      border-radius: 4px;
+      padding: 1px 4px;
+      border-bottom: 1px solid rgba(244, 63, 94, 0.5);
+    }
+    .diff-added {
+      background: rgba(16, 185, 129, 0.24);
+      color: #a7f3d0;
+      border-radius: 4px;
+      padding: 1px 4px;
+      border-bottom: 1px solid rgba(16, 185, 129, 0.5);
+    }
+    .findings-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .findings-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .finding-chip {
+      font-size: 0.72rem;
+      padding: 2px 7px;
+      border-radius: 5px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: #38bdf8;
+    }
+    .why-section {
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.74rem;
+      color: #cbd5e1;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 4px 10px;
+    }
+    .why-header {
+      grid-column: 1 / -1;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #38bdf8;
+    }
     .utility-notice {
-      font-size: 0.8rem; color: #94a3b8; padding: 10px 14px;
-      background: rgba(15, 23, 42, 0.65);
-      border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08);
-      border-left: 3px solid #38bdf8;
+      font-size: 0.74rem;
+      color: #94a3b8;
+      padding: 5px 10px;
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 6px;
+      border-left: 2px solid #38bdf8;
+      line-height: 1.4;
     }
     .actions {
-      display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;
-      padding-top: 6px;
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      padding-top: 4px;
     }
     button {
-      padding: 10px 18px; border-radius: 8px; border: none;
-      font-size: 0.88rem; font-weight: 600; cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); line-height: 1;
+      padding: 8px 16px;
+      border-radius: 7px;
+      border: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      line-height: 1;
     }
     .btn-edit {
       background: rgba(255, 255, 255, 0.08);
@@ -169,16 +272,6 @@ function buildStyleEl(): HTMLStyleElement {
       color: #f8fafc;
     }
     .btn-dismiss:hover { background: rgba(255, 255, 255, 0.15); }
-    .findings-list {
-      display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;
-    }
-    .finding-chip {
-      font-size: 0.75rem; padding: 3px 10px; border-radius: 9999px;
-      background: rgba(15, 23, 42, 0.7);
-      border: 1px solid rgba(56, 189, 248, 0.25);
-      color: #38bdf8;
-      backdrop-filter: blur(6px);
-    }
   `;
   return style;
 }
@@ -323,13 +416,9 @@ function buildWhySection(context?: EngineContextBlock): HTMLDivElement | null {
   const section = document.createElement("div");
   section.id = "vg-overlay-why";
   section.className = "why-section";
-  section.style.cssText =
-    "background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px; font-size: 0.82rem; color: #cbd5e1; display: flex; flex-direction: column; gap: 8px;";
 
   const header = document.createElement("div");
-  header.className = "section-label";
-  header.style.cssText =
-    "font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #38bdf8;";
+  header.className = "why-header";
   header.textContent = "Context Intelligence (Why)";
   section.appendChild(header);
 
@@ -385,7 +474,7 @@ function buildWhySection(context?: EngineContextBlock): HTMLDivElement | null {
     if (reid.contributors && reid.contributors.length > 0) {
       const contribLine = document.createElement("div");
       contribLine.id = "vg-why-reid-contributors";
-      contribLine.style.cssText = "font-size: 0.78rem; color: #94a3b8; margin-top: 2px;";
+      contribLine.style.cssText = "font-size: 0.72rem; color: #94a3b8; margin-top: 1px;";
       const contribs = reid.contributors
         .map((c) => `${c.type} (${(c.weight * 100).toFixed(0)}%)`)
         .join(", ");
@@ -453,43 +542,55 @@ export function showReviewOverlay(opts: ReviewOverlayOptions): void {
   header.appendChild(title);
   modal.appendChild(header);
 
-  // ---- Description ----
+  // ---- Description (Compact) ----
   const desc = document.createElement("p");
+  desc.className = "subtitle";
   desc.textContent = isBlockDecision
-    ? "This submission contains content that your privacy policy does not permit sending. You can edit the message and remove the sensitive content before sending."
-    : `Sensitive content was detected (${engineResult.findings.length} finding${engineResult.findings.length !== 1 ? "s" : ""}). Review the sanitized version below and choose to send it or edit the original.`;
+    ? "This prompt contains restricted data blocked by privacy policy. Please edit before sending."
+    : `Review sanitized prompt below before sending to protect sensitive personal details.`;
   modal.appendChild(desc);
 
-  // ---- Policy summary ----
-  if (engineResult.summary) {
-    const summaryEl = document.createElement("p");
-    summaryEl.style.cssText = "font-size:0.82rem;color:#94a3b8;font-style:italic;";
-    summaryEl.textContent = `Policy: ${engineResult.summary}`;
-    modal.appendChild(summaryEl);
-  }
-
-  // ---- Original text diff ----
-  const origLabel = document.createElement("div");
-  origLabel.className = "section-label";
-  origLabel.textContent = "Original (sensitive content highlighted)";
-  modal.appendChild(origLabel);
-  modal.appendChild(buildDiffBox(originalText, engineResult.findings));
-
-  // ---- Sanitized text ----
+  // ---- Side-by-side Diff Grid or Block Diff ----
   if (!isBlockDecision) {
+    const diffGrid = document.createElement("div");
+    diffGrid.className = "diff-grid";
+
+    const origCol = document.createElement("div");
+    origCol.className = "diff-column";
+    const origLabel = document.createElement("div");
+    origLabel.className = "section-label";
+    origLabel.textContent = "Original";
+    origCol.appendChild(origLabel);
+    origCol.appendChild(buildDiffBox(originalText, engineResult.findings));
+
+    const sanCol = document.createElement("div");
+    sanCol.className = "diff-column";
     const sanLabel = document.createElement("div");
     sanLabel.className = "section-label";
-    sanLabel.textContent = "Sanitized version (will be sent)";
-    modal.appendChild(sanLabel);
-    modal.appendChild(buildSanitizedBox(engineResult.sanitized_text, engineResult.findings));
+    sanLabel.textContent = "Sanitized (to send)";
+    sanCol.appendChild(sanLabel);
+    sanCol.appendChild(buildSanitizedBox(engineResult.sanitized_text, engineResult.findings));
+
+    diffGrid.appendChild(origCol);
+    diffGrid.appendChild(sanCol);
+    modal.appendChild(diffGrid);
+  } else {
+    const origLabel = document.createElement("div");
+    origLabel.className = "section-label";
+    origLabel.textContent = "Original (sensitive content highlighted)";
+    modal.appendChild(origLabel);
+    modal.appendChild(buildDiffBox(originalText, engineResult.findings));
   }
 
-  // ---- Finding chips ----
+  // ---- Finding chips (Inline row) ----
   if (engineResult.findings.length > 0) {
-    const chipsLabel = document.createElement("div");
+    const chipRow = document.createElement("div");
+    chipRow.className = "findings-row";
+
+    const chipsLabel = document.createElement("span");
     chipsLabel.className = "section-label";
-    chipsLabel.textContent = "Detected entities";
-    modal.appendChild(chipsLabel);
+    chipsLabel.textContent = "Detected:";
+    chipRow.appendChild(chipsLabel);
 
     const chipList = document.createElement("div");
     chipList.className = "findings-list";
@@ -499,13 +600,8 @@ export function showReviewOverlay(opts: ReviewOverlayOptions): void {
       chip.textContent = `${f.entity_type} (${f.action})`;
       chipList.appendChild(chip);
     }
-    modal.appendChild(chipList);
-  }
-
-  // ---- Context Intelligence (Why) ----
-  const whySection = buildWhySection(engineResult.context);
-  if (whySection) {
-    modal.appendChild(whySection);
+    chipRow.appendChild(chipList);
+    modal.appendChild(chipRow);
   }
 
   // ---- Utility notice ----
@@ -513,7 +609,7 @@ export function showReviewOverlay(opts: ReviewOverlayOptions): void {
     const notice = document.createElement("div");
     notice.className = "utility-notice";
     notice.textContent =
-      "⚠ Sanitization may alter model response quality. The AI sees placeholders instead of original values.";
+      "ℹ Sanitization preserves privacy by replacing sensitive details with safe placeholders.";
     modal.appendChild(notice);
   }
 
