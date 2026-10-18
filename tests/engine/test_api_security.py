@@ -122,3 +122,21 @@ def test_sanitized_validation_handler_does_not_echo_input(client):
     response_text = response.text
     # The sensitive string from the payload MUST NOT be echoed in the error response body
     assert sensitive_junk not in response_text
+
+
+def test_auth_pair_with_extension_origin_succeeds(client):
+    """Verify /auth/pair returns active token when called from chrome-extension origin."""
+    headers = {"Origin": "chrome-extension://abcdefghijklmnopqrstuvwxyz123456"}
+    response = client.post("/auth/pair", json={}, headers=headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["token"] == ACTIVE_API_TOKEN
+    assert data["status"] == "paired"
+
+
+def test_auth_pair_with_malicious_origin_is_rejected(client):
+    """Verify /auth/pair rejects foreign web origins."""
+    headers = {"Origin": "https://evil-site.com"}
+    response = client.post("/auth/pair", json={}, headers=headers)
+    assert response.status_code == 403
+

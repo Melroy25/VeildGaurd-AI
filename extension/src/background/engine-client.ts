@@ -167,6 +167,28 @@ export async function getStoredToken(): Promise<string | null> {
   if (typeof token === "string" && token.length > 0) {
     return token;
   }
+
+  // Automatic Zero-Click Pairing: If no token stored, attempt loopback auto-pairing
+  try {
+    const pairRes = await fetch(`${ENGINE_BASE_URL}/auth/pair`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: chrome.runtime.getURL(""),
+      },
+    });
+    if (pairRes.ok) {
+      const pairData = (await pairRes.json()) as { token?: string };
+      if (typeof pairData.token === "string" && pairData.token.length > 0) {
+        await saveToken(pairData.token);
+        console.log("[VeilGuard AI] Successfully auto-paired bearer token from local engine!");
+        return pairData.token;
+      }
+    }
+  } catch {
+    // Engine not reachable yet or offline
+  }
+
   return null;
 }
 

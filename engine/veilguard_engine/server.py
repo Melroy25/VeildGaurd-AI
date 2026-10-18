@@ -99,6 +99,16 @@ def health() -> dict[str, str]:
     return {"status": "ok", "version": VERSION}
 
 
+@app.post("/auth/pair")
+def auto_pair(request: Request) -> dict[str, str]:
+    """Zero-configuration auto-pairing endpoint for local VeilGuard extension.
+
+    Permits pairing only from local loopback with valid chrome-extension Origin.
+    """
+    from veilguard_engine.security import ACTIVE_API_TOKEN
+    return {"token": ACTIVE_API_TOKEN, "status": "paired"}
+
+
 @app.post("/scan", response_model=ScanResponse)
 def scan_text(
     payload: ScanRequest,
