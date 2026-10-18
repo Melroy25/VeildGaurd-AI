@@ -13,7 +13,7 @@ echo [VeilGuard AI] Starting Desktop Sidebar Companion...
 if exist "release\VeilGuard-win64\VeilGuard.exe" (
     start "" "release\VeilGuard-win64\VeilGuard.exe"
     echo [OK] Sidebar Companion is now active on the right edge of your screen!
-    timeout /t 2 >nul
+    ping -n 3 127.0.0.1 >nul
     exit /b 0
 )
 
@@ -21,7 +21,7 @@ if exist ".venv\Scripts\python.exe" (
     start "" ".venv\Scripts\pythonw.exe" desktop\app_main.py
     echo [OK] Sidebar Companion launched via Python environment.
     echo Look at the right edge of your screen for the sidebar!
-    timeout /t 2 >nul
+    ping -n 3 127.0.0.1 >nul
     exit /b 0
 )
 
