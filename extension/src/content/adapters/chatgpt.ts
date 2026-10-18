@@ -499,7 +499,9 @@ export class ChatGPTAdapter implements SiteAdapter {
   // -------------------------------------------------------------------------
 
   async selfTest(timeoutMs: number = 3000): Promise<boolean> {
-    if (this.getComposer() && this.getSendButton()) {
+    // On ChatGPT, the send button is dynamically hidden when the composer is empty.
+    // As long as the composer textarea/contenteditable exists, DOM protection is active.
+    if (this.getComposer()) {
       return true;
     }
 
