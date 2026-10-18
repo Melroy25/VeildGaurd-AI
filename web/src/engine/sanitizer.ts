@@ -17,6 +17,17 @@ export interface ScanResult {
 }
 
 export function sanitizeAndEvaluate(text: string, profile: string = "corporate"): ScanResult {
+  if (!text || text.trim().length === 0) {
+    return {
+      originalText: text,
+      sanitizedText: "",
+      decision: "allow",
+      riskScore: 0.0,
+      reason: "Ready. Type a prompt or select a sample scenario above to inspect.",
+      findings: [],
+    };
+  }
+
   const findings = scanTextInBrowser(text);
 
   if (findings.length === 0) {
