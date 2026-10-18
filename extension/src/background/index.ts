@@ -92,11 +92,18 @@ chrome.runtime.onMessage.addListener(
     }
 
     // Handle asynchronously and return true to keep the message channel open
-    handleRequest(message, sender).then((res) => {
-      sendResponse(res);
-    }).catch((err: unknown) => {
-      console.error("[VeilGuard AI] Unhandled background error:", err);
-    });
+    handleRequest(message, sender)
+      .then((res) => {
+        sendResponse(res);
+      })
+      .catch((err: unknown) => {
+        console.error("[VeilGuard AI] Unhandled background error:", err);
+        sendResponse({
+          ok: false,
+          errorKind: "engine_error",
+          errorMessage: err instanceof Error ? err.message : String(err),
+        } as AnalyzeResponse);
+      });
 
     return true; // Keep sendResponse channel open for async response
   }

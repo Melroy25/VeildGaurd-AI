@@ -169,6 +169,18 @@ async function runAnalysis(
 
   // Build ANALYZE request — background handles token and vault merging
   const response = await new Promise<AnalyzeResponse>((resolve) => {
+    let resolved = false;
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        resolve({
+          ok: false,
+          errorKind: "timeout",
+          errorMessage: "Engine analysis timed out. Ensure the VeilGuard engine is running at 127.0.0.1:8765.",
+        });
+      }
+    }, 4500);
+
     chrome.runtime.sendMessage(
       {
         type: "ANALYZE",
@@ -178,14 +190,18 @@ async function runAnalysis(
         // knownPlaceholders: background auto-merges via vault on ANALYZE
       },
       (msg: unknown) => {
-        if (chrome.runtime.lastError || !msg) {
-          resolve({
-            ok: false,
-            errorKind: "unreachable",
-            errorMessage: chrome.runtime.lastError?.message ?? "No response from background",
-          });
-        } else {
-          resolve(msg as AnalyzeResponse);
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timeout);
+          if (chrome.runtime.lastError || !msg) {
+            resolve({
+              ok: false,
+              errorKind: "unreachable",
+              errorMessage: chrome.runtime.lastError?.message ?? "No response from background",
+            });
+          } else {
+            resolve(msg as AnalyzeResponse);
+          }
         }
       }
     );

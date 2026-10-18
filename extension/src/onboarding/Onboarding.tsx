@@ -163,22 +163,30 @@ export const Onboarding: React.FC = () => {
 
         {/* Action Buttons */}
         <footer className="flex flex-wrap items-center justify-between gap-4 pt-4">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <a
-              href="http://127.0.0.1:4310/"
+              href="https://veilguard-ai.vercel.app"
               target="_blank"
               rel="noreferrer"
               className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-slate-950 text-sm font-bold shadow-[0_2px_14px_rgba(56,189,248,0.4)] transition-all cursor-pointer flex items-center gap-2"
             >
-              <span>Launch Mock AI Testbed</span>
+              <span>Launch Cloud Web Demo</span>
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             </a>
+            <a
+              href="http://127.0.0.1:4310/"
+              target="_blank"
+              rel="noreferrer"
+              className="px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.12] border border-white/15 text-white text-sm font-semibold transition-all cursor-pointer flex items-center gap-2"
+            >
+              <span>Local Testbed (4310)</span>
+            </a>
             <button
               type="button"
               onClick={() => chrome.runtime.openOptionsPage?.()}
-              className="px-5 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/10 text-white text-sm font-semibold transition-all cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/10 text-slate-300 hover:text-white text-sm font-semibold transition-all cursor-pointer"
             >
               Open Privacy Dashboard
             </button>

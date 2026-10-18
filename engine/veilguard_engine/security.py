@@ -96,7 +96,12 @@ class OriginCheckMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         origin = request.headers.get("origin")
         if origin:
-            if not origin.startswith("chrome-extension://"):
+            allowed_prefixes = (
+                "chrome-extension://",
+                "http://127.0.0.1:",
+                "http://localhost:",
+            )
+            if not any(origin.startswith(prefix) for prefix in allowed_prefixes):
                 return Response(
                     content='{"detail": "Forbidden: cross-origin browser requests rejected."}',
                     status_code=status.HTTP_403_FORBIDDEN,

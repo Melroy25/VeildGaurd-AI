@@ -170,13 +170,16 @@ export async function getStoredToken(): Promise<string | null> {
 
   // Automatic Zero-Click Pairing: If no token stored, attempt loopback auto-pairing
   try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 2500);
     const pairRes = await fetch(`${ENGINE_BASE_URL}/auth/pair`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Origin: chrome.runtime.getURL(""),
       },
+      signal: controller.signal,
     });
+    clearTimeout(timer);
     if (pairRes.ok) {
       const pairData = (await pairRes.json()) as { token?: string };
       if (typeof pairData.token === "string" && pairData.token.length > 0) {
@@ -185,8 +188,8 @@ export async function getStoredToken(): Promise<string | null> {
         return pairData.token;
       }
     }
-  } catch {
-    // Engine not reachable yet or offline
+  } catch (err) {
+    console.warn("[VeilGuard AI] Auto-pairing attempt warning:", err);
   }
 
   return null;
@@ -228,7 +231,6 @@ async function engineFetch(
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    Origin: chrome.runtime.getURL(""),
   };
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
