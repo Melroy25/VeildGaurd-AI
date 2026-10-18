@@ -387,6 +387,9 @@ class VeilGuardSidebar(tk.Tk):
             wrap="word",
         )
         self.input_text.pack(fill="x", padx=12, pady=(0, 6))
+        self.input_text.bind("<KeyRelease>", self._on_input_changed)
+        self.input_text.bind("<<Paste>>", lambda e: self.after(50, self._on_input_changed))
+        self.input_text.bind("<<Cut>>", lambda e: self.after(50, self._on_input_changed))
 
         # Action Buttons Row
         btn_row = tk.Frame(self.content_frame, bg=BG_PANEL)
@@ -407,6 +410,22 @@ class VeilGuardSidebar(tk.Tk):
             command=self._do_inspect,
         )
         self.btn_inspect.pack(side="left")
+
+        self.btn_clear = tk.Button(
+            btn_row,
+            text="🗑️ Clear",
+            bg=BG_CARD,
+            fg=TEXT_MUTED,
+            activebackground=BORDER_COLOR,
+            activeforeground=TEXT_PRIMARY,
+            relief="flat",
+            padx=8,
+            pady=3,
+            font=("Segoe UI", 8),
+            cursor="hand2",
+            command=self._do_clear,
+        )
+        self.btn_clear.pack(side="left", padx=(6, 0))
 
         self.btn_sanitize = tk.Button(
             btn_row,
@@ -612,7 +631,10 @@ class VeilGuardSidebar(tk.Tk):
                     # Keep previous active context while interacting with sidebar
                     pass
                 elif is_ai:
-                    self.active_ai_app_name = title
+                    if title != self.active_ai_app_name:
+                        self.active_ai_app_name = title
+                        self._on_chat_switched(title)
+
                     self._update_context_badge(f"Active: {title[:24]}...", True)
 
                     # Auto-expand when switching into AI tool
@@ -637,6 +659,100 @@ class VeilGuardSidebar(tk.Tk):
                 pass
 
             time.sleep(0.6)
+
+    def _on_chat_switched(self, new_title: str):
+        """When switching to a different chat tab or window, reset stale warnings if prompt is empty."""
+        def _reset():
+            curr = self.input_text.get("1.0", tk.END).strip()
+            if not curr:
+                self.result_summary.config(
+                    text="Ready. No sensitive items.",
+                    fg=TEXT_SECONDARY,
+                )
+                self.output_text.delete("1.0", tk.END)
+                self.last_clipboard = ""
+            else:
+                self._live_inspect()
+        self.after(0, _reset)
+
+    def _on_input_changed(self, event=None):
+        """Immediately sync warning status with whatever text is currently in the prompt box."""
+        text = self.input_text.get("1.0", tk.END).strip()
+
+        # If there is nothing in the prompt box, warning MUST show NOTHING / Ready!
+        if not text:
+            self.result_summary.config(
+                text="Ready. No sensitive items.",
+                fg=TEXT_SECONDARY,
+            )
+            self.output_text.delete("1.0", tk.END)
+            if hasattr(self, "_debounce_timer") and self._debounce_timer:
+                self.after_cancel(self._debounce_timer)
+                self._debounce_timer = None
+            return
+
+        # Debounce live inspection so typing remains snappy
+        if hasattr(self, "_debounce_timer") and self._debounce_timer:
+            self.after_cancel(self._debounce_timer)
+        self._debounce_timer = self.after(350, self._live_inspect)
+
+    def _live_inspect(self):
+        """Run inspection on the current prompt text and update warnings in real-time."""
+        text = self.input_text.get("1.0", tk.END).strip()
+        if not text:
+            self.result_summary.config(
+                text="Ready. No sensitive items.",
+                fg=TEXT_SECONDARY,
+            )
+            self.output_text.delete("1.0", tk.END)
+            return
+
+        res = self.client.analyze_prompt(text)
+        if not res:
+            return
+
+        findings = res.get("findings", [])
+        decision = res.get("decision", "allow")
+        clean = res.get("sanitization", {}).get("sanitized_text", "")
+
+        if decision == "allow" or not findings:
+            self.result_summary.config(
+                text="✅ Clean prompt (0 sensitive items). Safe to submit.",
+                fg=ACCENT_GREEN,
+            )
+            if clean:
+                self.output_text.delete("1.0", tk.END)
+                self.output_text.insert("1.0", clean)
+        elif decision == "block":
+            self.result_summary.config(
+                text=f"⛔ HARD BLOCK: {len(findings)} secret(s) detected!",
+                fg=ACCENT_RED,
+            )
+            if clean:
+                self.output_text.delete("1.0", tk.END)
+                self.output_text.insert("1.0", clean)
+        else:
+            self.result_summary.config(
+                text=f"⚠️ {len(findings)} sensitive item(s) detected in prompt!",
+                fg=ACCENT_AMBER,
+            )
+            if clean:
+                self.output_text.delete("1.0", tk.END)
+                self.output_text.insert("1.0", clean)
+
+    def _do_clear(self):
+        """Immediately clear all inputs, outputs, clipboard cache, and reset warnings."""
+        self.input_text.delete("1.0", tk.END)
+        self.output_text.delete("1.0", tk.END)
+        self.last_clipboard = ""
+        self.last_sanitized_text = ""
+        if hasattr(self, "_debounce_timer") and self._debounce_timer:
+            self.after_cancel(self._debounce_timer)
+            self._debounce_timer = None
+        self.result_summary.config(
+            text="Ready. Prompt cleared.",
+            fg=TEXT_SECONDARY,
+        )
 
     def _update_health_badge(self, is_healthy: bool):
         def _update():
@@ -669,25 +785,24 @@ class VeilGuardSidebar(tk.Tk):
             res = self.client.analyze_prompt(clip)
             if res and res.get("decision") in ("redact", "require_approval", "block"):
                 def _alert():
-                    count = len(res.get("findings", []))
-                    clean = res.get("sanitization", {}).get("sanitized_text", "")
-                    
                     # Only insert into ORIGINAL PROMPT if it was empty, so we don't destroy user edits!
                     curr = self.input_text.get("1.0", tk.END).strip()
                     if not curr or curr == self.last_sanitized_text:
                         self.input_text.delete("1.0", tk.END)
                         self.input_text.insert("1.0", clip)
 
-                    if clean:
-                        self.output_text.delete("1.0", tk.END)
-                        self.output_text.insert("1.0", clean)
+                        clean = res.get("sanitization", {}).get("sanitized_text", "")
+                        if clean:
+                            self.output_text.delete("1.0", tk.END)
+                            self.output_text.insert("1.0", clean)
 
-                    self.result_summary.config(
-                        text=f"⚠️ {count} sensitive item(s) detected in clipboard!",
-                        fg=ACCENT_AMBER,
-                    )
-                    if self.auto_pop_enabled.get() and not self.is_expanded:
-                        self.expand()
+                        count = len(res.get("findings", []))
+                        self.result_summary.config(
+                            text=f"⚠️ {count} sensitive item(s) detected in clipboard!",
+                            fg=ACCENT_AMBER,
+                        )
+                        if self.auto_pop_enabled.get() and not self.is_expanded:
+                            self.expand()
                 self.after(0, _alert)
         except Exception:
             pass
@@ -805,8 +920,21 @@ class VeilGuardSidebar(tk.Tk):
             messagebox.showerror("Error", f"Failed: {e}")
 
 
+def ensure_single_instance():
+    """Ensure only one instance of the sidebar runs at a time."""
+    try:
+        ERROR_ALREADY_EXISTS = 183
+        mutex = ctypes.windll.kernel32.CreateMutexW(None, False, "Local\\VeilGuardSidebarSingleInstance")
+        if ctypes.windll.kernel32.GetLastError() == ERROR_ALREADY_EXISTS:
+            sys.exit(0)
+        return mutex
+    except Exception:
+        return None
+
+
 def launch():
     """Launch the VeilGuard sidebar desktop application."""
+    _mutex = ensure_single_instance()
     app = VeilGuardSidebar()
     app.mainloop()
 
