@@ -185,6 +185,7 @@ class VeilGuardSidebar(tk.Tk):
         self.auto_pop_enabled = tk.BooleanVar(value=True)
         self.clipboard_monitor_enabled = tk.BooleanVar(value=True)
         self.last_clipboard = ""
+        self.last_sanitized_text = ""
         self.active_ai_app_name = ""
         self.is_dragging = False
         self.drag_start_y = 0
@@ -656,28 +657,38 @@ class VeilGuardSidebar(tk.Tk):
         self.after(0, _update)
 
     def _check_clipboard_quietly(self):
-        """Inspect clipboard without stealing focus."""
+        """Inspect clipboard without stealing focus or overwriting active input."""
         try:
             clip = self.clipboard_get()
-            if clip and clip != self.last_clipboard and len(clip.strip()) > 5:
-                self.last_clipboard = clip
-                res = self.client.analyze_prompt(clip)
-                if res and res.get("decision") in ("redact", "require_approval", "block"):
-                    def _alert():
-                        count = len(res.get("findings", []))
-                        clean = res.get("sanitization", {}).get("sanitized_text", "")
+            if not clip or clip == self.last_clipboard or clip == self.last_sanitized_text:
+                return
+            if len(clip.strip()) <= 5:
+                return
+            self.last_clipboard = clip
+
+            res = self.client.analyze_prompt(clip)
+            if res and res.get("decision") in ("redact", "require_approval", "block"):
+                def _alert():
+                    count = len(res.get("findings", []))
+                    clean = res.get("sanitization", {}).get("sanitized_text", "")
+                    
+                    # Only insert into ORIGINAL PROMPT if it was empty, so we don't destroy user edits!
+                    curr = self.input_text.get("1.0", tk.END).strip()
+                    if not curr or curr == self.last_sanitized_text:
                         self.input_text.delete("1.0", tk.END)
                         self.input_text.insert("1.0", clip)
-                        if clean:
-                            self.output_text.delete("1.0", tk.END)
-                            self.output_text.insert("1.0", clean)
-                        self.result_summary.config(
-                            text=f"⚠️ {count} sensitive item(s) detected in clipboard!",
-                            fg=ACCENT_AMBER,
-                        )
-                        if self.auto_pop_enabled.get() and not self.is_expanded:
-                            self.expand()
-                    self.after(0, _alert)
+
+                    if clean:
+                        self.output_text.delete("1.0", tk.END)
+                        self.output_text.insert("1.0", clean)
+
+                    self.result_summary.config(
+                        text=f"⚠️ {count} sensitive item(s) detected in clipboard!",
+                        fg=ACCENT_AMBER,
+                    )
+                    if self.auto_pop_enabled.get() and not self.is_expanded:
+                        self.expand()
+                self.after(0, _alert)
         except Exception:
             pass
 
@@ -709,7 +720,7 @@ class VeilGuardSidebar(tk.Tk):
         self.result_summary.config(text=msg, fg=color)
 
     def _do_sanitize(self):
-        """Sanitize prompt and place clean text into clipboard."""
+        """Sanitize prompt: preserves ORIGINAL PROMPT and writes sanitized text to output."""
         text = self.input_text.get("1.0", tk.END).strip()
         if not text:
             return
@@ -727,10 +738,16 @@ class VeilGuardSidebar(tk.Tk):
 
         entities_count = len(res.get("findings", []))
 
+        # 1. ORIGINAL PROMPT stays 100% UNTOUCHED!
+        # 2. Put sanitized text into SANITIZED OUTPUT
         self.output_text.delete("1.0", tk.END)
         self.output_text.insert("1.0", clean)
 
-        # Copy to clipboard
+        # 3. Mark as sanitized by us so clipboard watcher won't overwrite input
+        self.last_sanitized_text = clean
+        self.last_clipboard = clean
+
+        # 4. Copy to clipboard
         self.clipboard_clear()
         self.clipboard_append(clean)
         self.update()
@@ -744,6 +761,8 @@ class VeilGuardSidebar(tk.Tk):
         """Copy output text to clipboard."""
         clean = self.output_text.get("1.0", tk.END).strip()
         if clean:
+            self.last_sanitized_text = clean
+            self.last_clipboard = clean
             self.clipboard_clear()
             self.clipboard_append(clean)
             self.update()
