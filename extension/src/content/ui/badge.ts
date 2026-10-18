@@ -53,18 +53,21 @@ function renderBadge(state: BadgeState, customLabel?: string): void {
   root.innerHTML = `
     <style>
       .badge {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         font-size: 11px;
-        font-weight: 500;
+        font-weight: 600;
+        letter-spacing: 0.02em;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 5px 10px;
+        gap: 7px;
+        padding: 5px 12px;
         border-radius: 9999px;
-        background: #0f172a;
+        background: rgba(10, 17, 32, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
         color: ${cfg.text};
         border: 1px solid ${cfg.border};
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 10px rgba(56, 189, 248, 0.15);
         user-select: none;
       }
       .dot {
@@ -72,13 +75,14 @@ function renderBadge(state: BadgeState, customLabel?: string): void {
         height: 8px;
         border-radius: 50%;
         background: ${cfg.dot};
+        box-shadow: 0 0 8px ${cfg.dot};
       }
       .analyzing .dot {
         animation: pulse 1s ease-in-out infinite;
       }
       @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.3; }
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.3; transform: scale(0.8); }
       }
     </style>
     <div class="badge ${state}" id="veilguard-badge" role="status" aria-live="polite">

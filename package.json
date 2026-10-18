@@ -10,7 +10,9 @@
     "test:e2e": "npm run build && playwright test",
     "e2e:real:login": "node scripts/real-site-login.mjs",
     "e2e:real": "node scripts/run-real-site.mjs",
-    "mock-site": "node mock-ai-site/server.mjs"
+    "mock-site": "node mock-ai-site/server.mjs",
+    "build:web": "vite build web",
+    "dev:web": "vite web"
   },
   "devDependencies": {
     "@playwright/test": "^1.50.1",

@@ -1,0 +1,108 @@
+/**
+ * VeilGuard AI - Blue Glass Design Tokens
+ * Frosted glass surfaces, electric blue accents, WCAG AA compliant text contrast.
+ */
+
+:root {
+  /* Canvas & Surface Colors */
+  --vg-bg-deep: #060b14;
+  --vg-bg-surface: #0a1120;
+  --vg-bg-card: rgba(15, 23, 42, 0.75);
+  --vg-bg-glass: rgba(255, 255, 255, 0.05);
+  --vg-bg-glass-hover: rgba(255, 255, 255, 0.08);
+  --vg-bg-glass-active: rgba(255, 255, 255, 0.12);
+
+  /* Glass Borders & Effects */
+  --vg-border-glass: rgba(255, 255, 255, 0.12);
+  --vg-border-bright: rgba(56, 189, 248, 0.35);
+  --vg-border-subtle: rgba(255, 255, 255, 0.06);
+  --vg-blur-glass: blur(20px);
+  --vg-shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  --vg-shadow-glow: 0 0 25px rgba(56, 189, 248, 0.2);
+
+  /* Electric Blue & Cyan Accents */
+  --vg-accent-primary: #38bdf8;
+  --vg-accent-secondary: #0ea5e9;
+  --vg-accent-cyan: #22d3ee;
+  --vg-accent-indigo: #6366f1;
+
+  /* Typography (WCAG AA Compliant) */
+  --vg-text-primary: #f8fafc;
+  --vg-text-secondary: #94a3b8;
+  --vg-text-muted: #64748b;
+  --vg-text-inverse: #060b14;
+
+  /* Policy Status Badges */
+  --vg-status-allow: #10b981;
+  --vg-status-redact: #f59e0b;
+  --vg-status-approval: #38bdf8;
+  --vg-status-block: #f43f5e;
+  --vg-status-neutral: #64748b;
+
+  /* Radii */
+  --vg-radius-sm: 6px;
+  --vg-radius-md: 10px;
+  --vg-radius-lg: 16px;
+  --vg-radius-xl: 24px;
+}
+
+/* Glass Card Utility */
+.vg-glass-panel {
+  background: var(--vg-bg-glass);
+  backdrop-filter: var(--vg-blur-glass);
+  -webkit-backdrop-filter: var(--vg-blur-glass);
+  border: 1px solid var(--vg-border-glass);
+  border-radius: var(--vg-radius-lg);
+  box-shadow: var(--vg-shadow-glass);
+}
+
+.vg-glass-card {
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--vg-border-glass);
+  border-radius: var(--vg-radius-md);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vg-glass-card:hover {
+  border-color: var(--vg-border-bright);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45), var(--vg-shadow-glow);
+}
+
+/* Glass Button Utility */
+.vg-glass-btn {
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: var(--vg-accent-primary);
+  backdrop-filter: blur(8px);
+  border-radius: var(--vg-radius-sm);
+  padding: 8px 16px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.vg-glass-btn:hover {
+  background: rgba(56, 189, 248, 0.22);
+  border-color: var(--vg-accent-primary);
+  box-shadow: var(--vg-shadow-glow);
+  color: #ffffff;
+}
+
+.vg-glass-btn-primary {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.35);
+}
+
+.vg-glass-btn-primary:hover {
+  background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+  border-color: #38bdf8;
+  box-shadow: 0 4px 18px rgba(56, 189, 248, 0.4);
+}

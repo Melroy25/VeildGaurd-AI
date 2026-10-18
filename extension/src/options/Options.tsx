@@ -244,10 +244,10 @@ interface SummaryCardProps {
 }
 
 const SummaryCard: React.FC<SummaryCardProps> = ({ label, value, sub }) => (
-  <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 flex flex-col gap-1">
-    <span className="text-2xl font-bold font-mono text-slate-100">{value}</span>
-    <span className="text-sm text-slate-300">{label}</span>
-    {sub && <span className="text-xs text-slate-500">{sub}</span>}
+  <div className="bg-white/[0.04] border border-white/10 rounded-xl p-4 flex flex-col gap-1 backdrop-blur-md shadow-lg hover:border-sky-500/30 transition-all">
+    <span className="text-2xl font-bold font-mono text-white tracking-tight">{value}</span>
+    <span className="text-sm font-medium text-slate-300">{label}</span>
+    {sub && <span className="text-xs text-slate-400">{sub}</span>}
   </div>
 );
 
@@ -257,8 +257,11 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({
   title,
   children,
 }) => (
-  <section className="bg-slate-900 border border-slate-800 rounded-lg p-5">
-    <h2 className="text-base font-semibold text-slate-200 mb-4">{title}</h2>
+  <section className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 backdrop-blur-xl shadow-xl hover:border-white/15 transition-all">
+    <h2 className="text-base font-bold text-white mb-4 tracking-tight flex items-center gap-2">
+      <span className="w-1.5 h-4 rounded-full bg-sky-400" />
+      {title}
+    </h2>
     {children}
   </section>
 );
@@ -1288,21 +1291,34 @@ export const Options: React.FC = () => {
 
   return (
     <div
-      className="min-h-screen bg-slate-950 text-slate-100 font-sans"
+      className="min-h-screen bg-[#060b14] text-slate-100 font-sans relative overflow-x-hidden selection:bg-sky-500/30 selection:text-white"
       style={{ colorScheme: "dark" }}
     >
+      {/* Ambient Blue Glass Glow Orbs */}
+      <div className="fixed top-0 right-1/4 w-96 h-96 bg-sky-500/5 rounded-full blur-3xl pointer-events-none -z-0" />
+      <div className="fixed bottom-0 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none -z-0" />
+
       {/* Header */}
-      <header className="border-b border-slate-800 px-8 py-4">
+      <header className="border-b border-white/10 px-8 py-4 bg-white/[0.02] backdrop-blur-md relative z-10">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-sky-400">VeilGuard AI</h1>
-            <p className="text-xs text-slate-500">
-              Privacy firewall — metadata dashboard
-            </p>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-500 to-cyan-400 flex items-center justify-center shadow-[0_0_16px_rgba(56,189,248,0.4)]">
+              <svg className="w-5 h-5 text-slate-950 font-bold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
+                VeilGuard <span className="text-sky-400">AI</span>
+              </h1>
+              <p className="text-xs text-slate-400">
+                Privacy firewall — metadata dashboard
+              </p>
+            </div>
           </div>
           {/* Tab switcher */}
           <nav
-            className="flex gap-1 bg-slate-900 rounded-lg p-1"
+            className="flex gap-1.5 bg-white/[0.04] border border-white/10 rounded-xl p-1.5 backdrop-blur-md"
             role="tablist"
             aria-label="Options sections"
           >
@@ -1311,10 +1327,10 @@ export const Options: React.FC = () => {
               role="tab"
               aria-selected={activeTab === "dashboard"}
               onClick={() => setActiveTab("dashboard")}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 ${
+              className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 cursor-pointer ${
                 activeTab === "dashboard"
-                  ? "bg-slate-700 text-white"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-gradient-to-r from-sky-500 to-sky-600 text-slate-950 shadow-[0_2px_10px_rgba(56,189,248,0.35)]"
+                  : "text-slate-300 hover:text-white hover:bg-white/[0.04]"
               }`}
             >
               Dashboard
@@ -1325,10 +1341,10 @@ export const Options: React.FC = () => {
               id="tab-pdf"
               aria-selected={activeTab === "pdf"}
               onClick={() => setActiveTab("pdf")}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 ${
+              className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 cursor-pointer ${
                 activeTab === "pdf"
-                  ? "bg-slate-700 text-white"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-gradient-to-r from-sky-500 to-sky-600 text-slate-950 shadow-[0_2px_10px_rgba(56,189,248,0.35)]"
+                  : "text-slate-300 hover:text-white hover:bg-white/[0.04]"
               }`}
             >
               Document Scanner
@@ -1338,10 +1354,10 @@ export const Options: React.FC = () => {
               role="tab"
               aria-selected={activeTab === "settings"}
               onClick={() => setActiveTab("settings")}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 ${
+              className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 cursor-pointer ${
                 activeTab === "settings"
-                  ? "bg-slate-700 text-white"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-gradient-to-r from-sky-500 to-sky-600 text-slate-950 shadow-[0_2px_10px_rgba(56,189,248,0.35)]"
+                  : "text-slate-300 hover:text-white hover:bg-white/[0.04]"
               }`}
             >
               Settings
