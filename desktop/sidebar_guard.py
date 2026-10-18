@@ -22,6 +22,7 @@ from ctypes import wintypes
 import json
 import os
 from pathlib import Path
+import subprocess
 import sys
 import threading
 import time
@@ -546,8 +547,34 @@ class VeilGuardSidebar(tk.Tk):
 
         self.geometry(f"{w}x{h}+{x}+{y}")
 
+    def _boot_engine_background(self):
+        """Launch local Python engine in background if not running."""
+        try:
+            py = sys.executable
+            root_dir = str(Path(__file__).resolve().parent.parent)
+            subprocess.Popen(
+                [py, "-m", "veilguard_engine.server"],
+                cwd=root_dir,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000),
+            )
+        except Exception:
+            pass
+
     def _toggle_master_guard(self):
-        """Toggle master protection on or off."""
+        """Toggle master protection on or off, or auto-boot engine if offline."""
+        if not self.client.check_health():
+            self.master_btn.config(text="⏳ STARTING...", bg=ACCENT_AMBER)
+            self.update()
+            self._boot_engine_background()
+            time.sleep(1.5)
+            if self.client.check_health():
+                self.guard_active = True
+                self.master_btn.config(text="🟢 GUARD ON", bg=ACCENT_GREEN)
+                self.handle_frame.config(bg=ACCENT_INDIGO)
+                self.context_label.config(text="Guard Active")
+                self._apply_geometry()
+                return
+
         self.guard_active = not self.guard_active
         if self.guard_active:
             self.master_btn.config(text="🟢 GUARD ON", bg=ACCENT_GREEN)
