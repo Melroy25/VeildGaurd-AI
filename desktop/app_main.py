@@ -152,9 +152,9 @@ def run_full_app():
     if not ping_engine():
         print("[VeilGuard AI] Starting local loopback engine at 127.0.0.1:8765...")
         start_engine_thread()
-        # Wait up to 3 seconds for health
-        for _ in range(15):
-            time.sleep(0.2)
+        # Wait up to 10 seconds for health (spaCy cold import takes ~7.5s)
+        for _ in range(40):
+            time.sleep(0.25)
             if ping_engine():
                 break
 

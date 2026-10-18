@@ -242,13 +242,12 @@ class VeilGuardSidebar(tk.Tk):
             font=("Segoe UI", 8, "bold"),
         )
 
-        # Bind hover, drag, and right-click menu to sliver
+        # Bind hover, click, and right-click menu to sliver
+        # NOTE: Sliver is dock-only and never dragged — dragging belongs exclusively to expanded header
         for widget in (self.handle_frame, self.handle_icon, self.handle_grip):
             widget.bind("<Enter>", self._on_handle_hover_enter)
             widget.bind("<Leave>", self._on_handle_hover_leave)
             widget.bind("<Button-1>", self._on_handle_click)
-            widget.bind("<B1-Motion>", self._on_drag)
-            widget.bind("<ButtonRelease-1>", self._end_drag)
             widget.bind("<Button-3>", self._on_sliver_context_menu)
 
         # ---------------- 2. EXPANDED PANEL ----------------
@@ -622,12 +621,17 @@ class VeilGuardSidebar(tk.Tk):
 
     def _boot_engine_background(self):
         """Launch local Python engine in background if not running."""
+        # If already healthy, nothing to do
+        if self.client.check_health():
+            return
+
         # 1. Attempt in-process daemon thread first (fastest, cleanest in exe & venv)
         try:
             from desktop.app_main import start_engine_thread
             start_engine_thread()
-            for _ in range(15):
-                time.sleep(0.1)
+            # Wait up to 10s for spaCy/Presidio model initialization
+            for _ in range(40):
+                time.sleep(0.25)
                 if self.client.check_health():
                     return
         except Exception:
@@ -648,6 +652,10 @@ class VeilGuardSidebar(tk.Tk):
                     cwd=root_dir,
                     creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000),
                 )
+            for _ in range(40):
+                time.sleep(0.25)
+                if self.client.check_health():
+                    return
         except Exception:
             pass
 
@@ -706,6 +714,7 @@ class VeilGuardSidebar(tk.Tk):
     def expand(self):
         """Expand the sidebar to full width and focus input."""
         self.is_expanded = True
+        self.user_custom_x = None  # Always snap cleanly to right edge on expand
         self._last_expand_time = time.time()
         self.handle_frame.pack_forget()
         self.content_frame.pack(fill="both", expand=True)
@@ -799,7 +808,17 @@ class VeilGuardSidebar(tk.Tk):
         self.drag_start_y = event.y_root - self.winfo_y()
 
     def _on_drag(self, event):
-        """Free 2D drag anywhere across the screen."""
+        """Free 2D drag anywhere across the screen.
+
+        NOTE: Only active when the sidebar is fully expanded. The sliver binds
+        <B1-Motion> to this handler too, but the sliver never calls _start_drag,
+        so drag_start_x would be stale (often 0). Any tiny mouse wiggle during a
+        sliver-click would compute new_x = event.x_root - 0 and teleport the
+        window to the left edge. Guard: bail immediately when collapsed.
+        """
+        if not self.is_expanded:
+            return  # Never move the window from a sliver click wiggle
+
         sw = self.winfo_screenwidth()
         sh = self.winfo_screenheight()
         w = self.winfo_width()
@@ -812,8 +831,7 @@ class VeilGuardSidebar(tk.Tk):
         new_x = max(10, min(sw - w - 10, new_x))
         new_y = max(10, min(sh - h - 10, new_y))
 
-        if self.is_expanded:
-            self.user_custom_x = new_x
+        self.user_custom_x = new_x
         self.win_y = new_y
         self.geometry(f"{w}x{h}+{new_x}+{new_y}")
 
@@ -1064,7 +1082,12 @@ class VeilGuardSidebar(tk.Tk):
 
             def _retry_after_boot():
                 self._boot_engine_background()
-                res2 = self.client.analyze_prompt(text)
+                res2 = None
+                for _ in range(8):
+                    res2 = self.client.analyze_prompt(text)
+                    if res2:
+                        break
+                    time.sleep(0.5)
 
                 def _update():
                     if not res2:

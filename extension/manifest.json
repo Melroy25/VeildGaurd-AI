@@ -28,7 +28,9 @@
     "https://*.mistral.ai/*",
     "https://aistudio.google.com/*",
     "https://*.aistudio.google.com/*",
-    "https://huggingface.co/chat/*"
+    "https://huggingface.co/chat/*",
+    "https://codex.openai.com/*",
+    "https://*.codex.openai.com/*"
   ],
   "content_scripts": [
     {
@@ -53,10 +55,9 @@
         "https://*.mistral.ai/*",
         "https://aistudio.google.com/*",
         "https://*.aistudio.google.com/*",
-        "https://huggingface.co/chat/*"
-      ],
-      "js": [
-        "page-world.js"
+        "https://huggingface.co/chat/*",
+        "https://codex.openai.com/*",
+        "https://*.codex.openai.com/*"
       ],
       "run_at": "document_start",
       "world": "MAIN"
@@ -83,7 +84,9 @@
         "https://*.mistral.ai/*",
         "https://aistudio.google.com/*",
         "https://*.aistudio.google.com/*",
-        "https://huggingface.co/chat/*"
+        "https://huggingface.co/chat/*",
+        "https://codex.openai.com/*",
+        "https://*.codex.openai.com/*"
       ],
       "js": [
         "content.js"

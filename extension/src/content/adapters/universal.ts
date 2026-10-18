@@ -26,6 +26,7 @@ const SUPPORTED_AI_HOST_PATTERNS = [
   "huggingface.co",
   "gemini.google.com",
   "chatgpt.com",
+  "codex.openai.com",
 ];
 
 export const UNIVERSAL_SELECTORS = {
