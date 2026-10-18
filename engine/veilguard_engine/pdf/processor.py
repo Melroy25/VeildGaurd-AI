@@ -76,8 +76,7 @@ def _get_placeholder(
         type_counters["PAN"] = type_counters.get("PAN", 0) + 1
         return f"[PAN_{type_counters['PAN']}]"
     elif "SECRET" in type_upper or "KEY" in type_upper or "TOKEN" in type_upper:
-        type_counters["SECRET"] = type_counters.get("SECRET", 0) + 1
-        return f"[SECRET_{type_counters['SECRET']}]"
+        return "[CRITICAL_SECRET]"
     elif "CREDIT" in type_upper or "CARD" in type_upper:
         type_counters["CARD"] = type_counters.get("CARD", 0) + 1
         return f"[CARD_{type_counters['CARD']}]"

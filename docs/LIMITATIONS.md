@@ -125,3 +125,21 @@
 - However, secondary detectors (spaCy NER and quasi-identifier detectors) frequently extract adjacent context tokens such as `"KYC"` (classified as `QUASI`) or `"Verify Aadhaar"` (spurious `PERSON` tag from spaCy).
 - On benchmark items where ground truth only annotates the identifier itself, these extra extractions count as false positives in token/entity precision calculations, lowering VeilGuard's entity F1 relative to single-pattern keyword matchers that produce zero contextual extractions.
 
+## 22. Site Coverage & Prototype Status (Rule 3)
+- An AI website is designated as **Verified** only if the real-site automated test harness recorded passing cells for every claimed submission path ($N \ge 20$).
+- Currently, only the local **Mock AI Chat Testbed** (`127.0.0.1:4310`) is Verified across all 14 cells.
+- **ChatGPT** (`chatgpt.com`) is in **Prototype** status: while the unauthenticated logged-out send button and backstop are recorded in `bench/results/enforcement_real_site.json`, the Enter key, authenticated SPA sessions, and edit flows have not completed full multi-trial matrix runs.
+- All other target AI sites (Google Gemini, Claude, Microsoft Copilot, Perplexity, DeepSeek, Poe, Mistral, Google AI Studio) utilize the universal contenteditable/ProseMirror adapter and are explicitly classified as **Prototype** until automated real-site trials are executed and recorded.
+
+## 23. Desktop Sidebar Companion Prototype Status
+- The Windows desktop companion (`desktop/sidebar_guard.py`) provides OS-level foreground detection, opt-in clipboard inspection, and PDF redaction.
+- Per Rule 2, the desktop sidebar is classified as **Prototype** pending completion and recording of the formal manual verification checklist (`docs/SIDEBAR_VERIFICATION.md`).
+- Clipboard inspection is disabled by default (opt-in only), activates strictly while an AI application is focused, renders a prominent visible indicator, and never writes clipboard content to persistent storage or logs.
+
+## 24. Development Split Error Analysis Classification
+- On the 233-record development split (`dev.jsonl`), categories where the keyword baseline scored differently were analyzed:
+  - **`direct_pii`**: Keyword F1 0.657 vs VeilGuard F1 0.548. Classification: statistical NER span boundary variability in `en_core_web_sm` and false positive name extractions on informal/unpunctuated text vs exact regex tokens.
+  - **`financial`**: Keyword F1 0.657 vs VeilGuard F1 0.103. Classification: Keyword baseline matches unvalidated 16-digit sequences indiscriminately (FP=22), whereas VeilGuard enforces strict structural/Luhn checksums and entity type boundaries.
+  - **`india_ids`**: Keyword F1 0.809 vs VeilGuard F1 0.658. Classification: VeilGuard achieves 96.2% recall (TP=51 vs keyword's 36), but multi-detector span boundaries (e.g., overlapping entity tokens) yield lower IoU precision.
+  - **`indirect_combo`**: Keyword F1 0.000 vs VeilGuard F1 0.770. Classification: Keyword filters have zero semantic capability to detect combinations of non-sensitive quasi-identifiers, where VeilGuard's re-identification scorer achieves 80.0% combination recall.
+

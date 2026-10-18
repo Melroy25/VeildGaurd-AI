@@ -223,7 +223,7 @@ class VeilGuardSidebar(tk.Tk):
         self.is_expanded = False
         self.guard_active = True  # Master On/Off switch
         self.auto_pop_enabled = tk.BooleanVar(value=True)
-        self.clipboard_monitor_enabled = tk.BooleanVar(value=True)
+        self.clipboard_monitor_enabled = tk.BooleanVar(value=False)  # Rule 6: Opt-in only
         self.last_clipboard = ""
         self.last_sanitized_text = ""
         self.active_ai_app_name = ""
@@ -252,6 +252,7 @@ class VeilGuardSidebar(tk.Tk):
 
         # Bind Esc to quickly dismiss
         self.bind("<Escape>", lambda e: self.collapse())
+        self.protocol("WM_DELETE_WINDOW", self.destroy)
 
         # Build UI layout
         self._build_ui()
@@ -737,8 +738,8 @@ class VeilGuardSidebar(tk.Tk):
                             self.after(0, self.collapse)
                     was_ai_focused = False
 
-                # 3. Check clipboard for prompt changes
-                if self.clipboard_monitor_enabled.get() and self.guard_active:
+                # 3. Check clipboard for prompt changes (Rule 6: only while AI app is focused and user explicitly opted in)
+                if self.clipboard_monitor_enabled.get() and self.guard_active and is_ai_focused:
                     self._check_clipboard_quietly()
 
             except Exception:
@@ -851,7 +852,9 @@ class VeilGuardSidebar(tk.Tk):
 
     def _update_context_badge(self, text: str, is_active: bool):
         def _update():
-            self.context_label.config(text=text)
+            # Rule 6: Show visible indicator when clipboard guard is actively running
+            clip_status = " • 📋 CLIPBOARD GUARD ACTIVE" if (self.clipboard_monitor_enabled.get() and is_active) else ""
+            self.context_label.config(text=f"{text}{clip_status}")
             if is_active:
                 self.context_icon.config(text="⚡", fg=ACCENT_GREEN)
             else:
@@ -1028,6 +1031,18 @@ class VeilGuardSidebar(tk.Tk):
         import webbrowser
         webbrowser.open("http://127.0.0.1:8765/health")
         self.result_summary.config(text="📊 Opened VeilGuard status in browser!", fg=ACCENT_GREEN)
+
+    def destroy(self):
+        """Rule 5 & 6: Wipe all prompt and clipboard buffers before closing window."""
+        self.running = False
+        try:
+            self.input_text.delete("1.0", tk.END)
+            self.output_text.delete("1.0", tk.END)
+        except Exception:
+            pass
+        self.last_clipboard = ""
+        self.last_sanitized_text = ""
+        super().destroy()
 
 
 def ensure_single_instance():

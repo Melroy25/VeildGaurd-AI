@@ -1,7 +1,7 @@
 # VeilGuard AI: Evidence & Verification Report
 
 > **Auto-generated report from reproducible benchmark artifacts.**
-> Generated on: `2026-10-18 03:03:04Z` | Sealed Test Run: `#2` | Git Commit: `2701793`
+> Generated on: `2026-10-18 07:57:36Z` | Sealed Test Run: `#2` | Git Commit: `2701793`
 > Source artifacts: `bench/results/benchmark_test.json`, `enforcement_full_chain_mock_site.json`, `enforcement_real_site.json`.
 
 > [!IMPORTANT]
@@ -83,12 +83,18 @@ A security tool that redacts prompt instructions or necessary technical inputs d
 ## 6. End-to-End Browser Enforcement Matrix
 
 Tested on **Mock AI Chat Testbed** with real loopback engine (`127.0.0.1:8765`).
-- Total matrix cells verified: **8/8 PASS**
+- Total matrix cells verified: **14/14 PASS**
 - Trials per cell: `20`
 - Plain-text prompt leaks observed: **0**
 
 | Cell ID / Path | Composer | Submit Wiring | Verdict Action | Flagged Leaked | Sanitized Delivered | Status |
 |---|---|---|---|---|---|---|
+| `textarea/form/click` | `textarea` | `form` | `redact` | 0 | 20 | **PASS** |
+| `textarea/form/enter` | `textarea` | `form` | `redact` | 0 | 20 | **PASS** |
+| `textarea/form/requestSubmit` | `textarea` | `form` | `redact` | 0 | 20 | **PASS** |
+| `textarea/click/click` | `textarea` | `click` | `redact` | 0 | 20 | **PASS** |
+| `textarea/click/enter` | `textarea` | `click` | `redact` | 0 | 20 | **PASS** |
+| `contenteditable/form/click` | `contenteditable` | `form` | `redact` | 0 | 20 | **PASS** |
 | `contenteditable/form/enter` | `contenteditable` | `form` | `redact` | 0 | 20 | **PASS** |
 | `contenteditable/form/requestSubmit` | `contenteditable` | `form` | `redact` | 0 | 20 | **PASS** |
 | `contenteditable/click/click` | `contenteditable` | `click` | `redact` | 0 | 20 | **PASS** |

@@ -1,7 +1,7 @@
 # VeilGuard AI Benchmark Report
 
-> **Split:** `test` | **Run #:** 2 | **Commit:** `2701793`
-> **Records:** 286 | **Generated from JSON — no numbers typed by hand.**
+> **Split:** `dev` | **Run #:** N/A (dev) | **Commit:** `e2f4084`
+> **Records:** 233 | **Generated from JSON — no numbers typed by hand.**
 
 > [!IMPORTANT]
 > Results are on a **synthetic, same-team-authored dataset**. They measure
@@ -27,50 +27,35 @@
 ## Systems
 
 - **keyword**: Competent regex/keyword filter (R01–R11, see `bench/baselines/keyword.py`)
-- **presidio_default**: Stock `AnalyzerEngine()`, default registry, `entities=None`
-- **presidio_all_stock**: Presidio with all predefined recognizers enabled
-- **veilguard_type_based**: VeilGuard Phase 3a pipeline, all Phase 5 intelligence OFF
 - **veilguard_full**: VeilGuard with all intelligence features ON
 
 ## Entity-Level Metrics (50% IoU, micro)
 
 | System | TP | FP | FN | Precision | Recall | F1 | P CI95 | R CI95 |
 |---|---|---|---|---|---|---|---|---|
-| keyword | 209 | 28 | 297 | 88.2% | 41.3% | 56.3% | 83.5%–91.7% | 37.1%–45.6% |
-| presidio_default | 124 | 465 | 382 | 21.1% | 24.5% | 22.6% | 17.9%–24.5% | 21.0%–28.4% |
-| presidio_all_stock | 145 | 527 | 361 | 21.6% | 28.7% | 24.6% | 18.6%–24.8% | 24.9%–32.8% |
-| veilguard_type_based | 165 | 90 | 341 | 64.7% | 32.6% | 43.4% | 58.7%–70.3% | 28.7%–36.8% |
-| veilguard_full | 379 | 151 | 127 | 71.5% | 74.9% | 73.2% | 67.5%–75.2% | 71.0%–78.5% |
+| keyword | 149 | 33 | 146 | 81.9% | 50.5% | 62.5% | 75.6%–86.8% | 44.8%–56.2% |
+| veilguard_full | 236 | 133 | 59 | 64.0% | 80.0% | 71.1% | 58.9%–68.7% | 75.1%–84.2% |
 
 ### Strict Exact-Boundary Variant
 
 | System | TP | FP | FN | Precision | Recall | F1 |
 |---|---|---|---|---|---|---|
-| keyword | 191 | 46 | 315 | 80.6% | 37.7% | 51.4% |
-| presidio_default | 122 | 467 | 384 | 20.7% | 24.1% | 22.3% |
-| presidio_all_stock | 141 | 531 | 365 | 21.0% | 27.9% | 23.9% |
-| veilguard_type_based | 157 | 98 | 349 | 61.6% | 31.0% | 41.3% |
-| veilguard_full | 338 | 192 | 168 | 63.8% | 66.8% | 65.3% |
+| keyword | 148 | 34 | 147 | 81.3% | 50.2% | 62.1% |
+| veilguard_full | 211 | 158 | 84 | 57.2% | 71.5% | 63.6% |
 
 ## Flagged-Item Metrics
 
 | System | Precision | Recall | F1 | FPR (Count / Benign N, 95% CI) | P CI95 | R CI95 |
 |---|---|---|---|---|---|---|
-| keyword | 97.3% | 79.2% | 87.3% | 3.9% (4/103, up to 9.6%) | 93.3%–99.0% | 72.8%–84.5% |
-| presidio_default | 60.5% | 72.7% | 66.0% | 84.5% (87/103, up to 90.2%) | 53.9%–66.7% | 65.8%–78.6% |
-| presidio_all_stock | 63.3% | 83.1% | 71.9% | 85.4% (88/103, up to 91.0%) | 57.1%–69.2% | 77.0%–87.8% |
-| veilguard_type_based | 100.0% | 56.8% | 72.5% | 0.0% (0/103, up to 3.6%) | 96.4%–100.0% | 49.6%–63.8% |
-| veilguard_full | 100.0% | 84.2% | 91.4% | 0.0% (0/103, up to 3.6%) | 97.6%–100.0% | 78.2%–88.7% |
+| keyword | 81.3% | 72.9% | 76.9% | 33.3% (26/78, up to 44.4%) | 74.0%–86.9% | 65.4%–79.3% |
+| veilguard_full | 89.4% | 60.0% | 71.8% | 14.1% (11/78, up to 23.5%) | 82.0%–94.0% | 52.1%–67.4% |
 
 ## Combination-Risk Recall
 
 | System | Combo Flagged | Combo Total | Recall | CI95 |
 |---|---|---|---|---|
-| keyword | 6 | 35 | 17.1% | 8.1%–32.7% |
-| presidio_default | 34 | 35 | 97.1% | 85.5%–99.5% |
-| presidio_all_stock | 34 | 35 | 97.1% | 85.5%–99.5% |
-| veilguard_type_based | 0 | 35 | 0.0% | 0.0%–9.9% |
-| veilguard_full | 28 | 35 | 80.0% | 64.1%–90.0% |
+| keyword | 1 | 25 | 4.0% | 0.7%–19.5% |
+| veilguard_full | 3 | 25 | 12.0% | 4.2%–30.0% |
 
 ## Utility (Required Retention & Sensitive Removal)
 
@@ -78,31 +63,19 @@
 
 | System | Required Retained | Sensitive Removed |
 |---|---|---|
-| keyword | 96.7% (175/181) | 41.1% (208/506) |
-| presidio_default | 63.5% (115/181) | 48.8% (247/506) |
-| presidio_all_stock | 62.4% (113/181) | 54.3% (275/506) |
-| veilguard_type_based | 100.0% (181/181) | 24.3% (123/506) |
-| veilguard_full | 100.0% (181/181) | 24.5% (124/506) |
+| keyword | 77.7% (143/184) | 50.8% (150/295) |
+| veilguard_full | 94.0% (173/184) | 26.4% (78/295) |
 
 ## Decision Accuracy (VeilGuard Variants Only)
 
-### veilguard_type_based: accuracy=71.7% (205/286)
+### veilguard_full: accuracy=58.4% (136/233)
 
 | Gold \ Pred | allow | redact | require_approval | block |
 |---|---|---|---|---|
-| allow | 103 | 0 | 0 | 0 |
-| redact | 31 | 73 | 0 | 0 |
-| require_approval | 48 | 1 | 0 | 0 |
-| block | 0 | 1 | 0 | 29 |
-
-### veilguard_full: accuracy=55.2% (158/286)
-
-| Gold \ Pred | allow | redact | require_approval | block |
-|---|---|---|---|---|
-| allow | 103 | 0 | 0 | 0 |
-| redact | 9 | 26 | 69 | 0 |
-| require_approval | 20 | 29 | 0 | 0 |
-| block | 0 | 1 | 0 | 29 |
+| allow | 67 | 11 | 0 | 0 |
+| redact | 40 | 38 | 21 | 0 |
+| require_approval | 22 | 3 | 0 | 0 |
+| block | 0 | 0 | 0 | 31 |
 
 ## Latency
 
@@ -110,56 +83,32 @@ Hardware: `Intel64 Family 6 Model 140 Stepping 1, GenuineIntel` | OS: `Windows-1
 
 | System | p50 (ms) | p95 (ms) |
 |---|---|---|
-| keyword | 0.4 | 0.7 |
-| presidio_default | 15.2 | 23.5 |
-| presidio_all_stock | 15.7 | 23.9 |
-| veilguard_type_based | 17.3 | 35.8 |
-| veilguard_full | 42.3 | 81.3 |
-
-## Ablation: veilguard_type_based vs veilguard_full
-
-| Metric | type_based | full | Delta |
-|---|---|---|---|
-| Entity F1 | 43.4% | 73.2% | +29.8% |
-| Flagged F1 | 72.5% | 91.4% | +18.9% |
-| Combo Recall | 0.0% | 80.0% | +80.0% |
-| Required Retained | 100.0% | 100.0% | +0.0% |
+| keyword | 0.1 | 0.2 |
+| veilguard_full | 29.2 | 54.7 |
 
 ## Where VeilGuard Did Not Win
 
 Categories and metrics where a baseline matched or beat VeilGuard Full:
 
-- **direct_pii**: `keyword` F1=72.3% vs VeilGuard Full F1=60.4%
-- **financial**: `keyword` F1=66.7% vs VeilGuard Full F1=37.5%
-- **india_ids**: `keyword` F1=65.6% vs VeilGuard Full F1=46.2%
-- **direct_pii**: `veilguard_type_based` F1=65.2% vs VeilGuard Full F1=60.4%
-- **financial**: `veilguard_type_based` F1=60.0% vs VeilGuard Full F1=37.5%
-- **india_ids**: `veilguard_type_based` F1=61.0% vs VeilGuard Full F1=46.2%
-- **secrets**: `veilguard_type_based` F1=95.1% vs VeilGuard Full F1=92.1%
-- **combination-risk recall**: `presidio_default` recall=97.1% vs VeilGuard Full recall=80.0% — explained by `presidio_default`'s 84.5% false positive rate on benign prompts (flagging almost all text indiscriminately) versus VeilGuard's 0.0% FPR.
-- **combination-risk recall**: `presidio_all_stock` recall=97.1% vs VeilGuard Full recall=80.0% — explained by `presidio_all_stock`'s 85.4% false positive rate on benign prompts (flagging almost all text indiscriminately) versus VeilGuard's 0.0% FPR.
+- **direct_pii**: `keyword` F1=65.7% vs VeilGuard Full F1=54.8%
+- **financial**: `keyword` F1=65.7% vs VeilGuard Full F1=10.3%
+- **india_ids**: `keyword` F1=80.9% vs VeilGuard Full F1=65.8%
+- **secrets**: `keyword` F1=95.4% vs VeilGuard Full F1=63.2%
 
 ## Per-Category Entity Metrics (Entity F1)
 
-| Category | N | keyword F1 | presidio_default F1 | presidio_all_stock F1 | veilguard_type_based F1 | veilguard_full F1 |
-|---|---|---|---|---|---|---|
-| direct_pii | 52 | 72.3% | 49.7% | 45.1% | 65.2% | 60.4% | 
-| financial * | 19 | 66.7% | 6.7% | 6.7% | 60.0% | 37.5% | 
-| hard_negatives | 34 | 22.2% | 35.0% | 34.1% | 48.8% | 54.5% | 
-| india_ids | 56 | 65.6% | 0.0% | 25.0% | 61.0% | 46.2% | 
-| indirect_combo | 47 | 0.0% | 0.0% | 0.0% | 0.0% | 77.7% | 
-| medical | 30 | 76.9% | 45.6% | 45.6% | 39.6% | 94.2% | 
-| secrets | 30 | 69.9% | 0.0% | 0.0% | 95.1% | 92.1% | 
-| utility_tasks * | 18 | 0.0% | 0.0% | 0.0% | 0.0% | 73.7% | 
+| Category | N | keyword F1 | veilguard_full F1 |
+|---|---|---|---|
+| direct_pii | 23 | 65.7% | 54.8% | 
+| financial | 24 | 65.7% | 10.3% | 
+| hard_negatives | 35 | 0.0% | 0.0% | 
+| india_ids | 53 | 80.9% | 65.8% | 
+| indirect_combo | 26 | 0.0% | 77.0% | 
+| medical | 20 | 96.2% | 98.8% | 
+| secrets | 31 | 95.4% | 63.2% | 
+| utility_tasks | 21 | 0.0% | 100.0% | 
 
 *\* low confidence (n < 20)*
-
-## Test Split Run Log
-
-| Run # | Timestamp | Commit | Systems |
-|---|---|---|---|
-| 1 | 2026-10-17T16:43:53Z | `41b9fc1` | keyword, presidio_default, presidio_all_stock, veilguard_type_based, veilguard_full |
-| 2 | 2026-10-18T03:02:31Z | `2701793` | keyword, presidio_default, presidio_all_stock, veilguard_type_based, veilguard_full |
 
 ## Limitations
 

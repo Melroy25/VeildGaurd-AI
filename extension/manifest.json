@@ -4,8 +4,7 @@
   "version": "0.0.1",
   "description": "Context-aware privacy firewall for AI tools.",
   "permissions": [
-    "storage",
-    "activeTab"
+    "storage"
   ],
   "host_permissions": [
     "http://127.0.0.1:8765/*",
@@ -60,8 +59,7 @@
         "page-world.js"
       ],
       "run_at": "document_start",
-      "world": "MAIN",
-      "all_frames": true
+      "world": "MAIN"
     },
     {
       "matches": [
@@ -90,8 +88,7 @@
       "js": [
         "content.js"
       ],
-      "run_at": "document_start",
-      "all_frames": true
+      "run_at": "document_start"
     }
   ],
   "action": {
