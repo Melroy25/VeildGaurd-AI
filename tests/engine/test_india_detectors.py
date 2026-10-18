@@ -92,3 +92,34 @@ def test_bank_account_requires_local_context(detector):
     acc_findings = [f for f in findings if f.entity_type == "IN_BANK_ACCOUNT"]
     assert len(acc_findings) == 1
     assert with_context[acc_findings[0].start : acc_findings[0].end] == "50100234567890"
+
+
+def test_aadhaar_with_medical_condition_is_sanitized_end_to_end():
+    """Verify Aadhaar without KYC verification verb is pseudonymized and not kept raw."""
+    from veilguard_engine.scanner import Scanner
+    from veilguard_engine.policy.loader import PolicyRegistry
+    from veilguard_engine.policy.evaluator import PolicyEvaluator
+    from veilguard_engine.sanitizer import Sanitizer
+    from veilguard_engine.necessity.resolver import evaluate_necessity
+    from veilguard_engine.context.task import infer_task
+
+    scanner = Scanner()
+    registry = PolicyRegistry()
+    sanitizer = Sanitizer(scanner=scanner)
+
+    text = "Aadhaar 5857 0839 3474, has severe diabetes."
+    scan_res = scanner.scan(text)
+    profile_obj = registry.get_profile("company")
+    policy_res = PolicyEvaluator.evaluate(scan_res.findings, source="browser", destination_trust="standard", profile=profile_obj)
+
+    task_prof = infer_task(text)
+    assert task_prof.type != "verify_identifier", "Mentioning Aadhaar without verify/KYC verb must NOT be classified as verify_identifier"
+
+    nec_res = evaluate_necessity(scan_res.findings, policy_res, task_prof)
+    policy_res.decision = nec_res.adjusted_decision
+    policy_res.per_finding_actions = nec_res.adjusted_actions
+
+    san_res = sanitizer.sanitize(text, scan_res.findings, policy_res)
+    assert "5857 0839 3474" not in san_res.sanitized_text
+    assert "[AADHAAR_" in san_res.sanitized_text
+

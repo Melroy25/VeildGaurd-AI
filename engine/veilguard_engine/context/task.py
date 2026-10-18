@@ -114,6 +114,12 @@ def infer_task(text: str, task_hint: Optional[str] = None) -> TaskProfile:
 
     for task, rules in TASK_RULES.items():
         matched_rules = [rid for rid, pat in rules if pat.search(text_lower)]
+        # Actionable tasks require an explicit action verb (e.g. verify/check, find/lookup).
+        # Simply mentioning an Aadhaar or phone number does not mean the user wants to verify or look up an ID.
+        if task == "verify_identifier" and "T_VERIFY_ID_01" not in matched_rules:
+            continue
+        if task == "lookup_contact" and "T_LOOKUP_01" not in matched_rules:
+            continue
         if matched_rules:
             matches[task] = matched_rules
 
