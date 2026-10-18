@@ -368,4 +368,12 @@ async def endpoint_pdf_redact(
     )
 
 
+if __name__ == "__main__":
+    import uvicorn
+    from veilguard_engine.config import HOST, PORT
+
+    uvicorn.run("veilguard_engine.server:app", host=HOST, port=PORT, log_level="info")
+
+
+
 
