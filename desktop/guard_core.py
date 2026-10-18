@@ -25,6 +25,8 @@ DEFAULT_PROFILE = "company"
 # AI Applications & Windows to monitor
 AI_KEYWORDS = [
     "chatgpt",
+    "chat gpt",
+    "codex",
     "claude",
     "copilot",
     "gemini",
@@ -38,7 +40,9 @@ AI_KEYWORDS = [
     "deepseek",
     "mistral",
     "ai studio",
+    "v0",
 ]
+
 
 
 def get_auth_token() -> str:

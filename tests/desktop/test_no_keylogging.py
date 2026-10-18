@@ -65,7 +65,11 @@ def test_no_prohibited_keylogger_apis():
 def test_ai_window_detection():
     """Verify smart window title detection correctly identifies AI tools vs normal apps."""
     # Positive matches
+    assert is_ai_window("ChatGPT") is True
     assert is_ai_window("ChatGPT — Mozilla Firefox") is True
+    assert is_ai_window("ChatGPT - OpenAI Desktop App") is True
+    assert is_ai_window("Codex") is True
+    assert is_ai_window("Codex - Code Assistant") is True
     assert is_ai_window("Claude — Desktop App") is True
     assert is_ai_window("Cursor - main.py - Visual Studio Code") is True
     assert is_ai_window("Microsoft Copilot in Windows") is True
@@ -98,3 +102,15 @@ def test_guard_state_buffer_wiping():
     assert state.last_analyzed_text == ""
     assert state.sanitized_text == ""
     assert state.last_clipboard == ""
+
+
+def test_sidebar_structure():
+    """Verify VeilGuardSidebar has the required collapse, focus-out, and geometry methods."""
+    from desktop.sidebar_guard import VeilGuardSidebar
+    assert hasattr(VeilGuardSidebar, "_on_focus_out")
+    assert hasattr(VeilGuardSidebar, "_check_focus_loss")
+    assert hasattr(VeilGuardSidebar, "expand")
+    assert hasattr(VeilGuardSidebar, "collapse")
+    assert hasattr(VeilGuardSidebar, "_do_sanitize")
+    assert hasattr(VeilGuardSidebar, "_do_clear")
+

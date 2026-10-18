@@ -36,7 +36,6 @@ $PyInstallerArgs = @(
     "--windowed",
     "--clean",
     "--noconfirm",
-    "--add-data=data;data",
     "--add-data=policies;policies",
     "--collect-all=veilguard_engine",
     "--collect-all=spacy",
@@ -82,6 +81,13 @@ How to Run:
      and displays a discreet edge-docked sidebar on the right of your screen.
   3. A shield icon will also appear in your system notification tray.
 
+Features:
+  - Smart Auto-Pop: Slides open when AI apps (ChatGPT, Codex, Claude, Cursor) are focused.
+  - Click-Outside-to-Close: Automatically collapses into a 6px edge sliver when you click away.
+  - Esc to dismiss instantly.
+  - Ctrl+Enter to Sanitize & Copy prompt in 1-click.
+  - Dual-verification PDF Redaction.
+
 Command Line Options:
   VeilGuard.exe --selftest    Run self-test diagnostic
   VeilGuard.exe --engine      Run local engine only (for API integrations)
@@ -101,6 +107,18 @@ $CompiledExe = Join-Path $ReleaseDir "VeilGuard.exe"
 if (Test-Path $CompiledExe) {
     Write-Host "Success: Standalone executable created at $CompiledExe" -ForegroundColor Green
     & $CompiledExe --version
+    Start-Sleep -Seconds 2
+
+    # Create ZIP archive
+    $ZipPath = Join-Path $RepoRoot "release\VeilGuard-win64.zip"
+    if (Test-Path $ZipPath) { Remove-Item -Force $ZipPath }
+    Write-Host "Creating release archive: release\VeilGuard-win64.zip..." -ForegroundColor Cyan
+    try {
+        Compress-Archive -Path "$ReleaseDir\*" -DestinationPath $ZipPath -Force
+        Write-Host "Release ZIP created at $ZipPath" -ForegroundColor Green
+    } catch {
+        Write-Warning "Could not create zip archive immediately: $_"
+    }
 } else {
     Write-Error "Compiled executable not found at $CompiledExe"
 }

@@ -169,20 +169,26 @@ class VeilGuardSidebar(tk.Tk):
         self.thin_sliver_width = 6
         self.hover_sliver_width = 24
         self.collapsed_height = 96
-        self.expanded_width = 370
-        self.expanded_height = 585
+        self.expanded_width = 380
+        self.expanded_height = 600
 
         # Position docked to right screen edge
-        self.win_y = max(80, (self.screen_h - self.expanded_height) // 2)
+        self.win_y = max(60, (self.screen_h - self.expanded_height) // 2)
 
         # Style & Configuration
         self.configure(bg=BG_PANEL)
         self.overrideredirect(True)  # Frameless
         self.wm_attributes("-topmost", True)  # Always on top
 
+        # Click outside to close / collapse automatically
+        self.bind("<FocusOut>", self._on_focus_out)
         # Bind Esc to quickly dismiss
         self.bind("<Escape>", lambda e: self.collapse())
+        # Bind Ctrl+L to clear prompt
+        self.bind("<Control-l>", lambda e: self._do_clear())
         self.protocol("WM_DELETE_WINDOW", self.destroy)
+
+        self._focus_check_timer = None
 
         # Build UI layout
         self._build_ui()
@@ -361,6 +367,7 @@ class VeilGuardSidebar(tk.Tk):
         self.input_text.bind("<KeyRelease>", self._on_input_changed)
         self.input_text.bind("<<Paste>>", lambda e: self.after(50, self._on_input_changed))
         self.input_text.bind("<<Cut>>", lambda e: self.after(50, self._on_input_changed))
+        self.input_text.bind("<Control-Return>", lambda e: (self._do_sanitize(), "break")[1])
 
         # Action Buttons Row
         btn_row = tk.Frame(self.content_frame, bg=BG_PANEL)
@@ -517,10 +524,10 @@ class VeilGuardSidebar(tk.Tk):
         if self.is_expanded:
             w = self.expanded_width
             h = self.expanded_height
-            x = self.screen_w - w - 8
+            x = self.screen_w - w
             y = min(self.win_y, self.screen_h - h - 30)
             try:
-                self.wm_attributes("-alpha", 0.97)
+                self.wm_attributes("-alpha", 0.98)
             except Exception:
                 pass
         else:
@@ -530,7 +537,7 @@ class VeilGuardSidebar(tk.Tk):
             y = min(self.win_y, self.screen_h - h - 30)
             try:
                 # Barely visible (0.35) when idle, bright on hover
-                alpha = 0.92 if self.is_hovered else (0.35 if self.guard_active else 0.15)
+                alpha = 0.95 if self.is_hovered else (0.35 if self.guard_active else 0.15)
                 self.wm_attributes("-alpha", alpha)
             except Exception:
                 pass
@@ -594,21 +601,75 @@ class VeilGuardSidebar(tk.Tk):
             self._apply_geometry()
 
     def expand(self):
-        """Expand the sidebar to full width."""
+        """Expand the sidebar to full width and focus input."""
         self.is_expanded = True
         self.handle_frame.pack_forget()
         self.content_frame.pack(fill="both", expand=True)
         self._apply_geometry()
+        # Bring to top and focus input text so clicking outside triggers FocusOut
+        try:
+            self.lift()
+            self.focus_force()
+            self.input_text.focus_set()
+        except Exception:
+            pass
 
     def collapse(self):
         """Collapse into the ultra-thin 6px sliver."""
         self.is_expanded = False
         self.is_hovered = False
+        if hasattr(self, "_focus_check_timer") and self._focus_check_timer:
+            try:
+                self.after_cancel(self._focus_check_timer)
+            except Exception:
+                pass
+            self._focus_check_timer = None
         self.content_frame.pack_forget()
         self.handle_icon.pack_forget()
         self.handle_grip.pack_forget()
         self.handle_frame.pack(fill="both", expand=True)
         self._apply_geometry()
+
+    def _on_focus_out(self, event):
+        """When focus leaves, verify whether the user clicked outside the sidebar to close it."""
+        if not self.is_expanded:
+            return
+        if hasattr(self, "_focus_check_timer") and self._focus_check_timer:
+            try:
+                self.after_cancel(self._focus_check_timer)
+            except Exception:
+                pass
+        self._focus_check_timer = self.after(140, self._check_focus_loss)
+
+    def _check_focus_loss(self):
+        self._focus_check_timer = None
+        if not self.is_expanded:
+            return
+
+        # 1. Did focus move to another widget inside our window?
+        try:
+            curr = self.focus_get()
+            if curr is not None:
+                return
+        except Exception:
+            pass
+
+        # 2. Check mouse pointer position on screen
+        try:
+            mx = self.winfo_pointerx()
+            my = self.winfo_pointery()
+            wx = self.winfo_rootx()
+            wy = self.winfo_rooty()
+            ww = self.winfo_width()
+            wh = self.winfo_height()
+            if (wx <= mx <= wx + ww) and (wy <= my <= wy + wh):
+                # Mouse pointer is still inside our sidebar window bounds
+                return
+        except Exception:
+            pass
+
+        # 3. Focus lost to an external app or desktop and mouse is outside -> Collapse!
+        self.collapse()
 
     def _on_handle_click(self, event):
         """Expand on click."""
@@ -629,6 +690,7 @@ class VeilGuardSidebar(tk.Tk):
     def _background_watcher(self):
         """Detects active AI tools and automatically pops open or collapses."""
         was_ai_focused = False
+        last_health_check = 0.0
 
         while self.running:
             try:
@@ -637,9 +699,12 @@ class VeilGuardSidebar(tk.Tk):
                     time.sleep(0.8)
                     continue
 
-                # 1. Health check local engine
-                is_healthy = self.client.check_health()
-                self._update_health_badge(is_healthy)
+                # 1. Throttled health check to avoid socket thrashing (every 5.0 seconds)
+                now = time.time()
+                if now - last_health_check > 5.0:
+                    is_healthy = self.client.check_health()
+                    self._update_health_badge(is_healthy)
+                    last_health_check = now
 
                 # 2. Check active foreground window
                 is_ai, title = self.detector.is_ai_tool_focused()
@@ -654,7 +719,7 @@ class VeilGuardSidebar(tk.Tk):
 
                     self._update_context_badge(f"Active: {title[:24]}...", True)
 
-                    # Auto-expand when switching into AI tool
+                    # Auto-expand when switching into AI tool from another app
                     if not was_ai_focused and self.auto_pop_enabled.get():
                         if not self.is_expanded:
                             self.after(0, self.expand)
@@ -669,13 +734,13 @@ class VeilGuardSidebar(tk.Tk):
                     was_ai_focused = False
 
                 # 3. Check clipboard for prompt changes (Rule 6: only while AI app is focused and user explicitly opted in)
-                if self.clipboard_monitor_enabled.get() and self.guard_active and is_ai_focused:
+                if self.clipboard_monitor_enabled.get() and self.guard_active and was_ai_focused:
                     self._check_clipboard_quietly()
 
             except Exception:
                 pass
 
-            time.sleep(0.6)
+            time.sleep(0.5)
 
     def _on_chat_switched(self, new_title: str):
         """When switching to a different chat tab or window, reset stale warnings if prompt is empty."""
@@ -940,27 +1005,17 @@ class VeilGuardSidebar(tk.Tk):
 
     def _do_open_dashboard(self):
         """Open the VeilGuard Privacy Dashboard in the browser."""
-        url, bbin = find_veilguard_extension_url()
-        if url and bbin and os.path.isfile(bbin):
-            try:
-                subprocess.Popen([bbin, url])
-                self.result_summary.config(text="📊 Opened VeilGuard Dashboard in browser!", fg=ACCENT_GREEN)
-                return
-            except Exception:
-                pass
-        if url:
-            try:
-                import webbrowser
-                webbrowser.open(url)
-                self.result_summary.config(text="📊 Opened VeilGuard Dashboard in browser!", fg=ACCENT_GREEN)
-                return
-            except Exception:
-                pass
-
-        # Fallback: Open local engine health
         import webbrowser
-        webbrowser.open("http://127.0.0.1:8765/health")
-        self.result_summary.config(text="📊 Opened VeilGuard status in browser!", fg=ACCENT_GREEN)
+        dashboard_url = "https://veilguard-ai.vercel.app"
+        try:
+            webbrowser.open(dashboard_url)
+            self.result_summary.config(text="📊 Opened VeilGuard Dashboard in browser!", fg=ACCENT_GREEN)
+        except Exception:
+            try:
+                webbrowser.open("http://127.0.0.1:8765/health")
+                self.result_summary.config(text="📊 Opened VeilGuard status in browser!", fg=ACCENT_GREEN)
+            except Exception as e:
+                self.result_summary.config(text=f"Failed to open browser: {e}", fg=ACCENT_RED)
 
     def destroy(self):
         """Rule 5 & 6: Wipe all prompt and clipboard buffers before closing window."""

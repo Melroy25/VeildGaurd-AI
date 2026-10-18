@@ -6,6 +6,7 @@ raises an exception, causing the engine to fail to start rather than allowing un
 """
 
 from pathlib import Path
+import sys
 from typing import Dict, List, Optional
 import yaml
 
@@ -21,8 +22,15 @@ class PolicyRegistry:
 
     def __init__(self, policies_dir: Optional[Path] = None):
         if policies_dir is None:
-            # Default to repository policies/ directory
-            self.policies_dir = Path(__file__).resolve().parent.parent.parent.parent / "policies"
+            # Check sys._MEIPASS first if in PyInstaller bundle, then relative to repo root
+            if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+                candidate = Path(sys._MEIPASS) / "policies"
+                if candidate.exists():
+                    self.policies_dir = candidate
+                else:
+                    self.policies_dir = Path(__file__).resolve().parent.parent.parent.parent / "policies"
+            else:
+                self.policies_dir = Path(__file__).resolve().parent.parent.parent.parent / "policies"
         else:
             self.policies_dir = Path(policies_dir)
 

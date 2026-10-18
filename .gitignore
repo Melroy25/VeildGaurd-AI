@@ -12,6 +12,7 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.spec
 *.egg-info/
 .pytest_cache/
 .coverage
