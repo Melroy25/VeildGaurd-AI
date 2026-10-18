@@ -31,16 +31,6 @@ from tkinter import ttk, messagebox, filedialog
 import urllib.request
 import urllib.error
 
-# Enable Per-Monitor DPI awareness on Windows so Tkinter geometry matches physical display
-if sys.platform == "win32":
-    try:
-        ctypes.windll.shcore.SetProcessDpiAwareness(2)
-    except Exception:
-        try:
-            ctypes.windll.shcore.SetProcessDpiAwareness(1)
-        except Exception:
-            pass
-
 # Import modular core logic
 try:
     from desktop.guard_core import (
@@ -171,7 +161,9 @@ class VeilGuardSidebar(tk.Tk):
         self.last_sanitized_text = ""
         self.active_ai_app_name = ""
         self.is_dragging = False
+        self.drag_start_x = 0
         self.drag_start_y = 0
+        self.user_custom_x = None
         self.is_hovered = False
 
         # Screen dimensions
@@ -252,13 +244,14 @@ class VeilGuardSidebar(tk.Tk):
             widget.bind("<Leave>", self._on_handle_hover_leave)
             widget.bind("<Button-1>", self._on_handle_click)
             widget.bind("<B1-Motion>", self._on_drag)
+            widget.bind("<ButtonRelease-1>", self._end_drag)
             widget.bind("<Button-3>", self._on_sliver_context_menu)
 
         # ---------------- 2. EXPANDED PANEL ----------------
         self.content_frame = tk.Frame(self.main_container, bg=BG_PANEL)
 
-        # Top Header Bar
-        header = tk.Frame(self.content_frame, bg=BG_PANEL)
+        # Top Header Bar (Draggable across the whole top bar)
+        header = tk.Frame(self.content_frame, bg=BG_PANEL, cursor="fleur")
         header.pack(fill="x", padx=12, pady=(10, 6))
 
         header_title = tk.Label(
@@ -267,6 +260,7 @@ class VeilGuardSidebar(tk.Tk):
             fg=TEXT_PRIMARY,
             bg=BG_PANEL,
             font=("Segoe UI", 11, "bold"),
+            cursor="fleur",
         )
         header_title.pack(side="left")
 
@@ -299,7 +293,7 @@ class VeilGuardSidebar(tk.Tk):
         close_btn.pack(side="right")
         close_btn.bind("<Button-1>", lambda e: self.destroy())
 
-        # Minimize / Collapse Button (— collapses back into 6px edge sliver)
+        # Minimize / Collapse Button (— collapses back into edge sliver)
         min_btn = tk.Label(
             header,
             text="—",
@@ -308,8 +302,20 @@ class VeilGuardSidebar(tk.Tk):
             font=("Segoe UI", 10, "bold"),
             cursor="hand2",
         )
-        min_btn.pack(side="right", padx=(0, 10))
+        min_btn.pack(side="right", padx=(0, 8))
         min_btn.bind("<Button-1>", lambda e: self.collapse())
+
+        # Reset Dock Button (📌 resets position back flush to right edge)
+        dock_btn = tk.Label(
+            header,
+            text="📌 Dock",
+            fg=TEXT_MUTED,
+            bg=BG_PANEL,
+            font=("Segoe UI", 8),
+            cursor="hand2",
+        )
+        dock_btn.pack(side="right", padx=(0, 6))
+        dock_btn.bind("<Button-1>", lambda e: self._reset_dock())
 
         # Drag handle
         drag_handle = tk.Label(
@@ -320,9 +326,12 @@ class VeilGuardSidebar(tk.Tk):
             font=("Segoe UI", 8),
             cursor="fleur",
         )
-        drag_handle.pack(side="right", padx=6)
-        drag_handle.bind("<Button-1>", self._start_drag)
-        drag_handle.bind("<B1-Motion>", self._on_drag)
+        drag_handle.pack(side="right", padx=(0, 6))
+
+        for w in (header, header_title, drag_handle):
+            w.bind("<Button-1>", self._start_drag)
+            w.bind("<B1-Motion>", self._on_drag)
+            w.bind("<ButtonRelease-1>", self._end_drag)
 
         # Active App Context Bar
         self.context_bar = tk.Frame(self.content_frame, bg=BG_CARD, padx=8, pady=5)
@@ -569,46 +578,35 @@ class VeilGuardSidebar(tk.Tk):
         # Start expanded on launch so user immediately sees the companion is active!
         self.expand()
 
-    def _get_screen_work_area(self) -> tuple[int, int, int, int]:
-        """Return (left, top, right, bottom) of usable screen work area excluding taskbar."""
-        try:
-            class RECT(ctypes.Structure):
-                _fields_ = [
-                    ('left', ctypes.c_long),
-                    ('top', ctypes.c_long),
-                    ('right', ctypes.c_long),
-                    ('bottom', ctypes.c_long)
-                ]
-            work_rect = RECT()
-            # SPI_GETWORKAREA = 0x0030
-            if ctypes.windll.user32.SystemParametersInfoW(0x0030, 0, ctypes.byref(work_rect), 0):
-                if work_rect.right > work_rect.left and work_rect.bottom > work_rect.top:
-                    return work_rect.left, work_rect.top, work_rect.right, work_rect.bottom
-        except Exception:
-            pass
-        return 0, 0, self.winfo_screenwidth(), self.winfo_screenheight()
+    def _reset_dock(self):
+        """Reset custom user drag position and re-dock to the right edge."""
+        self.user_custom_x = None
+        self._apply_geometry()
 
     def _apply_geometry(self):
         """Update window position and geometry, guaranteeing 100% full visibility within screen bounds."""
-        left, top, right, bottom = self._get_screen_work_area()
+        sw = self.winfo_screenwidth()
+        sh = self.winfo_screenheight()
 
         if self.is_expanded:
             w = self.expanded_width
-            h = min(self.expanded_height, bottom - top - 30)
-            # Dock flush to the right edge of the usable work area
-            x = right - w
-            # Guarantee x is never pushed off-screen to the right or left
-            x = max(left, x)
-            y = max(top + 10, min(self.win_y, bottom - h - 10))
+            h = min(self.expanded_height, sh - 60)
+            if hasattr(self, "user_custom_x") and self.user_custom_x is not None:
+                x = self.user_custom_x
+            else:
+                x = sw - w - 16
+            # Strict clamping: NEVER off-screen on left or right!
+            x = max(16, min(sw - w - 16, x))
+            y = max(16, min(self.win_y, sh - h - 16))
             try:
                 self.wm_attributes("-alpha", 0.98)
             except Exception:
                 pass
         else:
             w = self.hover_sliver_width if self.is_hovered else self.thin_sliver_width
-            h = min(self.collapsed_height, bottom - top - 30)
-            x = max(left, right - w)
-            y = max(top + 10, min(self.win_y, bottom - h - 10))
+            h = min(self.collapsed_height, sh - 60)
+            x = sw - w
+            y = max(16, min(self.win_y, sh - h - 16))
             try:
                 # Sleek, visible edge dock (0.92 idle, 1.0 hover)
                 alpha = 1.0 if self.is_hovered else (0.92 if self.guard_active else 0.40)
@@ -720,6 +718,9 @@ class VeilGuardSidebar(tk.Tk):
         if not self.is_expanded:
             return
 
+        if getattr(self, "is_dragging", False):
+            return
+
         # Grace period right after startup (3.5s) or right after expanding (0.8s)
         now = time.time()
         if now - getattr(self, "_startup_time", 0) < 3.5:
@@ -759,15 +760,30 @@ class VeilGuardSidebar(tk.Tk):
 
     def _start_drag(self, event):
         self.is_dragging = True
+        self.drag_start_x = event.x_root - self.winfo_x()
         self.drag_start_y = event.y_root - self.winfo_y()
 
     def _on_drag(self, event):
-        """Drag up or down along the screen edge."""
-        _, top, _, bottom = self._get_screen_work_area()
+        """Free 2D drag anywhere across the screen."""
+        sw = self.winfo_screenwidth()
+        sh = self.winfo_screenheight()
+        w = self.winfo_width()
+        h = self.winfo_height()
+
+        new_x = event.x_root - self.drag_start_x
         new_y = event.y_root - self.drag_start_y
-        new_y = max(top + 10, min(bottom - 100, new_y))
+
+        # Clamp so the window cannot be dragged off-screen
+        new_x = max(10, min(sw - w - 10, new_x))
+        new_y = max(10, min(sh - h - 10, new_y))
+
+        if self.is_expanded:
+            self.user_custom_x = new_x
         self.win_y = new_y
-        self._apply_geometry()
+        self.geometry(f"{w}x{h}+{new_x}+{new_y}")
+
+    def _end_drag(self, event):
+        self.is_dragging = False
 
     def _background_watcher(self):
         """Detects active AI tools and automatically pops open or collapses."""

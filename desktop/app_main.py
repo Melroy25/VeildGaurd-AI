@@ -24,17 +24,6 @@ import threading
 import time
 import webbrowser
 
-# Enable Per-Monitor DPI awareness on Windows so Tkinter geometry matches physical display
-if sys.platform == "win32":
-    try:
-        import ctypes
-        ctypes.windll.shcore.SetProcessDpiAwareness(2)
-    except Exception:
-        try:
-            ctypes.windll.shcore.SetProcessDpiAwareness(1)
-        except Exception:
-            pass
-
 VERSION = "0.2.0-glass"
 
 # Ensure repository root is on sys.path
