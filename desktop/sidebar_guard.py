@@ -168,10 +168,10 @@ class VeilGuardSidebar(tk.Tk):
         self.screen_w = self.winfo_screenwidth()
         self.screen_h = self.winfo_screenheight()
 
-        # Ultra-thin collapsed dimensions
-        self.thin_sliver_width = 6
-        self.hover_sliver_width = 24
-        self.collapsed_height = 96
+        # Sleek collapsed dimensions
+        self.thin_sliver_width = 18
+        self.hover_sliver_width = 30
+        self.collapsed_height = 128
         self.expanded_width = 380
         self.expanded_height = 635
 
@@ -192,13 +192,17 @@ class VeilGuardSidebar(tk.Tk):
         self.protocol("WM_DELETE_WINDOW", self.destroy)
 
         self._focus_check_timer = None
+        self._startup_time = time.time()
+        self._last_expand_time = time.time()
+        self.running = True
+        self._wake_event = None
+        self._setup_wake_listener()
 
         # Build UI layout
         self._build_ui()
         self._apply_geometry()
 
         # Start background polling thread
-        self.running = True
         self.poll_thread = threading.Thread(target=self._background_watcher, daemon=True)
         self.poll_thread.start()
 
@@ -552,8 +556,8 @@ class VeilGuardSidebar(tk.Tk):
         )
         self.btn_turn_off.pack(fill="x")
 
-        # Start in ultra-thin collapsed state
-        self.collapse()
+        # Start expanded on launch so user immediately sees the companion is active!
+        self.expand()
 
     def _apply_geometry(self):
         """Update window position and geometry."""
@@ -572,8 +576,8 @@ class VeilGuardSidebar(tk.Tk):
             x = self.screen_w - w
             y = min(self.win_y, self.screen_h - h - 30)
             try:
-                # Barely visible (0.35) when idle, bright on hover
-                alpha = 0.95 if self.is_hovered else (0.35 if self.guard_active else 0.15)
+                # Sleek, visible edge dock (0.92 idle, 1.0 hover)
+                alpha = 1.0 if self.is_hovered else (0.92 if self.guard_active else 0.40)
                 self.wm_attributes("-alpha", alpha)
             except Exception:
                 pass
@@ -624,34 +628,34 @@ class VeilGuardSidebar(tk.Tk):
         """Gently expand sliver on mouse approach."""
         if not self.is_expanded:
             self.is_hovered = True
-            self.handle_grip.pack(pady=(4, 0))
-            self.handle_icon.pack(pady=2)
+            self.handle_grip.pack(pady=(6, 0))
+            self.handle_icon.pack(pady=4)
             self._apply_geometry()
 
     def _on_handle_hover_leave(self, event):
-        """Shrink back to 6px when mouse leaves."""
+        """Shrink back to standard dock width when mouse leaves."""
         if not self.is_expanded:
             self.is_hovered = False
-            self.handle_icon.pack_forget()
-            self.handle_grip.pack_forget()
             self._apply_geometry()
 
     def expand(self):
         """Expand the sidebar to full width and focus input."""
         self.is_expanded = True
+        self._last_expand_time = time.time()
         self.handle_frame.pack_forget()
         self.content_frame.pack(fill="both", expand=True)
         self._apply_geometry()
         # Bring to top and focus input text so clicking outside triggers FocusOut
         try:
             self.lift()
+            self.attributes("-topmost", True)
             self.focus_force()
             self.input_text.focus_set()
         except Exception:
             pass
 
     def collapse(self):
-        """Collapse into the ultra-thin 6px sliver."""
+        """Collapse into the sleek edge dock sliver."""
         self.is_expanded = False
         self.is_hovered = False
         if hasattr(self, "_focus_check_timer") and self._focus_check_timer:
@@ -661,9 +665,9 @@ class VeilGuardSidebar(tk.Tk):
                 pass
             self._focus_check_timer = None
         self.content_frame.pack_forget()
-        self.handle_icon.pack_forget()
-        self.handle_grip.pack_forget()
         self.handle_frame.pack(fill="both", expand=True)
+        self.handle_grip.pack(pady=(6, 0))
+        self.handle_icon.pack(pady=4)
         self._apply_geometry()
 
     def _on_focus_out(self, event):
@@ -680,6 +684,13 @@ class VeilGuardSidebar(tk.Tk):
     def _check_focus_loss(self):
         self._focus_check_timer = None
         if not self.is_expanded:
+            return
+
+        # Grace period right after startup (3.5s) or right after expanding (0.8s)
+        now = time.time()
+        if now - getattr(self, "_startup_time", 0) < 3.5:
+            return
+        if now - getattr(self, "_last_expand_time", 0) < 0.8:
             return
 
         # 1. Did focus move to another widget inside our window?
@@ -1065,6 +1076,26 @@ class VeilGuardSidebar(tk.Tk):
             except Exception as e:
                 self.result_summary.config(text=f"Failed to open browser: {e}", fg=ACCENT_RED)
 
+    def _setup_wake_listener(self):
+        """Create a Win32 named event and listener thread so secondary launches expand this window."""
+        try:
+            self._wake_event = ctypes.windll.kernel32.CreateEventW(None, False, False, WAKE_EVENT_NAME)
+            if self._wake_event:
+                threading.Thread(target=self._wake_event_loop, daemon=True).start()
+        except Exception:
+            self._wake_event = None
+
+    def _wake_event_loop(self):
+        """Wait for wake signals from secondary launch attempts and expand immediately."""
+        WAIT_OBJECT_0 = 0x00000000
+        while self.running and self._wake_event:
+            try:
+                res = ctypes.windll.kernel32.WaitForSingleObject(self._wake_event, 500)
+                if res == WAIT_OBJECT_0:
+                    self.after(0, self.expand)
+            except Exception:
+                break
+
     def destroy(self):
         """Rule 5 & 6: Wipe all prompt and clipboard buffers before closing window."""
         self.running = False
@@ -1075,6 +1106,12 @@ class VeilGuardSidebar(tk.Tk):
             pass
         self.last_clipboard = ""
         self.last_sanitized_text = ""
+        if hasattr(self, "_wake_event") and self._wake_event:
+            try:
+                ctypes.windll.kernel32.CloseHandle(self._wake_event)
+            except Exception:
+                pass
+            self._wake_event = None
         if hasattr(self, "_single_instance_mutex") and self._single_instance_mutex:
             try:
                 ctypes.windll.kernel32.CloseHandle(self._single_instance_mutex)
@@ -1085,14 +1122,39 @@ class VeilGuardSidebar(tk.Tk):
         sys.exit(0)
 
 
+_GLOBAL_MUTEX = None
+WAKE_EVENT_NAME = "Local\\VeilGuardSidebarWakeEvent"
+MUTEX_NAME = "Local\\VeilGuardSidebarSingleInstance"
+
+
+def signal_existing_instance() -> bool:
+    """Signal an already running instance to expand and bring itself to front."""
+    try:
+        EVENT_MODIFY_STATE = 0x0002
+        h_event = ctypes.windll.kernel32.OpenEventW(EVENT_MODIFY_STATE, False, WAKE_EVENT_NAME)
+        if h_event:
+            ctypes.windll.kernel32.SetEvent(h_event)
+            ctypes.windll.kernel32.CloseHandle(h_event)
+            return True
+    except Exception:
+        pass
+    return False
+
+
 def ensure_single_instance():
-    """Ensure only one instance of the sidebar runs at a time."""
+    """Ensure only one instance of the sidebar runs at a time.
+    If another instance is already running, signals it to expand and exits cleanly."""
+    global _GLOBAL_MUTEX
+    if _GLOBAL_MUTEX is not None:
+        return _GLOBAL_MUTEX
     try:
         ERROR_ALREADY_EXISTS = 183
-        mutex = ctypes.windll.kernel32.CreateMutexW(None, False, "Local\\VeilGuardSidebarSingleInstance")
+        mutex = ctypes.windll.kernel32.CreateMutexW(None, False, MUTEX_NAME)
         if ctypes.windll.kernel32.GetLastError() == ERROR_ALREADY_EXISTS:
-            print("[VeilGuard AI] Another sidebar is already running. Exiting duplicate instance.")
+            print("[VeilGuard AI] Another sidebar instance is already active. Signaling it to expand...")
+            signal_existing_instance()
             sys.exit(0)
+        _GLOBAL_MUTEX = mutex
         return mutex
     except Exception:
         return None

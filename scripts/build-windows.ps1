@@ -84,9 +84,9 @@ How to Run:
 
 Features:
   - Smart Auto-Pop: Slides open when AI apps (ChatGPT, Codex, Claude, Cursor) are focused.
-  - Click-Outside-to-Close: Automatically collapses into a 6px edge sliver when you click away.
+  - Click-Outside-to-Close: Automatically collapses into a sleek 18px edge dock sliver when you click away.
   - Esc to dismiss instantly.
-  - Ctrl+Enter to Sanitize & Copy prompt in 1-click.
+  - 1-Click Sanitize & Copy: Instantly pseudonymizes prompts.
   - Dual-verification PDF Redaction.
 
 Command Line Options:

@@ -174,7 +174,7 @@ def run_full_app():
                 sidebar.after(0, sidebar.expand)
 
             def on_open_dashboard(icon, item):
-                webbrowser.open("http://127.0.0.1:4310/")
+                webbrowser.open("https://veilguard-ai.vercel.app/?tab=dashboard")
 
             def on_exit(icon, item):
                 icon.stop()

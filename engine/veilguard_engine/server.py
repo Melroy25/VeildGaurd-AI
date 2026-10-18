@@ -6,7 +6,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from veilguard_engine.config import VERSION
+from veilguard_engine.config import VERSION, HOST, PORT
 from veilguard_engine.context import infer_task
 from veilguard_engine.models import (
     AnalyzeRequest,
