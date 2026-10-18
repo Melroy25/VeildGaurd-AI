@@ -110,7 +110,16 @@ def run_selftest() -> int:
         # Strip comments/docstrings for AST-equivalent safety check
         for token_name in ["pynput", "keyboard"]:
             assert f"import {token_name}" not in text, f"Illegal import in {py_file.name}"
-    print("[4/4] Privacy invariants (no keylogging): VERIFIED")
+    print("[4/5] Privacy invariants (no keylogging): VERIFIED")
+
+    # 5. Verify local engine imports
+    try:
+        from veilguard_engine.server import app as engine_app
+        assert engine_app is not None
+        print("[5/5] Engine server module & Starlette middleware: LOADED SUCCESSFULLY")
+    except Exception as e:
+        print(f"[5/5] Engine server module: FAILED TO LOAD ({e})")
+        return 1
 
     print("=" * 60)
     print("ALL TESTS PASSED: System ready for deployment.")
@@ -120,15 +129,19 @@ def run_selftest() -> int:
 
 def start_engine_thread():
     """Start local uvicorn server in a background daemon thread."""
-    import uvicorn
-    from veilguard_engine.server import app, HOST, PORT
+    try:
+        import uvicorn
+        from veilguard_engine.server import app, HOST, PORT
 
-    assert HOST == "127.0.0.1", "SECURITY INVARIANT: Host must be 127.0.0.1"
-    config = uvicorn.Config(app=app, host=HOST, port=PORT, log_level="warning")
-    server = uvicorn.Server(config)
-    t = threading.Thread(target=server.run, daemon=True)
-    t.start()
-    return server
+        assert HOST == "127.0.0.1", "SECURITY INVARIANT: Host must be 127.0.0.1"
+        config = uvicorn.Config(app=app, host=HOST, port=PORT, log_level="warning")
+        server = uvicorn.Server(config)
+        t = threading.Thread(target=server.run, daemon=True)
+        t.start()
+        return server
+    except Exception as e:
+        print(f"[VeilGuard AI] Warning: Could not boot local engine thread ({e})")
+        return None
 
 
 def run_full_app():
