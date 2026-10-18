@@ -12,7 +12,9 @@
     "http://127.0.0.1:4310/*",
     "http://localhost:4310/*",
     "https://chatgpt.com/*",
-    "https://*.chatgpt.com/*"
+    "https://*.chatgpt.com/*",
+    "https://gemini.google.com/*",
+    "https://*.gemini.google.com/*"
   ],
   "content_scripts": [
     {
@@ -20,7 +22,9 @@
         "http://127.0.0.1:4310/*",
         "http://localhost:4310/*",
         "https://chatgpt.com/*",
-        "https://*.chatgpt.com/*"
+        "https://*.chatgpt.com/*",
+        "https://gemini.google.com/*",
+        "https://*.gemini.google.com/*"
       ],
       "js": [
         "page-world.js"
@@ -34,7 +38,9 @@
         "http://127.0.0.1:4310/*",
         "http://localhost:4310/*",
         "https://chatgpt.com/*",
-        "https://*.chatgpt.com/*"
+        "https://*.chatgpt.com/*",
+        "https://gemini.google.com/*",
+        "https://*.gemini.google.com/*"
       ],
       "js": [
         "content.js"

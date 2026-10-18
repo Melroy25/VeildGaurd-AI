@@ -1,8 +1,9 @@
 import { SiteAdapter } from "./types";
 import { mockSiteAdapter } from "./mock-site";
 import { chatgptAdapter } from "./chatgpt";
+import { geminiAdapter } from "./gemini";
 
-const REGISTERED_ADAPTERS: SiteAdapter[] = [mockSiteAdapter, chatgptAdapter];
+const REGISTERED_ADAPTERS: SiteAdapter[] = [mockSiteAdapter, chatgptAdapter, geminiAdapter];
 
 /**
  * Resolves the appropriate site adapter for the current browser location.
@@ -19,3 +20,4 @@ export function getAdapterForLocation(location: Location = window.location): Sit
 export * from "./types";
 export * from "./mock-site";
 export * from "./chatgpt";
+export * from "./gemini";
