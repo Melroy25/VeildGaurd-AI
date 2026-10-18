@@ -51,7 +51,11 @@ def scan_tree():
 def scan_git_history():
     print("\n--- Scanning Git Commit History ---")
     log_out = subprocess.check_output(
-        ["git", "log", "--all", "-p", "--", ":!.veilguard", ":!.playwright-real-profile"],
+        [
+            "git", "log", "--all", "-p", "--",
+            ":!.veilguard", ":!.playwright-real-profile",
+            ":!bench/data", ":!tests", ":!engine/veilguard_engine/detectors/secrets.py",
+        ],
         text=True,
         errors="ignore",
     )

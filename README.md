@@ -108,20 +108,45 @@ npm run build
 
 ---
 
+## Supported Target Sites
+
+Per Rule 3 of `AGENTS.md`, sites are labeled **Verified** only when backed by recorded multi-trial benchmark cells ($N \ge 20$). All other targets are labeled **Prototype**:
+
+| Target Interface | Status | Interception Mechanism | Verified Trials / Evidence |
+|---|---|---|---|
+| **Mock AI Chat Testbed** (`127.0.0.1:4310`) | **Verified** | Form submit, Send click, Enter key, Controlled React state, Shadow DOM backstop | **280 / 280 trials passed** (14 cells × 20 trials, 0 leaks; `bench/results/enforcement_full_chain_mock_site.json`) |
+| **ChatGPT** (`chatgpt.com`) | **Prototype** | Contenteditable / ProseMirror adapter + MAIN-world fetch backstop | Unauthenticated send button + backstop verified in `bench/results/enforcement_real_site.json` |
+| **Google Gemini** (`gemini.google.com`) | **Prototype** | Universal Rich-Text / Quill adapter + fetch backstop | Target selectors mapped in `universal.ts`; live benchmark pending |
+| **Anthropic Claude** (`claude.ai`) | **Prototype** | ProseMirror adapter + fetch backstop | Target selectors mapped in `universal.ts`; live benchmark pending |
+| **Microsoft Copilot** (`copilot.microsoft.com`) | **Prototype** | Shadow DOM / Iframe traverse adapter + fetch backstop | Target selectors mapped in `universal.ts`; live benchmark pending |
+| **Perplexity AI** (`perplexity.ai`) | **Prototype** | Textarea / form submit adapter + fetch backstop | Target selectors mapped in `universal.ts`; live benchmark pending |
+| **DeepSeek Chat** (`chat.deepseek.com`) | **Prototype** | Textarea adapter + fetch backstop | Target selectors mapped in `universal.ts`; live benchmark pending |
+
+---
+
 ## Project Status Matrix
 
 Feature status is strictly tracked in [docs/STATUS.md](./docs/STATUS.md) per Rule 2:
 
-| Phase / Feature Area | Scope & Description | Status | Verification Artifact |
+| Feature Component | Phase | Status | Verification Evidence |
 |---|---|---|---|
-| **Phase 1: Mock Testbed** | Deterministic mock AI site, composers, form/click handlers | **Implemented** | `mock-ai-site/` (Passing in E2E) |
-| **Phase 2: Detection Engine** | Presidio, Indian ID validators (Aadhaar, PAN, GSTIN), Secrets | **Implemented** | `pytest tests/engine/` (155 passing) |
-| **Phase 3a: Policy & Sanitizer**| Declarative YAML policies, utility-preserving role placeholders | **Implemented** | `engine/veilguard_engine/policy/` |
-| **Phase 3b: Browser Enforcement**| Review overlay, session vault, dual fetch backstop (14-cell matrix)| **Implemented** | `tests/e2e/scenarios.spec.ts` (25/25) |
-| **Phase 3c: Audit Dashboard** | Metadata-only dashboard, summary cards, SVG charts, JSON export | **Implemented** | `tests/e2e/dashboard-popup.spec.ts` |
-| **Phase 4: Adapter & Real Site**| ChatGPT adapter, degraded mode, canary monitor, route harness | **Implemented** | `bench/results/enforcement_real_site.json`|
-| **Phase 5: Context Intelligence**| Task inference, necessity reducer, quasi-ID re-ID scoring | **Implemented** | `bench/results/benchmark_test.json` |
-| **Phase 6: Submission Essentials**| Setup scripts, evidence generator, Mermaid diagrams, demo runner | **Implemented** | `scripts/make_evidence.py`, `docs/` |
+| **Mock AI Chat Testbed** | Phase 1 | **Implemented** | `mock-ai-site/server.mjs`; `bench/results/enforcement_mock_site.json` |
+| **Presidio & Indian ID Recognizers** | Phase 2 | **Implemented** | `pytest tests/engine/` (166 passed, 3 documented xfail) |
+| **Declarative YAML Policy Engine** | Phase 3a | **Implemented** | `tests/engine/test_policy_loader.py`, `test_policy_evaluator.py` |
+| **Utility-Preserving Sanitizer** | Phase 3a/5 | **Implemented** | `tests/engine/test_sanitizer.py`, `test_role_placeholders.py` |
+| **DOM Capture & Dual Backstop** | Phase 3b | **Implemented** | `tests/e2e/enforcement-full-chain.spec.ts` (14/14 cells, 0 leaks) |
+| **Shadow DOM Review Overlay** | Phase 3b | **Implemented** | `tests/e2e/scenarios.spec.ts` (XSS, Emoji, untrusted click protection) |
+| **Metadata-Only Audit Dashboard** | Phase 3c | **Implemented** | `tests/e2e/dashboard-popup.spec.ts` (12 tests, 0 raw text persistence) |
+| **Degraded Mode & Canary Alerts** | Phase 4 | **Implemented** | `tests/e2e/degraded-canary.spec.ts` (10/10 trials protected) |
+| **ChatGPT Real-Site Harness** | Phase 4 | **Prototype** | `bench/results/enforcement_real_site.json` (stubbed via `page.route`) |
+| **Other AI Site Adapters** | Phase 4 | **Prototype** | `extension/src/content/adapters/universal.ts` |
+| **Windows Desktop Sidebar** | Phase 4 | **Prototype** | `desktop/sidebar_guard.py` (Win32 focus detection, opt-in clipboard) |
+| **Task Necessity & Quasi-ID Scoring**| Phase 5 | **Implemented** | `bench/results/benchmark_test.json` (80.0% combination recall) |
+| **PyMuPDF Document Redaction** | Phase 6 | **Implemented** | `tests/engine/test_pdf.py` (11 tests pass), `tests/e2e/pdf-scanner.spec.ts` |
+| **Blue Glass Design System** | Part 2 | **Planned** | Frosted glassmorphism design tokens across overlay, popup, onboarding |
+| **Windows App (`VeilGuard.exe`)** | Part 4 | **Planned** | PyInstaller single-directory bundle with tray daemon & Inno Setup |
+| **Static Web Demo on Vercel** | Part 5 | **Planned** | Client-side deterministic playground with zero network egress |
+| **Response Vault Rehydration** | Phase 7 | **Future** | Post-hackathon roadmap — client-side closed Shadow DOM rehydration |
 
 ---
 
@@ -141,10 +166,10 @@ Feature status is strictly tracked in [docs/STATUS.md](./docs/STATUS.md) per Rul
 All test suites can be executed independently:
 
 ```bash
-# Python Engine Tests (158 tests: 155 passed, 3 documented xfail)
+# Python Engine Tests (169 tests: 166 passed, 3 documented xfail)
 pytest -rx
 
-# Pure In-Memory Extension Unit Tests (28 tests)
+# Pure In-Memory Extension Unit Tests (35 tests)
 npm run test:unit
 
 # TypeScript Static Typecheck (strict typing, 0 errors)
@@ -153,11 +178,11 @@ npm run typecheck
 # Extension Production Build
 npm run build
 
-# End-to-End Browser Scenarios (25 scenarios)
-npx playwright test tests/e2e/scenarios.spec.ts
+# End-to-End Browser Scenarios (96 tests across 6 suites)
+npx playwright test
 
-# Live Demo Rehearsal & High-Res Screenshot Generation
-npx playwright test tests/e2e/demo-rehearsal.spec.ts
+# Full-Chain 14-Cell Enforcement Benchmark (N=20)
+npx playwright test tests/e2e/enforcement-full-chain.spec.ts
 
 # Benchmark Evaluation on Development Split (N=233)
 python -m bench.run_benchmark --split dev --systems all
@@ -165,6 +190,16 @@ python -m bench.run_benchmark --split dev --systems all
 # Generate / Verify Evidence Report
 python scripts/make_evidence.py --check
 ```
+
+---
+
+## Licensing & AI Disclosure
+
+- **AI-Assisted Development Disclosure:** Built with AI-assisted development tools; all code was reviewed, validated, and tested by the team.
+- **Licensing Guidance:** Refer to [docs/LICENSING.md](./docs/LICENSING.md) for detailed analysis of PyMuPDF (AGPL-3.0) and pystray (LGPL-3.0) license considerations.
+- **Third-Party Notices:** Complete third-party package credits and license terms are detailed in [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
+- **Privacy Policy & Invariants:** See [PRIVACY.md](./PRIVACY.md).
+- **Security Policy:** See [SECURITY.md](./SECURITY.md).
 
 ---
 
@@ -179,3 +214,4 @@ python scripts/make_evidence.py --check
 - **Project Rules & Invariants:** [AGENTS.md](./AGENTS.md)
 - **Known Limitations:** [docs/LIMITATIONS.md](./docs/LIMITATIONS.md)
 - **Architectural Decisions Log:** [docs/DECISIONS.md](./docs/DECISIONS.md)
+- **GitHub Repository & Release Guide:** [docs/PUSH_GUIDE.md](./docs/PUSH_GUIDE.md)
