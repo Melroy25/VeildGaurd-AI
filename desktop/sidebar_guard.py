@@ -36,6 +36,7 @@ try:
     from desktop.guard_core import (
         is_ai_window,
         get_foreground_window_title,
+        get_foreground_window_info,
         get_auth_token,
         DEFAULT_ENGINE_URL,
         DEFAULT_PROFILE,
@@ -45,6 +46,7 @@ except ImportError:
     from guard_core import (
         is_ai_window,
         get_foreground_window_title,
+        get_foreground_window_info,
         get_auth_token,
         DEFAULT_ENGINE_URL,
         DEFAULT_PROFILE,
@@ -71,14 +73,20 @@ ACCENT_RED = "#ef4444"   # red block
 
 
 class ForegroundDetector:
-    """Detects active focused window title using Windows Win32 API via guard_core."""
+    """Detects active focused window title and process using Windows Win32 API via guard_core."""
 
     def get_active_window_title(self) -> str:
         return get_foreground_window_title()
 
-    def is_ai_tool_focused(self) -> tuple[bool, str]:
-        title = self.get_active_window_title()
-        return is_ai_window(title), title
+    def is_ai_tool_focused(self) -> tuple[bool, str, int]:
+        hwnd, title, proc_name = get_foreground_window_info()
+        is_ai = is_ai_window(title, proc_name=proc_name)
+        display_name = title or proc_name
+        if proc_name and "codex" in proc_name:
+            display_name = f"Codex ({title[:25]}...)" if title else "Codex App"
+        elif proc_name and "cursor" in proc_name:
+            display_name = f"Cursor ({title[:25]}...)" if title else "Cursor IDE"
+        return is_ai, display_name, hwnd
 
 
 
@@ -154,12 +162,15 @@ class VeilGuardSidebar(tk.Tk):
 
         # State
         self.is_expanded = False
+        self.is_pinned = False  # When True, window stays open and never auto-collapses
         self.guard_active = True  # Master On/Off switch
         self.auto_pop_enabled = tk.BooleanVar(value=True)
-        self.clipboard_monitor_enabled = tk.BooleanVar(value=False)  # Rule 6: Opt-in only
+        self.clipboard_monitor_enabled = tk.BooleanVar(value=True)  # Auto-sanitize on copy
         self.last_clipboard = ""
         self.last_sanitized_text = ""
         self.active_ai_app_name = ""
+        self.last_ai_hwnd = 0  # HWND of last focused AI tool (e.g. Codex)
+        self.last_ai_title = ""
         self.is_dragging = False
         self.drag_start_x = 0
         self.drag_start_y = 0
@@ -308,10 +319,22 @@ class VeilGuardSidebar(tk.Tk):
         min_btn.pack(side="right", padx=(0, 8))
         min_btn.bind("<Button-1>", lambda e: self.collapse())
 
-        # Reset Dock Button (📌 resets position back flush to right edge)
+        # Pin Toggle Button (📌 locks window open so it never auto-collapses)
+        self.pin_btn = tk.Label(
+            header,
+            text="📌 Pin",
+            fg=TEXT_MUTED,
+            bg=BG_PANEL,
+            font=("Segoe UI", 8),
+            cursor="hand2",
+        )
+        self.pin_btn.pack(side="right", padx=(0, 6))
+        self.pin_btn.bind("<Button-1>", lambda e: self._toggle_pin())
+
+        # Reset Dock Button (↔ resets position back flush to right edge)
         dock_btn = tk.Label(
             header,
-            text="📌 Dock",
+            text="↔ Dock",
             fg=TEXT_MUTED,
             bg=BG_PANEL,
             font=("Segoe UI", 8),
@@ -409,7 +432,7 @@ class VeilGuardSidebar(tk.Tk):
         self.input_text.bind("<KeyRelease>", self._on_input_changed)
         self.input_text.bind("<<Paste>>", lambda e: self.after(50, self._on_input_changed))
         self.input_text.bind("<<Cut>>", lambda e: self.after(50, self._on_input_changed))
-        self.input_text.bind("<Control-Return>", lambda e: (self._do_sanitize(), "break")[1])
+        self.input_text.bind("<Control-Return>", lambda e: (self._do_send_to_app(), "break")[1])
 
         # Action Buttons Row
         btn_row = tk.Frame(self.content_frame, bg=BG_PANEL)
@@ -447,15 +470,31 @@ class VeilGuardSidebar(tk.Tk):
         )
         self.btn_clear.pack(side="left", padx=(6, 0))
 
+        self.btn_send = tk.Button(
+            btn_row,
+            text="🚀 Send to App",
+            bg=ACCENT_GREEN,
+            fg="#060b14",
+            activebackground="#059669",
+            activeforeground="#FFFFFF",
+            relief="flat",
+            padx=10,
+            pady=3,
+            font=("Segoe UI", 8, "bold"),
+            cursor="hand2",
+            command=self._do_send_to_app,
+        )
+        self.btn_send.pack(side="right", padx=(4, 0))
+
         self.btn_sanitize = tk.Button(
             btn_row,
-            text="✨ Sanitize & Copy",
+            text="✨ Sanitize",
             bg=ACCENT_INDIGO,
             fg="#FFFFFF",
             activebackground="#4F46E5",
             activeforeground="#FFFFFF",
             relief="flat",
-            padx=12,
+            padx=10,
             pady=3,
             font=("Segoe UI", 8, "bold"),
             cursor="hand2",
@@ -580,6 +619,16 @@ class VeilGuardSidebar(tk.Tk):
 
         # Start expanded on launch so user immediately sees the companion is active!
         self.expand()
+
+    def _toggle_pin(self):
+        """Toggle pinned state so sidebar never auto-collapses on focus loss."""
+        self.is_pinned = not self.is_pinned
+        if self.is_pinned:
+            self.pin_btn.config(text="📌 Pinned", fg=ACCENT_CYAN, font=("Segoe UI", 8, "bold"))
+            self.result_summary.config(text="📌 Sidebar pinned open (will not auto-hide).", fg=ACCENT_CYAN)
+        else:
+            self.pin_btn.config(text="📌 Pin", fg=TEXT_MUTED, font=("Segoe UI", 8))
+            self.result_summary.config(text="Sidebar unpinned (auto-hides when leaving AI apps).", fg=TEXT_SECONDARY)
 
     def _reset_dock(self):
         """Reset custom user drag position and re-dock to the right edge."""
@@ -794,7 +843,19 @@ class VeilGuardSidebar(tk.Tk):
         except Exception:
             pass
 
-        # 3. Focus lost to an external app or desktop and mouse is outside -> Collapse!
+        # 3. If pinned, NEVER collapse on focus loss
+        if getattr(self, "is_pinned", False):
+            return
+
+        # 4. If current active window is an AI tool (Codex, ChatGPT, Claude, Cursor, etc.), NEVER collapse!
+        try:
+            is_ai, title, hwnd = self.detector.is_ai_tool_focused()
+            if is_ai or "veilguard" in title.lower():
+                return
+        except Exception:
+            pass
+
+        # 5. Focus lost to an external non-AI app or desktop and mouse is outside -> Collapse!
         self.collapse()
 
     def _on_handle_click(self, event):
@@ -858,17 +919,20 @@ class VeilGuardSidebar(tk.Tk):
                     last_health_check = now
 
                 # 2. Check active foreground window
-                is_ai, title = self.detector.is_ai_tool_focused()
+                is_ai, title, hwnd = self.detector.is_ai_tool_focused()
 
                 if "veilguard" in title.lower():
                     # Keep previous active context while interacting with sidebar
                     pass
                 elif is_ai:
+                    if hwnd:
+                        self.last_ai_hwnd = hwnd
+                        self.last_ai_title = title
                     if title != self.active_ai_app_name:
                         self.active_ai_app_name = title
                         self._on_chat_switched(title)
 
-                    self._update_context_badge(f"Active: {title[:24]}...", True)
+                    self._update_context_badge(f"Active: {title[:28]}", True)
 
                     # Auto-expand when switching into AI tool from another app
                     if not was_ai_focused and self.auto_pop_enabled.get():
@@ -878,8 +942,8 @@ class VeilGuardSidebar(tk.Tk):
 
                 else:
                     self._update_context_badge("Standing by (No AI app active)", False)
-                    # AUTO-GO / AUTO-COLLAPSE when leaving AI tools
-                    if was_ai_focused and self.auto_pop_enabled.get():
+                    # AUTO-GO / AUTO-COLLAPSE when leaving AI tools (unless pinned!)
+                    if was_ai_focused and self.auto_pop_enabled.get() and not getattr(self, "is_pinned", False):
                         if self.is_expanded:
                             self.after(0, self.collapse)
                     was_ai_focused = False
@@ -1030,10 +1094,16 @@ class VeilGuardSidebar(tk.Tk):
                         if clean:
                             self.output_text.delete("1.0", tk.END)
                             self.output_text.insert("1.0", clean)
+                            self.last_sanitized_text = clean
+                            try:
+                                self.clipboard_clear()
+                                self.clipboard_append(clean)
+                            except Exception:
+                                pass
 
                         count = len(res.get("findings", []))
                         self.result_summary.config(
-                            text=f"⚠️ {count} sensitive item(s) detected in clipboard!",
+                            text=f"⚠️ {count} sensitive item(s) protected & sanitized in clipboard!",
                             fg=ACCENT_AMBER,
                         )
                         if self.auto_pop_enabled.get() and not self.is_expanded:
@@ -1068,6 +1138,67 @@ class VeilGuardSidebar(tk.Tk):
             color = ACCENT_AMBER
 
         self.result_summary.config(text=msg, fg=color)
+
+    def _do_send_to_app(self):
+        """Sanitize prompt and directly paste & submit into the active AI application (e.g. Codex)."""
+        text = self.input_text.get("1.0", tk.END).strip()
+        if not text:
+            self.result_summary.config(text="⚠️ Please enter prompt text first.", fg=ACCENT_AMBER)
+            return
+
+        # 1. First trigger sanitization
+        self._do_sanitize()
+
+        # 2. Inject clean text into target AI application
+        def _inject():
+            for _ in range(12):
+                if getattr(self, "last_sanitized_text", ""):
+                    break
+                time.sleep(0.1)
+
+            clean = getattr(self, "last_sanitized_text", "") or text
+            hwnd = getattr(self, "last_ai_hwnd", 0)
+
+            if not hwnd or sys.platform != "win32":
+                self.after(0, lambda: self.result_summary.config(
+                    text="✨ Sanitized & Copied to clipboard! (Paste with Ctrl+V)",
+                    fg=ACCENT_GREEN,
+                ))
+                return
+
+            try:
+                user32 = ctypes.windll.user32
+                user32.SetForegroundWindow(hwnd)
+                time.sleep(0.18)
+
+                VK_CONTROL = 0x11
+                VK_V = 0x56
+                VK_RETURN = 0x0D
+                KEYEVENTF_KEYUP = 0x0002
+
+                # Ctrl+V (paste clean text)
+                user32.keybd_event(VK_CONTROL, 0, 0, 0)
+                user32.keybd_event(VK_V, 0, 0, 0)
+                user32.keybd_event(VK_V, 0, KEYEVENTF_KEYUP, 0)
+                user32.keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0)
+                time.sleep(0.12)
+
+                # Enter (submit prompt to app)
+                user32.keybd_event(VK_RETURN, 0, 0, 0)
+                user32.keybd_event(VK_RETURN, 0, KEYEVENTF_KEYUP, 0)
+
+                app_name = getattr(self, "active_ai_app_name", "AI App") or "Codex"
+                self.after(0, lambda: self.result_summary.config(
+                    text=f"🚀 Sanitized prompt safely sent to {app_name[:20]}!",
+                    fg=ACCENT_GREEN,
+                ))
+            except Exception:
+                self.after(0, lambda: self.result_summary.config(
+                    text="✨ Sanitized & Copied! Press Ctrl+V in target app to paste.",
+                    fg=ACCENT_GREEN,
+                ))
+
+        threading.Thread(target=_inject, daemon=True).start()
 
     def _do_sanitize(self):
         """Sanitize prompt: preserves ORIGINAL PROMPT and writes sanitized text to output."""

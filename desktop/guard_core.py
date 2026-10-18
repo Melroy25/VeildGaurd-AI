@@ -64,29 +64,63 @@ def get_auth_token() -> str:
 
 def get_foreground_window_title() -> str:
     """Return the title of the current foreground window on Windows."""
+    info = get_foreground_window_info()
+    return info[1]
+
+
+def get_foreground_window_info() -> tuple[int, str, str]:
+    """Return (hwnd, title, process_name) of the current foreground window on Windows."""
     if sys.platform != "win32":
-        return ""
+        return (0, "", "")
     try:
         user32 = ctypes.windll.user32
+        kernel32 = ctypes.windll.kernel32
         hwnd = user32.GetForegroundWindow()
         if not hwnd:
-            return ""
+            return (0, "", "")
+
+        # 1. Window title
         length = user32.GetWindowTextLengthW(hwnd)
-        if length == 0:
-            return ""
-        buff = ctypes.create_unicode_buffer(length + 1)
-        user32.GetWindowTextW(hwnd, buff, length + 1)
-        return buff.value
+        title = ""
+        if length > 0:
+            buff = ctypes.create_unicode_buffer(length + 1)
+            user32.GetWindowTextW(hwnd, buff, length + 1)
+            title = buff.value
+
+        # 2. Process image name (e.g. codex.exe, cursor.exe, chrome.exe)
+        proc_name = ""
+        try:
+            from ctypes import wintypes
+            pid = wintypes.DWORD()
+            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+            if pid.value > 0:
+                h_proc = kernel32.OpenProcess(0x1000, False, pid.value)  # PROCESS_QUERY_LIMITED_INFORMATION
+                if h_proc:
+                    try:
+                        pbuf = ctypes.create_unicode_buffer(1024)
+                        psz = wintypes.DWORD(1024)
+                        if kernel32.QueryFullProcessImageNameW(h_proc, 0, pbuf, ctypes.byref(psz)):
+                            proc_name = os.path.basename(pbuf.value).lower()
+                    finally:
+                        kernel32.CloseHandle(h_proc)
+        except Exception:
+            pass
+
+        return (hwnd, title, proc_name)
     except Exception:
-        return ""
+        return (0, "", "")
 
 
-def is_ai_window(title: str, keywords: list[str] | None = None) -> bool:
-    """Check if window title indicates an AI application or chat interface."""
+def is_ai_window(title: str, keywords: list[str] | None = None, proc_name: str = "") -> bool:
+    """Check if window title or process name indicates an AI application or chat interface."""
+    targets = keywords or AI_KEYWORDS
+    if proc_name:
+        pn = proc_name.lower()
+        if any(k in pn for k in targets):
+            return True
     if not title:
         return False
     title_lower = title.lower()
-    targets = keywords or AI_KEYWORDS
     return any(k in title_lower for k in targets)
 
 
