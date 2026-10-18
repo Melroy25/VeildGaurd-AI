@@ -60,12 +60,19 @@
 
 ---
 
-## Phase 7: PDF Scan and Redaction
-- **Scope:** PDF document inspection and vector/raster redaction using PyMuPDF (`fitz`), accompanied by an automated post-redaction text re-extraction verification test.
-- **Done When:** PyMuPDF redaction produces sanitized PDFs where extracted text guarantees zero presence of targeted sensitive strings.
+## Phase 6: Submission Readiness & PDF True Redaction (Complete)
+- **Scope:**
+  1. Automated setup scripts (`scripts/setup.ps1`, `scripts/setup.sh`) verified in clean isolated temporary clone.
+  2. In-memory PDF Scanner & True Redaction (`/pdf/scan`, `/pdf/redact`, PyMuPDF + `pypdf` dual-extractor verification, Options page UI tab, `source: "document"` audit events).
+  3. Evidence report generator (`scripts/make_evidence.py`, `docs/EVIDENCE.md`).
+  4. 4-minute demonstration script (`docs/DEMO_SCRIPT.md`), automated rehearsal test (`tests/e2e/demo-rehearsal.spec.ts`), and 6 high-resolution evidence screenshots (`docs/screenshots/demo-*.png`).
+  5. 8-slide presentation deck content (`docs/PPT_CONTENT.md`) and submission checklist (`docs/SUBMISSION_CHECKLIST.md`).
+- **Done When:** All unit and E2E tests pass without failure, fresh-clone setup script completes with zero friction, and release tag `devhack-2026-submission` is generated.
+- **Verification:** 164 Python tests pass (3 xfail); 28 Vitest unit tests pass; 27 Playwright E2E tests pass (25 scenarios + 1 demo rehearsal + 1 PDF scanner); dual-extractor verification guarantees 0 residual target text; `docs/EVIDENCE.md` validated via `--check`.
 
 ---
 
-## Phase 8: Polish and Submission
-- **Scope:** Client-side response rehydration from the session vault, finalized documentation and known limitations, recorded demonstration scripts, and presentation materials.
-- **Done When:** Live demonstration functions smoothly end-to-end with verified claims and honest boundary disclosures.
+## Future Roadmap (Post-Hackathon Expansion)
+- **Client-Side Rehydration:** In-DOM closed Shadow DOM assistant reply restorer.
+- **Expanded Adapters:** Native adapters for Claude, Gemini, and Microsoft Copilot.
+- **Local OCR:** Integrated on-device OCR engine for scanned paper documents.

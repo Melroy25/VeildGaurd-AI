@@ -77,29 +77,34 @@
 ## 13. Local Audit History & Dashboard Scope Boundaries (Phase 3c)
 - **Local persistence only:** Event history is stored strictly in `chrome.storage.local` on the client device. It is not synchronized across devices, backed up to any cloud or remote endpoint (Rule 8), and is permanently cleared if the extension is uninstalled.
 - **Fixed retention ring buffer (1000 events):** Event history is capped at the newest 1000 events. Older events are silently evicted to prevent unbounded storage consumption.
-- **Documents scanned is 0 until Phase 7:** The dashboard summary card displays "Documents scanned: 0" because document/PDF interception is scheduled for Phase 7.
+- **Documents scanned count:** The dashboard summary card displays document events recorded via the dedicated PDF Scanner tab in the Options page. Document scanning is supported for PDF documents up to 10 MB and 50 pages.
 - **Dashboard counts describe local activity, not detection accuracy:** The counts, decision breakdowns, and user action distributions reflect activity intercepted on this specific browser profile. They are not benchmark precision or recall metrics. Benchmark metrics are computed independently in Phase 5/6.
 - **Popup protection status visibility:** Without the privileged `tabs` permission, the action popup queries only the active tab's content script via `chrome.tabs.sendMessage`. It cannot inspect arbitrary tabs or determine protection status on domains where VeilGuard has no registered content script, cleanly reporting "Not active on this site (unsupported site)". Never implies protection where none exists.
 
-## 14. Unscanned File Attachments (Phase 4)
-- In Phase 4, VeilGuard AI does **not** scan the contents of files attached to chat messages via the ChatGPT file upload button or drag-and-drop.
-- A non-blocking notice is displayed to the user: *"Attachments are not scanned by VeilGuard AI. Their contents are not checked."*
-- **Protection status on the badge remains `active (verified)`** — the notice clarifies this specific limitation without downgrading overall protection.
-- Full document/attachment scanning using PyMuPDF is scheduled for Phase 7.
+## 14. In-Chat File Attachments vs. Document Scanner (Phase 6 Update)
+- In Phase 6, VeilGuard AI includes a dedicated **PDF Document Scanner & True Redaction** tab in the Options dashboard for pre-sanitizing documents before upload.
+- However, direct in-chat file attachments dropped into the third-party web composer (e.g., ChatGPT file upload paperclip) are not yet synchronously intercepted in real-time within the chat DOM.
+- A non-blocking notice is displayed to users: *"To sanitize documents, use the VeilGuard Document Scanner tab before attaching."*
+- Full automated in-line interception of third-party DOM file drop events is scheduled for post-hackathon roadmap.
 
-## 15. Voice / Audio Input (Phase 4)
+## 15. PDF Document Scanning Boundaries (Phase 6)
+- **Text-Based / Vector PDFs Only:** Document scanning operates directly on PDF character glyphs and text streams. Raster image-only scans (e.g. photos of paper documents without an embedded OCR text layer) do not contain extractable text glyphs and require upstream OCR preprocessing.
+- **Size and Page Limits:** Processing is bounded in-memory to 10 MB maximum file size and 50 maximum pages. Larger documents are rejected to prevent local memory exhaustion.
+- **Dual-Extractor Verification Scope:** Dual-extractor verification checks that target sensitive values detected during the initial scan do not appear in PyMuPDF or pypdf extracted text. If novel or unmodeled entities were not detected in the first pass, they cannot be checked for residual presence. User visual inspection remains recommended.
+
+## 16. Voice / Audio Input (Phase 4)
 - ChatGPT's voice dictation mode streams audio from the microphone directly to OpenAI's servers via real-time audio APIs.
 - VeilGuard AI does not intercept audio streams. This path is unprotected and must be prominently declared to users.
 - The badge does not claim protection on voice-mode submissions.
 
-## 16. DOM Selector Volatility — ChatGPT (Phase 4, Verified 2026-10-17)
+## 17. DOM Selector Volatility — ChatGPT (Phase 4, Verified 2026-10-17)
 - The ChatGPT adapter's DOM selectors were verified on 2026-10-17 against the live site at `https://chatgpt.com`:
   - Composer: `#mobile-composer-prompt` (TEXTAREA, `aria-label="Chat with ChatGPT"`)
   - Send Button: `button[aria-label="Send message"]` (`type="submit"`)
 - ChatGPT (OpenAI) may update its front-end at any time. If selectors break, the adapter's `selfTest()` will fail and VeilGuard transitions to **Limited Protection** (backstop-only) mode, displayed on the badge.
 - VeilGuard never silently claims full protection when adapter self-test fails (Rule 3).
 
-## 17. Single Real-Site Target in Phase 4 (Phase 4)
+## 18. Single Real-Site Target in Phase 4 (Phase 4)
 - Phase 4 implements and verifies protection on ChatGPT (`https://chatgpt.com`) only.
 - Claude, Gemini, Copilot, and other AI sites are **not supported** in Phase 4.
 - The extension manifest grants host permissions only for `https://chatgpt.com/*` and `https://*.chatgpt.com/*` (in addition to the mock test site). No other AI sites receive injected scripts.

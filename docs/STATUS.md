@@ -37,5 +37,6 @@
 | **Utility-Preserving Sanitizer (context-aware)** | Phase 5 | **Implemented** | `tests/engine/test_role_placeholders.py` (7 tests pass), `tests/e2e/scenarios.spec.ts` (`scenario:customer-analysis-context`); 100.0% required retention in benchmark |
 | **Medical Term Detection (`HEALTH_WITH_IDENTITY`)** | Phase 5 | **Implemented** | `data/medical_terms.txt` (252 terms), `tests/engine/test_medical.py` (6 tests pass); previous medical xfail resolved |
 | **Benchmark Suite & Sealed-Test Runner** | Phase 5 | **Implemented** | `bench/run_benchmark.py`, `bench/results/test_run_log.jsonl` (run #1, commit `41b9fc1`), `bench/results/benchmark_test.json`, `docs/BENCHMARK.md` |
-| **PyMuPDF Document Redaction** | Phase 6 | **Planned** | — |
-| **Vault & Response Rehydration** | Phase 7 | **Planned** | — |
+| **PyMuPDF Document Redaction** | Phase 6 | **Implemented** | `tests/engine/test_pdf.py` (9 tests pass), `tests/e2e/pdf-scanner.spec.ts` — in-memory true redaction, dual-extractor verification with `pypdf`, zero raw text persistence, download & `source: "document"` audit event |
+| **Submission Readiness & Essentials** | Phase 6 | **Implemented** | `scripts/setup.ps1`, `scripts/setup.sh`, `scripts/make_evidence.py`, `docs/EVIDENCE.md`, `tests/e2e/demo-rehearsal.spec.ts` (6 high-res screenshots), `docs/DEMO_SCRIPT.md`, `docs/PPT_CONTENT.md`, `docs/SUBMISSION_CHECKLIST.md` |
+| **Vault & Response Rehydration** | Phase 7 | **Future** | Post-hackathon roadmap — client-side closed Shadow DOM rehydration overlay |

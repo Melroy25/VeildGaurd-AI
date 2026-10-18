@@ -1,7 +1,7 @@
 # VeilGuard AI: Evidence & Verification Report
 
 > **Auto-generated report from reproducible benchmark artifacts.**
-> Generated on: `2026-10-17 23:45:29Z` | Sealed Test Run: `#1` | Git Commit: `41b9fc1`
+> Generated on: `2026-10-18 00:06:35Z` | Sealed Test Run: `#1` | Git Commit: `41b9fc1`
 > Source artifacts: `bench/results/benchmark_test.json`, `enforcement_full_chain_mock_site.json`, `enforcement_real_site.json`.
 
 > [!IMPORTANT]
@@ -131,9 +131,9 @@ All scans execute locally on device under 50ms (p50), introducing virtually zero
 
 | Test Suite | Runner | Test Count | Passing | Known Boundaries (XFAIL) | Failures |
 |---|---|---|---|---|---|
-| Python Engine Core & APIs | `pytest` | 158 | 155 | 3 (documented NER boundaries) | 0 |
+| Python Engine Core, APIs & PDF | `pytest` | 167 | 164 | 3 (documented NER boundaries) | 0 |
 | Extension In-Memory Unit | `vitest` | 28 | 28 | 0 | 0 |
-| Browser End-to-End Scenarios | `playwright` | 25 | 25 | 0 | 0 |
+| Browser End-to-End Scenarios, Demo & PDF | `playwright` | 27 | 27 | 0 | 0 |
 | Full-Chain Matrix E2E | `playwright` | 14 | 14 | 0 | 0 |
 | Real-Site Boundary Harness | `playwright` | 4 | 4 | 0 | 0 |
 
