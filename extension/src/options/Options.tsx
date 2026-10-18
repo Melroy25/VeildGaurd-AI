@@ -32,9 +32,11 @@ import type { StoredEvent } from "../background/events-store";
 import { EVENTS_STORAGE_KEY, RECORD_HISTORY_KEY } from "../background/events-store";
 import benchmarkSummaryData from "./benchmark-summary.json";
 
+import { PDFScannerTab } from "./PDFScannerTab";
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type Tab = "dashboard" | "settings";
+type Tab = "dashboard" | "settings" | "pdf";
 type TimeRange = "24h" | "7d" | "all";
 type ConnectionStatus = "idle" | "checking" | "ok" | "error";
 
@@ -1320,6 +1322,20 @@ export const Options: React.FC = () => {
             <button
               type="button"
               role="tab"
+              id="tab-pdf"
+              aria-selected={activeTab === "pdf"}
+              onClick={() => setActiveTab("pdf")}
+              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 ${
+                activeTab === "pdf"
+                  ? "bg-slate-700 text-white"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              Document Scanner
+            </button>
+            <button
+              type="button"
+              role="tab"
               aria-selected={activeTab === "settings"}
               onClick={() => setActiveTab("settings")}
               className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 ${
@@ -1350,6 +1366,8 @@ export const Options: React.FC = () => {
               engineReachable={engineReachable}
             />
           </>
+        ) : activeTab === "pdf" ? (
+          <PDFScannerTab onEventLogged={loadEvents} />
         ) : (
           <SettingsTab onProfilesLoaded={handleProfilesLoaded} />
         )}

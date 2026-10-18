@@ -2,7 +2,7 @@ import time
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, List
 
-from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
@@ -23,6 +23,7 @@ from veilguard_engine.models import (
     ScanRequest,
     ScanResponse,
 )
+from veilguard_engine.pdf.models import PDFScanResponse
 from veilguard_engine.necessity import evaluate_necessity
 from veilguard_engine.policy import PolicyEvaluator, PolicyRegistry
 from veilguard_engine.policy.models import Action, Decision
@@ -273,5 +274,98 @@ def get_policy_profiles(
         )
         for p in registry.list_profiles()
     ]
+
+
+async def _extract_pdf_bytes_and_profile(request: Request) -> tuple[bytes, str]:
+    """Extract PDF binary content and policy profile from raw body or base64 JSON."""
+    content_type = request.headers.get("content-type", "")
+    profile = request.headers.get("x-profile", "company")
+
+    if "application/json" in content_type:
+        try:
+            payload = await request.json()
+        except Exception:
+            raise HTTPException(status_code=422, detail="Invalid JSON body")
+        if not isinstance(payload, dict) or "pdf_base64" not in payload:
+            raise HTTPException(status_code=422, detail="JSON payload must contain 'pdf_base64' string")
+        profile = payload.get("profile", profile)
+        import base64
+        try:
+            pdf_bytes = base64.b64decode(payload["pdf_base64"])
+        except Exception as exc:
+            raise HTTPException(status_code=422, detail=f"Invalid base64 payload: {exc}")
+    else:
+        pdf_bytes = await request.body()
+
+    return pdf_bytes, profile
+
+
+@app.post("/pdf/scan", response_model=PDFScanResponse)
+async def endpoint_pdf_scan(
+    request: Request,
+    _token: str = Depends(verify_bearer_token),
+) -> PDFScanResponse:
+    """Scan text-based PDF in-memory and return entity bounding boxes without raw text."""
+    from veilguard_engine.pdf import (
+        InvalidPDFError,
+        PDFLimitExceededError,
+        scan_pdf,
+    )
+    scanner = _get_scanner(request)
+    pdf_bytes, profile = await _extract_pdf_bytes_and_profile(request)
+    if not pdf_bytes:
+        raise HTTPException(status_code=422, detail="Empty PDF body")
+
+    try:
+        return scan_pdf(pdf_bytes, scanner, profile=profile)
+    except PDFLimitExceededError as exc:
+        status_code = 413 if "size" in str(exc).lower() else 422
+        raise HTTPException(status_code=status_code, detail=str(exc))
+    except InvalidPDFError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Internal scan failure: {exc}")
+
+
+@app.post("/pdf/redact")
+async def endpoint_pdf_redact(
+    request: Request,
+    _token: str = Depends(verify_bearer_token),
+) -> Response:
+    """Apply true redactions in-memory, scrub metadata, and dual-verify sanitization."""
+    from fastapi import Response
+    from veilguard_engine.pdf import (
+        InvalidPDFError,
+        PDFLimitExceededError,
+        RedactionVerificationError,
+        redact_pdf,
+    )
+    scanner = _get_scanner(request)
+    pdf_bytes, profile = await _extract_pdf_bytes_and_profile(request)
+    if not pdf_bytes:
+        raise HTTPException(status_code=422, detail="Empty PDF body")
+
+    try:
+        sanitized_bytes, count = redact_pdf(pdf_bytes, scanner, profile=profile)
+    except PDFLimitExceededError as exc:
+        status_code = 413 if "size" in str(exc).lower() else 422
+        raise HTTPException(status_code=status_code, detail=str(exc))
+    except InvalidPDFError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    except RedactionVerificationError as exc:
+        raise HTTPException(status_code=500, detail=f"Redaction verification failed: {exc}")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Internal redaction failure: {exc}")
+
+    return Response(
+        content=sanitized_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": 'attachment; filename="sanitized.pdf"',
+            "X-VeilGuard-Entities-Redacted": str(count),
+            "X-VeilGuard-Dual-Verified": "true",
+        },
+    )
+
 
 

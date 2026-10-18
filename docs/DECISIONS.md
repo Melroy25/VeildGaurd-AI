@@ -243,3 +243,14 @@ This document records key technical decisions, rationales, and alternatives eval
 - **Context:** Benchmark claims in privacy tools are frequently exaggerated, fabricated, or contaminated by tuning against the evaluation dataset.
 - **Decision:** Enforce a strict sealed-test protocol: (1) Manifest SHA-256 verification of `test.jsonl`; (2) Working tree must be 100% clean before running; (3) Mandatory `--confirm-frozen` flag; (4) Append-only logging to `test_run_log.jsonl`; (5) All tables in `BENCHMARK.md` and UI summaries are generated directly by script from runner JSON output; (6) Transparent publication of the "Where VeilGuard Did Not Win" section.
 - **Rationale:** Ensures complete adherence to Rule 1 (Honesty) and scientific reproducibility.
+
+### 40. In-Memory PDF True Redaction & Dual-Extractor Verification with `pypdf` (Phase 6)
+- **Date:** Phase 6 (Part B)
+- **Context:** Users frequently submit prompts originating from PDF documents (invoices, medical reports, bank statements). Conventional PDF redaction often applies visual overlays (drawing a black box) while leaving the underlying character text stream intact in the PDF object tree, enabling trivial data exfiltration by copy-pasting or extracting text. Furthermore, single-parser verification risks blind spots if the same library that performed redaction evaluates its own output.
+- **Decision:**
+  1. Enforce strict in-memory byte handling (Rule 7: zero disk or temp file persistence). Limit processing to 10 MB and 50 pages maximum.
+  2. Implement true redaction via PyMuPDF (`fitz`): `page.add_redact_annot()` followed by `page.apply_redactions()`, completely purging underlying text glyphs, font dictionaries, and vector commands from the PDF stream.
+  3. Scrub all document metadata and XML/XMP streams (`doc.set_metadata({})`, `doc.del_xml_metadata()`).
+  4. Introduce `pypdf` as the sole pre-approved new engine dependency to perform independent dual-extractor verification. After redaction, text is extracted via both PyMuPDF and `pypdf`. If any target sensitive string is detected by either parser, the operation fails closed with `RedactionVerificationError`.
+- **Rationale:** Guarantees that redacted text cannot be recovered from the PDF by standard or forensic PDF parsers, while maintaining full compliance with local-only and zero-persistence privacy invariants.
+
