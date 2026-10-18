@@ -1,16 +1,18 @@
-"""VeilGuard AI: Context-Aware Desktop Sidebar Companion.
+"""VeilGuard AI: Ultra-Thin Desktop Sidebar Companion.
 
-A lightweight, draggable desktop sidebar that stays docked to the screen edge
-and automatically activates/pops up when AI tools (ChatGPT, Claude, Cursor, Copilot, etc.)
-are in focus.
+An ultra-sleek, nearly invisible edge-docked sidebar that stays docked to the
+screen edge and automatically slides open when AI tools (ChatGPT, Claude, Cursor,
+Copilot, etc.) are focused, and vanishes/collapses when you switch away.
 
 Features:
-- Pure Python standard library (tkinter + ctypes + urllib), zero extra pip installs.
-- Draggable along the screen edge (or anywhere on screen).
-- Smart Foreground Detection: Automatically detects when ChatGPT / Claude / AI apps are focused.
-- Clipboard Auto-Scan: Inspects copied text against local engine (127.0.0.1:8765).
-- 1-Click Sanitize & Copy: Previews privacy diff and swaps in clean role placeholders.
-- Fail-Closed Engine Monitor: Shows live connection status to VeilGuard loopback core.
+- Ultra-thin 6px edge sliver (almost invisible, semi-transparent when idle).
+- Hover-expansion: Gently expands to 24px with shield icon when mouse approaches.
+- Master Guard Switch: One-click toggle between [🟢 GUARD ON] and [⚪ PAUSED/OFF].
+- Smart Auto-Pop & Auto-Go: Slides open when AI tools are in focus; automatically
+  collapses and goes away when you switch to normal apps.
+- Press 'Esc' to dismiss instantly.
+- Direct connection to VeilGuard loopback engine (127.0.0.1:8765/analyze).
+- Pure standard library Python (tkinter + ctypes + urllib), zero extra pip installs.
 """
 
 from __future__ import annotations
@@ -49,11 +51,11 @@ AI_KEYWORDS = [
 ]
 
 # Color Palette (Dark Mode)
-BG_DARK = "#121316"
-BG_PANEL = "#1C1D22"
-BG_CARD = "#24262E"
-BG_INPUT = "#18191E"
-BORDER_COLOR = "#2F323D"
+BG_DARK = "#101114"
+BG_PANEL = "#18191E"
+BG_CARD = "#21232B"
+BG_INPUT = "#131418"
+BORDER_COLOR = "#2D303B"
 TEXT_PRIMARY = "#F3F4F6"
 TEXT_SECONDARY = "#9CA3AF"
 TEXT_MUTED = "#6B7280"
@@ -71,7 +73,6 @@ def get_auth_token() -> str:
             return token_path.read_text(encoding="utf-8").strip()
         except Exception:
             pass
-    # Also check local project directory
     local_token = Path(__file__).parent.parent / ".veilguard" / "token"
     if local_token.is_file():
         try:
@@ -152,12 +153,6 @@ class VeilGuardClient:
         except Exception:
             return None
 
-    def scan_prompt(self, text: str, profile: str = DEFAULT_PROFILE) -> dict | None:
-        return self.analyze_prompt(text, profile)
-
-    def sanitize_prompt(self, text: str, profile: str = DEFAULT_PROFILE) -> dict | None:
-        return self.analyze_prompt(text, profile)
-
     def redact_pdf(self, pdf_bytes: bytes, profile: str = DEFAULT_PROFILE) -> bytes | None:
         try:
             headers = self._headers()
@@ -175,7 +170,7 @@ class VeilGuardClient:
 
 
 class VeilGuardSidebar(tk.Tk):
-    """The floating, draggable desktop sidebar widget."""
+    """The ultra-thin, draggable desktop sidebar widget."""
 
     def __init__(self):
         super().__init__()
@@ -184,28 +179,29 @@ class VeilGuardSidebar(tk.Tk):
         self.client = VeilGuardClient()
         self.detector = ForegroundDetector()
 
-        # Window state
+        # State
         self.is_expanded = False
+        self.guard_active = True  # Master On/Off switch
         self.auto_pop_enabled = tk.BooleanVar(value=True)
         self.clipboard_monitor_enabled = tk.BooleanVar(value=True)
         self.last_clipboard = ""
         self.active_ai_app_name = ""
         self.is_dragging = False
-        self.drag_start_x = 0
         self.drag_start_y = 0
+        self.is_hovered = False
 
         # Screen dimensions
         self.screen_w = self.winfo_screenwidth()
         self.screen_h = self.winfo_screenheight()
 
-        # Geometry dimensions
-        self.collapsed_width = 38
-        self.collapsed_height = 140
-        self.expanded_width = 380
-        self.expanded_height = 560
+        # Ultra-thin collapsed dimensions
+        self.thin_sliver_width = 6
+        self.hover_sliver_width = 24
+        self.collapsed_height = 96
+        self.expanded_width = 370
+        self.expanded_height = 540
 
-        # Position docked to right edge
-        self.win_x = self.screen_w - self.collapsed_width - 8
+        # Position docked to right screen edge
         self.win_y = max(80, (self.screen_h - self.expanded_height) // 2)
 
         # Style & Configuration
@@ -213,101 +209,89 @@ class VeilGuardSidebar(tk.Tk):
         self.overrideredirect(True)  # Frameless
         self.wm_attributes("-topmost", True)  # Always on top
 
-        # Set transparency key / rounded look
-        try:
-            self.wm_attributes("-alpha", 0.96)
-        except Exception:
-            pass
+        # Bind Esc to quickly dismiss
+        self.bind("<Escape>", lambda e: self.collapse())
 
         # Build UI layout
         self._build_ui()
         self._apply_geometry()
 
-        # Start background polling threads
+        # Start background polling thread
         self.running = True
         self.poll_thread = threading.Thread(target=self._background_watcher, daemon=True)
         self.poll_thread.start()
 
     def _build_ui(self):
-        """Construct the collapsed handle and the expanded full panel."""
-        self.main_container = tk.Frame(self, bg=BG_PANEL, highlightthickness=1, highlightbackground=BORDER_COLOR)
+        """Construct the ultra-thin collapsed handle and the expanded panel."""
+        self.main_container = tk.Frame(self, bg=BG_PANEL, highlightthickness=0)
         self.main_container.pack(fill="both", expand=True)
 
-        # ---------------- COLLAPSED HANDLE ----------------
-        self.handle_frame = tk.Frame(self.main_container, bg=BG_PANEL, cursor="hand2")
-        
-        # Drag grip icon
-        self.handle_grip = tk.Label(
-            self.handle_frame,
-            text="⋮⋮",
-            fg=TEXT_MUTED,
-            bg=BG_PANEL,
-            font=("Segoe UI", 11, "bold"),
+        # ---------------- 1. ULTRA-THIN EDGE SLIVER ----------------
+        self.handle_frame = tk.Frame(
+            self.main_container,
+            bg=ACCENT_INDIGO,
+            cursor="hand2",
+            highlightthickness=0,
         )
-        self.handle_grip.pack(pady=(6, 2))
 
-        # Shield Icon & Label
-        self.handle_shield = tk.Label(
+        # Hover icon (revealed when mouse approaches edge)
+        self.handle_icon = tk.Label(
             self.handle_frame,
             text="🛡️",
-            fg=ACCENT_INDIGO,
-            bg=BG_PANEL,
-            font=("Segoe UI Emoji", 14),
+            fg="#FFFFFF",
+            bg=ACCENT_INDIGO,
+            font=("Segoe UI Emoji", 10),
         )
-        self.handle_shield.pack(pady=2)
 
-        # Vertical text
-        self.handle_label = tk.Label(
+        self.handle_grip = tk.Label(
             self.handle_frame,
-            text="V\nE\nI\nL",
-            fg=TEXT_SECONDARY,
-            bg=BG_PANEL,
+            text="⋮",
+            fg="#FFFFFF",
+            bg=ACCENT_INDIGO,
             font=("Segoe UI", 8, "bold"),
-            justify="center",
         )
-        self.handle_label.pack(pady=(2, 6))
 
-        # Status dot on collapsed handle
-        self.handle_dot = tk.Label(
-            self.handle_frame,
-            text="●",
-            fg=ACCENT_GREEN,
-            bg=BG_PANEL,
-            font=("Segoe UI", 9),
-        )
-        self.handle_dot.pack(pady=(0, 6))
-
-        # Bind events to handle
-        for widget in (self.handle_frame, self.handle_grip, self.handle_shield, self.handle_label, self.handle_dot):
+        # Bind hover and drag events to sliver
+        for widget in (self.handle_frame, self.handle_icon, self.handle_grip):
+            widget.bind("<Enter>", self._on_handle_hover_enter)
+            widget.bind("<Leave>", self._on_handle_hover_leave)
             widget.bind("<Button-1>", self._on_handle_click)
             widget.bind("<B1-Motion>", self._on_drag)
 
-        # ---------------- EXPANDED CONTENT PANEL ----------------
+        # ---------------- 2. EXPANDED PANEL ----------------
         self.content_frame = tk.Frame(self.main_container, bg=BG_PANEL)
 
-        # Header Bar
+        # Top Header Bar
         header = tk.Frame(self.content_frame, bg=BG_PANEL)
-        header.pack(fill="x", padx=12, pady=(10, 8))
+        header.pack(fill="x", padx=12, pady=(10, 6))
 
         header_title = tk.Label(
             header,
-            text="🛡️ VeilGuard AI",
+            text="🛡️ VeilGuard",
             fg=TEXT_PRIMARY,
             bg=BG_PANEL,
             font=("Segoe UI", 11, "bold"),
         )
         header_title.pack(side="left")
 
-        self.status_badge = tk.Label(
+        # Master On/Off Toggle Button
+        self.master_btn = tk.Button(
             header,
-            text="● Online",
-            fg=ACCENT_GREEN,
-            bg=BG_PANEL,
-            font=("Segoe UI", 9),
+            text="🟢 GUARD ON",
+            bg=ACCENT_GREEN,
+            fg="#FFFFFF",
+            activebackground="#059669",
+            activeforeground="#FFFFFF",
+            relief="flat",
+            padx=8,
+            pady=2,
+            font=("Segoe UI", 8, "bold"),
+            cursor="hand2",
+            command=self._toggle_master_guard,
         )
-        self.status_badge.pack(side="left", padx=8)
+        self.master_btn.pack(side="left", padx=8)
 
-        # Minimize Button
+        # Close / Dismiss Button
         close_btn = tk.Label(
             header,
             text="✕",
@@ -319,42 +303,42 @@ class VeilGuardSidebar(tk.Tk):
         close_btn.pack(side="right")
         close_btn.bind("<Button-1>", lambda e: self.collapse())
 
-        # Drag grip on header
+        # Drag handle
         drag_handle = tk.Label(
             header,
             text="⋮⋮ Drag",
             fg=TEXT_MUTED,
             bg=BG_PANEL,
-            font=("Segoe UI", 9),
+            font=("Segoe UI", 8),
             cursor="fleur",
         )
-        drag_handle.pack(side="right", padx=10)
+        drag_handle.pack(side="right", padx=6)
         drag_handle.bind("<Button-1>", self._start_drag)
         drag_handle.bind("<B1-Motion>", self._on_drag)
 
         # Active App Context Bar
-        self.context_bar = tk.Frame(self.content_frame, bg=BG_CARD, padx=8, pady=6)
-        self.context_bar.pack(fill="x", padx=12, pady=(0, 8))
+        self.context_bar = tk.Frame(self.content_frame, bg=BG_CARD, padx=8, pady=5)
+        self.context_bar.pack(fill="x", padx=12, pady=(0, 6))
 
-        self.context_icon = tk.Label(self.context_bar, text="⚡", fg=ACCENT_AMBER, bg=BG_CARD, font=("Segoe UI", 10))
+        self.context_icon = tk.Label(self.context_bar, text="⚡", fg=ACCENT_GREEN, bg=BG_CARD, font=("Segoe UI", 9))
         self.context_icon.pack(side="left")
 
         self.context_label = tk.Label(
             self.context_bar,
-            text="Waiting for AI tool...",
+            text="Auto-Guard Active",
             fg=TEXT_SECONDARY,
             bg=BG_CARD,
-            font=("Segoe UI", 9),
+            font=("Segoe UI", 8),
         )
         self.context_label.pack(side="left", padx=6)
 
-        # Settings row (Auto-pop and clipboard checkboxes)
+        # Settings row
         settings_row = tk.Frame(self.content_frame, bg=BG_PANEL)
         settings_row.pack(fill="x", padx=12, pady=(0, 6))
 
         cb_auto = tk.Checkbutton(
             settings_row,
-            text="Auto-show on AI Apps",
+            text="Auto-pop on AI Apps",
             variable=self.auto_pop_enabled,
             fg=TEXT_SECONDARY,
             bg=BG_PANEL,
@@ -381,17 +365,17 @@ class VeilGuardSidebar(tk.Tk):
         # Input Prompt Text Box
         input_label = tk.Label(
             self.content_frame,
-            text="ORIGINAL PROMPT (PASTE OR TYPE):",
+            text="ORIGINAL PROMPT:",
             fg=TEXT_MUTED,
             bg=BG_PANEL,
             font=("Segoe UI", 8, "bold"),
             anchor="w",
         )
-        input_label.pack(fill="x", padx=12, pady=(4, 2))
+        input_label.pack(fill="x", padx=12, pady=(2, 2))
 
         self.input_text = tk.Text(
             self.content_frame,
-            height=5,
+            height=4,
             bg=BG_INPUT,
             fg=TEXT_PRIMARY,
             insertbackground=TEXT_PRIMARY,
@@ -401,23 +385,23 @@ class VeilGuardSidebar(tk.Tk):
             font=("Consolas", 9),
             wrap="word",
         )
-        self.input_text.pack(fill="x", padx=12, pady=(0, 8))
+        self.input_text.pack(fill="x", padx=12, pady=(0, 6))
 
-        # Button Row: Inspect & Sanitize
+        # Action Buttons Row
         btn_row = tk.Frame(self.content_frame, bg=BG_PANEL)
-        btn_row.pack(fill="x", padx=12, pady=(0, 8))
+        btn_row.pack(fill="x", padx=12, pady=(0, 6))
 
         self.btn_inspect = tk.Button(
             btn_row,
-            text="🔍 Inspect Prompt",
+            text="🔍 Inspect",
             bg=BG_CARD,
             fg=TEXT_PRIMARY,
             activebackground=BORDER_COLOR,
             activeforeground=TEXT_PRIMARY,
             relief="flat",
             padx=10,
-            pady=4,
-            font=("Segoe UI", 9, "bold"),
+            pady=3,
+            font=("Segoe UI", 8, "bold"),
             cursor="hand2",
             command=self._do_inspect,
         )
@@ -432,23 +416,23 @@ class VeilGuardSidebar(tk.Tk):
             activeforeground="#FFFFFF",
             relief="flat",
             padx=12,
-            pady=4,
-            font=("Segoe UI", 9, "bold"),
+            pady=3,
+            font=("Segoe UI", 8, "bold"),
             cursor="hand2",
             command=self._do_sanitize,
         )
         self.btn_sanitize.pack(side="right")
 
-        # Result Summary & Entities Badge Area
-        self.results_card = tk.Frame(self.content_frame, bg=BG_CARD, padx=8, pady=6)
-        self.results_card.pack(fill="x", padx=12, pady=(0, 8))
+        # Result Summary Box
+        self.results_card = tk.Frame(self.content_frame, bg=BG_CARD, padx=8, pady=5)
+        self.results_card.pack(fill="x", padx=12, pady=(0, 6))
 
         self.result_summary = tk.Label(
             self.results_card,
-            text="Ready. Paste text or copy from your AI tool.",
+            text="Ready. Copy or type text to inspect.",
             fg=TEXT_SECONDARY,
             bg=BG_CARD,
-            font=("Segoe UI", 9),
+            font=("Segoe UI", 8),
             anchor="w",
         )
         self.result_summary.pack(fill="x")
@@ -462,11 +446,11 @@ class VeilGuardSidebar(tk.Tk):
             font=("Segoe UI", 8, "bold"),
             anchor="w",
         )
-        clean_label.pack(fill="x", padx=12, pady=(4, 2))
+        clean_label.pack(fill="x", padx=12, pady=(2, 2))
 
         self.output_text = tk.Text(
             self.content_frame,
-            height=5,
+            height=4,
             bg=BG_INPUT,
             fg=ACCENT_GREEN,
             insertbackground=TEXT_PRIMARY,
@@ -476,9 +460,9 @@ class VeilGuardSidebar(tk.Tk):
             font=("Consolas", 9),
             wrap="word",
         )
-        self.output_text.pack(fill="x", padx=12, pady=(0, 8))
+        self.output_text.pack(fill="x", padx=12, pady=(0, 6))
 
-        # Bottom Actions: Clean PDF & Copy Clean
+        # Bottom Bar: Scrub PDF & Copy
         bottom_bar = tk.Frame(self.content_frame, bg=BG_PANEL)
         bottom_bar.pack(fill="x", padx=12, pady=(0, 8))
 
@@ -491,7 +475,7 @@ class VeilGuardSidebar(tk.Tk):
             activeforeground=TEXT_PRIMARY,
             relief="flat",
             padx=8,
-            pady=3,
+            pady=2,
             font=("Segoe UI", 8),
             cursor="hand2",
             command=self._do_pdf_scrub,
@@ -507,14 +491,14 @@ class VeilGuardSidebar(tk.Tk):
             activeforeground="#FFFFFF",
             relief="flat",
             padx=12,
-            pady=3,
+            pady=2,
             font=("Segoe UI", 8, "bold"),
             cursor="hand2",
             command=self._do_copy_clean,
         )
         self.btn_copy_clean.pack(side="right")
 
-        # Initial layout state: Collapsed
+        # Start in ultra-thin collapsed state
         self.collapse()
 
     def _apply_geometry(self):
@@ -522,15 +506,55 @@ class VeilGuardSidebar(tk.Tk):
         if self.is_expanded:
             w = self.expanded_width
             h = self.expanded_height
-            x = self.screen_w - w - 12
-            y = min(self.win_y, self.screen_h - h - 40)
+            x = self.screen_w - w - 8
+            y = min(self.win_y, self.screen_h - h - 30)
+            try:
+                self.wm_attributes("-alpha", 0.97)
+            except Exception:
+                pass
         else:
-            w = self.collapsed_width
+            w = self.hover_sliver_width if self.is_hovered else self.thin_sliver_width
             h = self.collapsed_height
-            x = self.screen_w - w - 4
-            y = min(self.win_y, self.screen_h - h - 40)
+            x = self.screen_w - w
+            y = min(self.win_y, self.screen_h - h - 30)
+            try:
+                # Barely visible (0.35) when idle, bright on hover
+                alpha = 0.92 if self.is_hovered else (0.35 if self.guard_active else 0.15)
+                self.wm_attributes("-alpha", alpha)
+            except Exception:
+                pass
 
         self.geometry(f"{w}x{h}+{x}+{y}")
+
+    def _toggle_master_guard(self):
+        """Toggle master protection on or off."""
+        self.guard_active = not self.guard_active
+        if self.guard_active:
+            self.master_btn.config(text="🟢 GUARD ON", bg=ACCENT_GREEN)
+            self.handle_frame.config(bg=ACCENT_INDIGO)
+            self.context_label.config(text="Guard Active")
+        else:
+            self.master_btn.config(text="⚪ PAUSED", bg="#374151")
+            self.handle_frame.config(bg="#374151")
+            self.context_label.config(text="Guard Paused (Off)")
+            self.collapse()
+        self._apply_geometry()
+
+    def _on_handle_hover_enter(self, event):
+        """Gently expand sliver on mouse approach."""
+        if not self.is_expanded:
+            self.is_hovered = True
+            self.handle_grip.pack(pady=(4, 0))
+            self.handle_icon.pack(pady=2)
+            self._apply_geometry()
+
+    def _on_handle_hover_leave(self, event):
+        """Shrink back to 6px when mouse leaves."""
+        if not self.is_expanded:
+            self.is_hovered = False
+            self.handle_icon.pack_forget()
+            self.handle_grip.pack_forget()
+            self._apply_geometry()
 
     def expand(self):
         """Expand the sidebar to full width."""
@@ -540,14 +564,17 @@ class VeilGuardSidebar(tk.Tk):
         self._apply_geometry()
 
     def collapse(self):
-        """Collapse the sidebar to an unobtrusive edge handle."""
+        """Collapse into the ultra-thin 6px sliver."""
         self.is_expanded = False
+        self.is_hovered = False
         self.content_frame.pack_forget()
+        self.handle_icon.pack_forget()
+        self.handle_grip.pack_forget()
         self.handle_frame.pack(fill="both", expand=True)
         self._apply_geometry()
 
     def _on_handle_click(self, event):
-        """Toggle between expanded and collapsed on handle click."""
+        """Expand on click."""
         if not self.is_dragging:
             self.expand()
 
@@ -556,33 +583,38 @@ class VeilGuardSidebar(tk.Tk):
         self.drag_start_y = event.y_root - self.winfo_y()
 
     def _on_drag(self, event):
-        """Allow vertical dragging along screen edge."""
+        """Drag up or down along the screen edge."""
         new_y = event.y_root - self.drag_start_y
         new_y = max(20, min(self.screen_h - 100, new_y))
         self.win_y = new_y
         self._apply_geometry()
 
     def _background_watcher(self):
-        """Background thread detecting active AI apps and clipboard changes."""
+        """Detects active AI tools and automatically pops open or collapses."""
         was_ai_focused = False
 
         while self.running:
             try:
+                # If master guard is off, stay dormant
+                if not self.guard_active:
+                    time.sleep(0.8)
+                    continue
+
                 # 1. Health check local engine
                 is_healthy = self.client.check_health()
                 self._update_health_badge(is_healthy)
 
-                # 2. Check active window
+                # 2. Check active foreground window
                 is_ai, title = self.detector.is_ai_tool_focused()
 
                 if "veilguard" in title.lower():
-                    # Keep previous active AI context while user is interacting with sidebar
+                    # Keep previous active context while interacting with sidebar
                     pass
                 elif is_ai:
                     self.active_ai_app_name = title
-                    self._update_context_badge(f"Active: {title[:28]}...", True)
+                    self._update_context_badge(f"Active: {title[:24]}...", True)
 
-                    # Auto-expand if transitioning from non-AI to AI app
+                    # Auto-expand when switching into AI tool
                     if not was_ai_focused and self.auto_pop_enabled.get():
                         if not self.is_expanded:
                             self.after(0, self.expand)
@@ -590,10 +622,14 @@ class VeilGuardSidebar(tk.Tk):
 
                 else:
                     self._update_context_badge("Standing by (No AI app active)", False)
+                    # AUTO-GO / AUTO-COLLAPSE when leaving AI tools
+                    if was_ai_focused and self.auto_pop_enabled.get():
+                        if self.is_expanded:
+                            self.after(0, self.collapse)
                     was_ai_focused = False
 
                 # 3. Check clipboard for prompt changes
-                if self.clipboard_monitor_enabled.get():
+                if self.clipboard_monitor_enabled.get() and self.guard_active:
                     self._check_clipboard_quietly()
 
             except Exception:
@@ -603,12 +639,11 @@ class VeilGuardSidebar(tk.Tk):
 
     def _update_health_badge(self, is_healthy: bool):
         def _update():
-            if is_healthy:
-                self.status_badge.config(text="● Online", fg=ACCENT_GREEN)
-                self.handle_dot.config(fg=ACCENT_GREEN)
-            else:
-                self.status_badge.config(text="● Engine Offline", fg=ACCENT_RED)
-                self.handle_dot.config(fg=ACCENT_RED)
+            if self.guard_active:
+                if is_healthy:
+                    self.master_btn.config(text="🟢 GUARD ON", bg=ACCENT_GREEN)
+                else:
+                    self.master_btn.config(text="🔴 ENGINE OFFLINE", bg=ACCENT_RED)
         self.after(0, _update)
 
     def _update_context_badge(self, text: str, is_active: bool):
@@ -616,14 +651,12 @@ class VeilGuardSidebar(tk.Tk):
             self.context_label.config(text=text)
             if is_active:
                 self.context_icon.config(text="⚡", fg=ACCENT_GREEN)
-                self.handle_shield.config(fg=ACCENT_GREEN)
             else:
                 self.context_icon.config(text="💤", fg=TEXT_MUTED)
-                self.handle_shield.config(fg=ACCENT_INDIGO)
         self.after(0, _update)
 
     def _check_clipboard_quietly(self):
-        """Inspect clipboard without stealing user focus."""
+        """Inspect clipboard without stealing focus."""
         try:
             clip = self.clipboard_get()
             if clip and clip != self.last_clipboard and len(clip.strip()) > 5:
@@ -633,7 +666,6 @@ class VeilGuardSidebar(tk.Tk):
                     def _alert():
                         count = len(res.get("findings", []))
                         clean = res.get("sanitization", {}).get("sanitized_text", "")
-                        self.handle_dot.config(fg=ACCENT_AMBER)
                         self.input_text.delete("1.0", tk.END)
                         self.input_text.insert("1.0", clip)
                         if clean:
@@ -650,7 +682,7 @@ class VeilGuardSidebar(tk.Tk):
             pass
 
     def _do_inspect(self):
-        """Manually inspect text in input box."""
+        """Inspect prompt text."""
         text = self.input_text.get("1.0", tk.END).strip()
         if not text:
             return
