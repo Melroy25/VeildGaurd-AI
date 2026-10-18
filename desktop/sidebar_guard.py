@@ -133,33 +133,30 @@ class VeilGuardClient:
         except Exception:
             return False
 
-    def scan_prompt(self, text: str, profile: str = DEFAULT_PROFILE) -> dict | None:
+    def analyze_prompt(self, text: str, profile: str = DEFAULT_PROFILE) -> dict | None:
         try:
-            payload = json.dumps({"text": text, "profile": profile}).encode("utf-8")
+            payload = json.dumps({
+                "text": text,
+                "profile": profile,
+                "source": "prompt",
+                "destination": "chatgpt.com",
+            }).encode("utf-8")
             req = urllib.request.Request(
-                f"{self.base_url}/scan",
+                f"{self.base_url}/analyze",
                 data=payload,
                 headers=self._headers(),
                 method="POST",
             )
-            with urllib.request.urlopen(req, timeout=3.0) as resp:
-                return json.loads(resp.read().decode("utf-8"))
-        except Exception as e:
-            return None
-
-    def sanitize_prompt(self, text: str, profile: str = DEFAULT_PROFILE) -> dict | None:
-        try:
-            payload = json.dumps({"text": text, "profile": profile}).encode("utf-8")
-            req = urllib.request.Request(
-                f"{self.base_url}/sanitize",
-                data=payload,
-                headers=self._headers(),
-                method="POST",
-            )
-            with urllib.request.urlopen(req, timeout=3.0) as resp:
+            with urllib.request.urlopen(req, timeout=4.0) as resp:
                 return json.loads(resp.read().decode("utf-8"))
         except Exception:
             return None
+
+    def scan_prompt(self, text: str, profile: str = DEFAULT_PROFILE) -> dict | None:
+        return self.analyze_prompt(text, profile)
+
+    def sanitize_prompt(self, text: str, profile: str = DEFAULT_PROFILE) -> dict | None:
+        return self.analyze_prompt(text, profile)
 
     def redact_pdf(self, pdf_bytes: bytes, profile: str = DEFAULT_PROFILE) -> bytes | None:
         try:
@@ -578,7 +575,10 @@ class VeilGuardSidebar(tk.Tk):
                 # 2. Check active window
                 is_ai, title = self.detector.is_ai_tool_focused()
 
-                if is_ai:
+                if "veilguard" in title.lower():
+                    # Keep previous active AI context while user is interacting with sidebar
+                    pass
+                elif is_ai:
                     self.active_ai_app_name = title
                     self._update_context_badge(f"Active: {title[:28]}...", True)
 
@@ -590,11 +590,10 @@ class VeilGuardSidebar(tk.Tk):
 
                 else:
                     self._update_context_badge("Standing by (No AI app active)", False)
-                    # If auto-pop enabled and user switches away, stay collapsed if desired
                     was_ai_focused = False
 
                 # 3. Check clipboard for prompt changes
-                if self.clipboard_monitor_enabled.get() and is_ai:
+                if self.clipboard_monitor_enabled.get():
                     self._check_clipboard_quietly()
 
             except Exception:
@@ -629,15 +628,17 @@ class VeilGuardSidebar(tk.Tk):
             clip = self.clipboard_get()
             if clip and clip != self.last_clipboard and len(clip.strip()) > 5:
                 self.last_clipboard = clip
-                # Scan clipboard text
-                res = self.client.scan_prompt(clip)
+                res = self.client.analyze_prompt(clip)
                 if res and res.get("decision") in ("redact", "require_approval", "block"):
-                    # Sensitive data in clipboard! Glow handle and update text
                     def _alert():
                         count = len(res.get("findings", []))
+                        clean = res.get("sanitization", {}).get("sanitized_text", "")
                         self.handle_dot.config(fg=ACCENT_AMBER)
                         self.input_text.delete("1.0", tk.END)
                         self.input_text.insert("1.0", clip)
+                        if clean:
+                            self.output_text.delete("1.0", tk.END)
+                            self.output_text.insert("1.0", clean)
                         self.result_summary.config(
                             text=f"⚠️ {count} sensitive item(s) detected in clipboard!",
                             fg=ACCENT_AMBER,
@@ -654,14 +655,14 @@ class VeilGuardSidebar(tk.Tk):
         if not text:
             return
 
-        res = self.client.scan_prompt(text)
+        res = self.client.analyze_prompt(text)
         if not res:
             self.result_summary.config(text="❌ Engine unreachable at 127.0.0.1:8765", fg=ACCENT_RED)
             return
 
         findings = res.get("findings", [])
         decision = res.get("decision", "allow")
-        task = res.get("task_inference", {}).get("inferred_task", "general")
+        task = res.get("context", {}).get("task", {}).get("type", "general") if res.get("context") else "general"
 
         if decision == "allow":
             msg = f"✅ Clean (Task: {task}). Safe to submit."
@@ -670,7 +671,7 @@ class VeilGuardSidebar(tk.Tk):
             msg = f"⛔ HARD BLOCK: Secret detected! Submissions prohibited."
             color = ACCENT_RED
         else:
-            msg = f"⚠️ {decision.upper()}: {len(findings)} entity found (Task: {task})"
+            msg = f"⚠️ {decision.upper()}: {len(findings)} sensitive item(s) found (Task: {task})"
             color = ACCENT_AMBER
 
         self.result_summary.config(text=msg, fg=color)
@@ -681,13 +682,18 @@ class VeilGuardSidebar(tk.Tk):
         if not text:
             return
 
-        res = self.client.sanitize_prompt(text)
+        res = self.client.analyze_prompt(text)
         if not res:
             self.result_summary.config(text="❌ Engine unreachable at 127.0.0.1:8765", fg=ACCENT_RED)
             return
 
-        clean = res.get("sanitized_text", "")
-        entities_count = res.get("findings_count", 0)
+        sanitization = res.get("sanitization")
+        if sanitization and sanitization.get("sanitized_text"):
+            clean = sanitization.get("sanitized_text")
+        else:
+            clean = text
+
+        entities_count = len(res.get("findings", []))
 
         self.output_text.delete("1.0", tk.END)
         self.output_text.insert("1.0", clean)
