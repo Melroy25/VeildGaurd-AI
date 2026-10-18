@@ -204,6 +204,10 @@ class VeilGuardSidebar(tk.Tk):
         self._build_ui()
         self._apply_geometry()
 
+        # Auto-boot local privacy firewall engine if not already running
+        if not self.client.check_health():
+            self._boot_engine_background()
+
         # Start background polling thread
         self.poll_thread = threading.Thread(target=self._background_watcher, daemon=True)
         self.poll_thread.start()
@@ -618,14 +622,32 @@ class VeilGuardSidebar(tk.Tk):
 
     def _boot_engine_background(self):
         """Launch local Python engine in background if not running."""
+        # 1. Attempt in-process daemon thread first (fastest, cleanest in exe & venv)
+        try:
+            from desktop.app_main import start_engine_thread
+            start_engine_thread()
+            for _ in range(15):
+                time.sleep(0.1)
+                if self.client.check_health():
+                    return
+        except Exception:
+            pass
+
+        # 2. Subprocess fallback
         try:
             py = sys.executable
-            root_dir = str(Path(__file__).resolve().parent.parent)
-            subprocess.Popen(
-                [py, "-m", "veilguard_engine.server"],
-                cwd=root_dir,
-                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000),
-            )
+            if py.lower().endswith("veilguard.exe"):
+                subprocess.Popen(
+                    [py, "--engine"],
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000),
+                )
+            else:
+                root_dir = str(Path(__file__).resolve().parent.parent)
+                subprocess.Popen(
+                    [py, "-m", "veilguard_engine.server"],
+                    cwd=root_dir,
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000),
+                )
         except Exception:
             pass
 

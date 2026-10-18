@@ -4,6 +4,7 @@ from typing import AsyncGenerator, List
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from veilguard_engine.config import VERSION, HOST, PORT
@@ -62,10 +63,19 @@ app.add_middleware(
     allowed_hosts=["127.0.0.1", "localhost", "testserver"],
 )
 
-# 2. Security Middleware: Origin header verification (chrome-extension:// only)
+# 2. Security Middleware: Origin header verification (chrome-extension://, loopback, and dashboard)
 app.add_middleware(OriginCheckMiddleware)
 
-# 3. Privacy Hygiene: Custom sanitized validation error handler
+# 3. CORS Middleware: Allow chrome-extension://, loopback, and dashboard (outermost)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origin_regex=r"chrome-extension://.*|http://(127\.0\.0\.1|localhost)(:\d+)?|https://veilguard-ai\.vercel\.app",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# 4. Privacy Hygiene: Custom sanitized validation error handler
 app.add_exception_handler(RequestValidationError, sanitized_validation_exception_handler)
 
 

@@ -87,13 +87,27 @@ def test_extension_origin_accepted(client):
 
 
 def test_options_preflight_receives_no_cors_headers(client):
-    """Verify engine has NO CORS middleware, returning no Access-Control-Allow-Origin."""
+    """Verify engine returns no Access-Control-Allow-Origin for unauthorized web origins."""
     headers = {
         "Origin": "https://evil.example.com",
         "Access-Control-Request-Method": "POST",
     }
     response = client.options("/scan", headers=headers)
     assert "access-control-allow-origin" not in response.headers
+
+
+def test_options_preflight_for_extension_origin_receives_cors_headers(client):
+    """Verify chrome-extension:// preflight receives valid CORS headers."""
+    headers = {
+        "Origin": "chrome-extension://abcdefghijklmnopqrstuvwxyz123456",
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "authorization,content-type",
+    }
+    response = client.options("/analyze", headers=headers)
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == "chrome-extension://abcdefghijklmnopqrstuvwxyz123456"
+    assert "authorization" in response.headers.get("access-control-allow-headers", "").lower()
+
 
 
 def test_oversized_text_rejected_with_422(client):

@@ -99,7 +99,10 @@ class OriginCheckMiddleware(BaseHTTPMiddleware):
             allowed_prefixes = (
                 "chrome-extension://",
                 "http://127.0.0.1:",
+                "http://127.0.0.1",
                 "http://localhost:",
+                "http://localhost",
+                "https://veilguard-ai.vercel.app",
             )
             if not any(origin.startswith(prefix) for prefix in allowed_prefixes):
                 return Response(
