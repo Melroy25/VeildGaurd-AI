@@ -43,4 +43,7 @@
 | **Blue Glass Design System & Extended Workflow** | Part 2 | **Implemented** | `extension/src/shared/design-tokens.css`, `tests/unit/contrast.test.ts` (8 tests pass), `extension/onboarding.html`, `extension/src/onboarding/Onboarding.tsx` |
 | **Windows App Standalone (`VeilGuard.exe`)** | Part 4 | **Implemented** | `desktop/app_main.py` (`--selftest`, `--version`, `--engine`, `--sidebar`), `scripts/build-windows.ps1` (PyInstaller `--onedir`), `installer/VeilGuard.iss` |
 | **Static Web Demo on Vercel** | Part 5 | **Implemented** | `web/src/App.tsx`, `web/vercel.json`, `tests/unit/web-engine-parity.test.ts` (6 tests pass), `npm run build:web` |
+| **Zero-Click Loopback Auto-Pairing** | Part 5 | **Implemented** | `engine/veilguard_engine/server.py` (`/auth/pair`), `extension/src/background/engine-client.ts`, `tests/engine/test_api_security.py` (11 tests pass) |
+| **Silent Windows Auto-Start Background Service** | Part 5 | **Implemented** | `scripts/enable-autostart.ps1`, `Start-VeilGuard-Background.bat`, `Enable-AutoStart.bat` (`pythonw.exe`, Startup folder lnk) |
 | **Vault & Response Rehydration** | Phase 7 | **Future** | Post-hackathon roadmap — client-side closed Shadow DOM rehydration overlay |
+
