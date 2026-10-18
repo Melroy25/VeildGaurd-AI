@@ -31,125 +31,55 @@ from tkinter import ttk, messagebox, filedialog
 import urllib.request
 import urllib.error
 
-# Engine configuration
-ENGINE_URL = "http://127.0.0.1:8765"
-DEFAULT_PROFILE = "company"
+# Import modular core logic
+try:
+    from desktop.guard_core import (
+        is_ai_window,
+        get_foreground_window_title,
+        get_auth_token,
+        DEFAULT_ENGINE_URL,
+        DEFAULT_PROFILE,
+        AI_KEYWORDS,
+    )
+except ImportError:
+    from guard_core import (
+        is_ai_window,
+        get_foreground_window_title,
+        get_auth_token,
+        DEFAULT_ENGINE_URL,
+        DEFAULT_PROFILE,
+        AI_KEYWORDS,
+    )
 
-# AI Applications & Windows to monitor
-AI_KEYWORDS = [
-    "chatgpt",
-    "claude",
-    "copilot",
-    "gemini",
-    "perplexity",
-    "cursor",
-    "poe",
-    "ollama",
-    "lm studio",
-    "anthropic",
-    "openai",
-    "deepseek",
-]
+ENGINE_URL = DEFAULT_ENGINE_URL
 
-# Color Palette (Dark Mode)
-BG_DARK = "#101114"
-BG_PANEL = "#18191E"
-BG_CARD = "#21232B"
-BG_INPUT = "#131418"
-BORDER_COLOR = "#2D303B"
-TEXT_PRIMARY = "#F3F4F6"
-TEXT_SECONDARY = "#9CA3AF"
-TEXT_MUTED = "#6B7280"
-ACCENT_INDIGO = "#6366F1"
-ACCENT_GREEN = "#10B981"
-ACCENT_AMBER = "#F59E0B"
-ACCENT_RED = "#EF4444"
-
-
-def get_auth_token() -> str:
-    """Read local bearer token from standard location if present."""
-    token_path = Path.home() / ".veilguard" / "token"
-    if token_path.is_file():
-        try:
-            return token_path.read_text(encoding="utf-8").strip()
-        except Exception:
-            pass
-    local_token = Path(__file__).parent.parent / ".veilguard" / "token"
-    if local_token.is_file():
-        try:
-            return local_token.read_text(encoding="utf-8").strip()
-        except Exception:
-            pass
-    return "dev-local-token"
-
-
-def find_veilguard_extension_url() -> tuple[str | None, str | None]:
-    """Find the extension ID and browser binary to open the VeilGuard options dashboard."""
-    user_data_dirs = [
-        ("brave", os.path.expandvars(r"%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data"), [
-            r"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe",
-            os.path.expandvars(r"%LOCALAPPDATA%\BraveSoftware\Brave-Browser\Application\brave.exe"),
-        ]),
-        ("chrome", os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\User Data"), [
-            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-            r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-            os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
-        ]),
-        ("edge", os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\Edge\User Data"), [
-            r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-            r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
-        ]),
-    ]
-    for browser_name, base_dir, bin_candidates in user_data_dirs:
-        if not os.path.isdir(base_dir):
-            continue
-        bin_path = next((b for b in bin_candidates if os.path.isfile(b)), None)
-        for root, dirs, files in os.walk(base_dir):
-            if "Preferences" in files or "Secure Preferences" in files:
-                for fname in ("Secure Preferences", "Preferences"):
-                    p = os.path.join(root, fname)
-                    if os.path.isfile(p):
-                        try:
-                            with open(p, "r", encoding="utf-8", errors="ignore") as f:
-                                data = json.load(f)
-                            settings = data.get("extensions", {}).get("settings", {})
-                            for ext_id, ext_data in settings.items():
-                                path_val = ext_data.get("path", "")
-                                if "veilguard" in path_val.lower() or "devhost_2026" in path_val.lower():
-                                    return f"chrome-extension://{ext_id}/options.html", bin_path
-                        except Exception:
-                            continue
-    return None, None
+# Color Palette (Blue Glass Aesthetic)
+BG_DARK = "#060b14"      # deep cosmic background
+BG_PANEL = "#0a1120"     # frosted surface
+BG_CARD = "#0f172a"      # elevated card
+BG_INPUT = "#080e1a"     # deep input canvas
+BORDER_COLOR = "#1e293b" # subtle border
+TEXT_PRIMARY = "#f8fafc" # slate-50
+TEXT_SECONDARY = "#94a3b8" # slate-400
+TEXT_MUTED = "#64748b"   # slate-500
+ACCENT_INDIGO = "#0284c7" # electric sky-600 handle
+ACCENT_SKY = "#38bdf8"   # electric sky-400
+ACCENT_CYAN = "#22d3ee"  # cyan highlight
+ACCENT_GREEN = "#10b981" # emerald allow
+ACCENT_AMBER = "#f59e0b" # amber redact
+ACCENT_RED = "#ef4444"   # red block
 
 
 class ForegroundDetector:
-    """Detects active focused window title using Windows Win32 API."""
-
-    def __init__(self):
-        self.user32 = ctypes.windll.user32
+    """Detects active focused window title using Windows Win32 API via guard_core."""
 
     def get_active_window_title(self) -> str:
-        try:
-            hwnd = self.user32.GetForegroundWindow()
-            if not hwnd:
-                return ""
-            length = self.user32.GetWindowTextLengthW(hwnd)
-            if length == 0:
-                return ""
-            buf = ctypes.create_unicode_buffer(length + 1)
-            self.user32.GetWindowTextW(hwnd, buf, length + 1)
-            return buf.value or ""
-        except Exception:
-            return ""
+        return get_foreground_window_title()
 
     def is_ai_tool_focused(self) -> tuple[bool, str]:
-        title = self.get_active_window_title().lower()
-        if not title:
-            return False, ""
-        for kw in AI_KEYWORDS:
-            if kw in title:
-                return True, title
-        return False, title
+        title = self.get_active_window_title()
+        return is_ai_window(title), title
+
 
 
 class VeilGuardClient:
