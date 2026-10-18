@@ -43,6 +43,13 @@ UPI_HANDLES: Set[str] = _load_upi_handles()
 
 # Regex patterns with word boundaries
 AADHAAR_CANDIDATE_REGEX = re.compile(r"\b([2-9]\d{3}[\s-]?\d{4}[\s-]?\d{4})\b")
+AADHAAR_KEYWORD_REGEX = re.compile(
+    r"\b(aadhaar|aadhar|adhaar|adhar|uidai|uid)\b", re.IGNORECASE
+)
+AADHAAR_CONTEXT_CANDIDATE_REGEX = re.compile(
+    r"(?:\b(aadhaar|aadhar|adhaar|adhar|uidai|uid)\s*[:#-]?\s*)([0-9]{4}[\s-]?[0-9]{4}[\s-]?[0-9]{4})\b",
+    re.IGNORECASE,
+)
 PAN_CANDIDATE_REGEX = re.compile(r"\b([A-Z]{5}\d{4}[A-Z])\b", re.IGNORECASE)
 GSTIN_CANDIDATE_REGEX = re.compile(
     r"\b(\d{2}[A-Z]{5}\d{4}[A-Z][A-Z0-9]Z[A-Z0-9])\b", re.IGNORECASE
@@ -120,28 +127,68 @@ class IndiaDetector:
                 )
                 claimed_spans.add(span)
 
-        # 3. IN_AADHAAR (12 digits, first digit 2-9, Verhoeff checksum)
+        # 3. IN_AADHAAR (12 digits, first digit 2-9, Verhoeff checksum OR Aadhaar context)
+        # 3a. Contextual matches: "Aadhaar 2345 6789 0123"
+        for match in AADHAAR_CONTEXT_CANDIDATE_REGEX.finditer(text):
+            val = match.group(2)
+            digits_only = re.sub(r"[\s-]", "", val)
+            if len(digits_only) == 12:
+                start = match.start(2)
+                end = match.end(2)
+                span = (start, end)
+                if not any(s <= start < e or s < end <= e for s, e in claimed_spans):
+                    is_valid = validate_verhoeff(digits_only)
+                    findings.append(
+                        Finding(
+                            id=f"in_aadhaar_{start}",
+                            category=Category.GOVERNMENT_ID,
+                            entity_type="IN_AADHAAR",
+                            start=start,
+                            end=end,
+                            score=0.98 if is_valid else 0.95,
+                            detector=self.name,
+                            rule_id="IN_AADHAAR.verhoeff.v1" if is_valid else "IN_AADHAAR.context.v1",
+                            validated=is_valid,
+                            reason="Validated 12-digit Indian Aadhaar number with Verhoeff checksum."
+                            if is_valid
+                            else "12-digit Indian Aadhaar number detected with Aadhaar context keyword.",
+                            also_detected_as=[],
+                        )
+                    )
+                    claimed_spans.add(span)
+
+        # 3b. Standalone Verhoeff-validated or nearby context
         for match in AADHAAR_CANDIDATE_REGEX.finditer(text):
             val = match.group(1)
             digits_only = re.sub(r"[\s-]", "", val)
-            if len(digits_only) == 12 and validate_verhoeff(digits_only):
-                span = (match.start(), match.end())
-                findings.append(
-                    Finding(
-                        id=f"in_aadhaar_{match.start()}",
-                        category=Category.GOVERNMENT_ID,
-                        entity_type="IN_AADHAAR",
-                        start=match.start(),
-                        end=match.end(),
-                        score=0.98,
-                        detector=self.name,
-                        rule_id="IN_AADHAAR.verhoeff.v1",
-                        validated=True,
-                        reason="Validated 12-digit Indian Aadhaar number with Verhoeff checksum.",
-                        also_detected_as=[],
-                    )
-                )
-                claimed_spans.add(span)
+            if len(digits_only) == 12:
+                start = match.start()
+                end = match.end()
+                span = (start, end)
+                if not any(s <= start < e or s < end <= e for s, e in claimed_spans):
+                    is_valid = validate_verhoeff(digits_only)
+                    ctx_start = max(0, start - 50)
+                    ctx_end = min(len(text), end + 30)
+                    has_ctx = bool(AADHAAR_KEYWORD_REGEX.search(text[ctx_start:ctx_end]))
+                    if is_valid or has_ctx:
+                        findings.append(
+                            Finding(
+                                id=f"in_aadhaar_{start}",
+                                category=Category.GOVERNMENT_ID,
+                                entity_type="IN_AADHAAR",
+                                start=start,
+                                end=end,
+                                score=0.98 if is_valid else 0.92,
+                                detector=self.name,
+                                rule_id="IN_AADHAAR.verhoeff.v1" if is_valid else "IN_AADHAAR.context.v1",
+                                validated=is_valid,
+                                reason="Validated 12-digit Indian Aadhaar number with Verhoeff checksum."
+                                if is_valid
+                                else "12-digit Indian Aadhaar number detected in Aadhaar/UID context.",
+                                also_detected_as=[],
+                            )
+                        )
+                        claimed_spans.add(span)
 
         # 4. IN_IFSC (11 characters)
         for match in IFSC_CANDIDATE_REGEX.finditer(text):

@@ -148,7 +148,7 @@ export function scanTextInBrowser(text: string): Finding[] {
   }
 
   // 2. Government IDs: Aadhaar
-  const aadhaarRegex = /(?:(?:\b(aadhaar|uidai)\s*[:#-]?\s*)?([2-9]\d{3}[\s-]?\d{4}[\s-]?\d{4}))\b/gi;
+  const aadhaarRegex = /(?:(?:\b(aadhaar|aadhar|adhaar|adhar|uidai|uid)\s*[:#-]?\s*)?([0-9]{4}[\s-]?[0-9]{4}[\s-]?[0-9]{4}))\b/gi;
   while ((match = aadhaarRegex.exec(text)) !== null) {
     const rawVal = match[2];
     const hasContext = !!match[1];
