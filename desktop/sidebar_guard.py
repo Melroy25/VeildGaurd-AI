@@ -31,6 +31,16 @@ from tkinter import ttk, messagebox, filedialog
 import urllib.request
 import urllib.error
 
+# Enable Per-Monitor DPI awareness on Windows so Tkinter geometry matches physical display
+if sys.platform == "win32":
+    try:
+        ctypes.windll.shcore.SetProcessDpiAwareness(2)
+    except Exception:
+        try:
+            ctypes.windll.shcore.SetProcessDpiAwareness(1)
+        except Exception:
+            pass
+
 # Import modular core logic
 try:
     from desktop.guard_core import (
@@ -559,22 +569,46 @@ class VeilGuardSidebar(tk.Tk):
         # Start expanded on launch so user immediately sees the companion is active!
         self.expand()
 
+    def _get_screen_work_area(self) -> tuple[int, int, int, int]:
+        """Return (left, top, right, bottom) of usable screen work area excluding taskbar."""
+        try:
+            class RECT(ctypes.Structure):
+                _fields_ = [
+                    ('left', ctypes.c_long),
+                    ('top', ctypes.c_long),
+                    ('right', ctypes.c_long),
+                    ('bottom', ctypes.c_long)
+                ]
+            work_rect = RECT()
+            # SPI_GETWORKAREA = 0x0030
+            if ctypes.windll.user32.SystemParametersInfoW(0x0030, 0, ctypes.byref(work_rect), 0):
+                if work_rect.right > work_rect.left and work_rect.bottom > work_rect.top:
+                    return work_rect.left, work_rect.top, work_rect.right, work_rect.bottom
+        except Exception:
+            pass
+        return 0, 0, self.winfo_screenwidth(), self.winfo_screenheight()
+
     def _apply_geometry(self):
-        """Update window position and geometry."""
+        """Update window position and geometry, guaranteeing 100% full visibility within screen bounds."""
+        left, top, right, bottom = self._get_screen_work_area()
+
         if self.is_expanded:
             w = self.expanded_width
-            h = self.expanded_height
-            x = self.screen_w - w
-            y = min(self.win_y, self.screen_h - h - 30)
+            h = min(self.expanded_height, bottom - top - 30)
+            # Dock flush to the right edge of the usable work area
+            x = right - w
+            # Guarantee x is never pushed off-screen to the right or left
+            x = max(left, x)
+            y = max(top + 10, min(self.win_y, bottom - h - 10))
             try:
                 self.wm_attributes("-alpha", 0.98)
             except Exception:
                 pass
         else:
             w = self.hover_sliver_width if self.is_hovered else self.thin_sliver_width
-            h = self.collapsed_height
-            x = self.screen_w - w
-            y = min(self.win_y, self.screen_h - h - 30)
+            h = min(self.collapsed_height, bottom - top - 30)
+            x = max(left, right - w)
+            y = max(top + 10, min(self.win_y, bottom - h - 10))
             try:
                 # Sleek, visible edge dock (0.92 idle, 1.0 hover)
                 alpha = 1.0 if self.is_hovered else (0.92 if self.guard_active else 0.40)
@@ -729,8 +763,9 @@ class VeilGuardSidebar(tk.Tk):
 
     def _on_drag(self, event):
         """Drag up or down along the screen edge."""
+        _, top, _, bottom = self._get_screen_work_area()
         new_y = event.y_root - self.drag_start_y
-        new_y = max(20, min(self.screen_h - 100, new_y))
+        new_y = max(top + 10, min(bottom - 100, new_y))
         self.win_y = new_y
         self._apply_geometry()
 
