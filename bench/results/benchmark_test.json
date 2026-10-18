@@ -2,7 +2,7 @@
   "meta": {
     "split": "test",
     "n": 286,
-    "commit": "41b9fc1",
+    "commit": "2701793",
     "manifest_version": "v1",
     "dev_sha256": "716bf6bc80310eeea602406d275d679e5a583f2b422bfe2e5856fc79ef804572",
     "test_sha256": "335a7ad7739b86f71c062fc51ff43fdc239d9a4d198302c7700138ee3e28242d",
@@ -11,7 +11,7 @@
       "python": "3.13.5",
       "processor": "Intel64 Family 6 Model 140 Stepping 1, GenuineIntel"
     },
-    "test_run_number": 1
+    "test_run_number": 2
   },
   "systems": {
     "keyword": {
@@ -195,6 +195,10 @@
         "combo_risk_recall_ci95": {
           "lower": 0.081,
           "upper": 0.3268
+        },
+        "fpr_ci95": {
+          "lower": 0.0152,
+          "upper": 0.0956
         }
       },
       "decision_accuracy": null,
@@ -658,8 +662,8 @@
         }
       },
       "latency": {
-        "p50_ms": 0.07379997987300158,
-        "p95_ms": 0.1012999564409256,
+        "p50_ms": 0.3988000098615885,
+        "p95_ms": 0.7152999751269817,
         "n_measurements": 858,
         "passes": 3,
         "warmup_calls": 5
@@ -958,6 +962,10 @@
         "combo_risk_recall_ci95": {
           "lower": 0.8547,
           "upper": 0.9949
+        },
+        "fpr_ci95": {
+          "lower": 0.7625,
+          "upper": 0.9021
         }
       },
       "decision_accuracy": null,
@@ -1613,8 +1621,8 @@
         }
       },
       "latency": {
-        "p50_ms": 6.225299963261932,
-        "p95_ms": 9.730299992952496,
+        "p50_ms": 15.21609997143969,
+        "p95_ms": 23.521000053733587,
         "n_measurements": 858,
         "passes": 3,
         "warmup_calls": 5
@@ -1622,12 +1630,12 @@
     },
     "presidio_all_stock": {
       "entity_metrics": {
-        "tp": 124,
-        "fp": 465,
-        "fn": 382,
-        "precision": 0.21052631578947367,
-        "recall": 0.2450592885375494,
-        "f1": 0.2264840182648402,
+        "tp": 145,
+        "fp": 527,
+        "fn": 361,
+        "precision": 0.21577380952380953,
+        "recall": 0.2865612648221344,
+        "f1": 0.2461799660441426,
         "per_group": {
           "UK_NHS": {
             "tp": 0,
@@ -1677,6 +1685,14 @@
             "recall": 0.0,
             "f1": 0.0
           },
+          "GOV_ID": {
+            "tp": 21,
+            "fp": 62,
+            "fn": 14,
+            "precision": 0.25301204819277107,
+            "recall": 0.6,
+            "f1": 0.35593220338983056
+          },
           "LOCATION": {
             "tp": 0,
             "fp": 54,
@@ -1717,14 +1733,6 @@
             "recall": 0.0,
             "f1": 0.0
           },
-          "GOV_ID": {
-            "tp": 0,
-            "fp": 0,
-            "fn": 35,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1": 0.0
-          },
           "SECRET": {
             "tp": 0,
             "fp": 0,
@@ -1751,21 +1759,21 @@
           }
         },
         "precision_ci95": {
-          "lower": 0.1795,
-          "upper": 0.2453
+          "lower": 0.1863,
+          "upper": 0.2484
         },
         "recall_ci95": {
-          "lower": 0.2096,
-          "upper": 0.2844
+          "lower": 0.2489,
+          "upper": 0.3275
         }
       },
       "entity_metrics_strict": {
-        "tp": 122,
-        "fp": 467,
-        "fn": 384,
-        "precision": 0.2071307300509338,
-        "recall": 0.24110671936758893,
-        "f1": 0.2228310502283105,
+        "tp": 141,
+        "fp": 531,
+        "fn": 365,
+        "precision": 0.20982142857142858,
+        "recall": 0.27865612648221344,
+        "f1": 0.23938879456706283,
         "per_group": {
           "UK_NHS": {
             "tp": 0,
@@ -1815,6 +1823,14 @@
             "recall": 0.0,
             "f1": 0.0
           },
+          "GOV_ID": {
+            "tp": 19,
+            "fp": 64,
+            "fn": 16,
+            "precision": 0.2289156626506024,
+            "recall": 0.5428571428571428,
+            "f1": 0.3220338983050847
+          },
           "LOCATION": {
             "tp": 0,
             "fp": 54,
@@ -1855,14 +1871,6 @@
             "recall": 0.0,
             "f1": 0.0
           },
-          "GOV_ID": {
-            "tp": 0,
-            "fp": 0,
-            "fn": 35,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1": 0.0
-          },
           "SECRET": {
             "tp": 0,
             "fp": 0,
@@ -1891,37 +1899,41 @@
       },
       "flagged_metrics": {
         "n": 286,
-        "tp": 133,
-        "fp": 87,
-        "fn": 50,
-        "tn": 16,
-        "precision": 0.6045454545454545,
-        "recall": 0.726775956284153,
-        "f1": 0.6600496277915632,
-        "fpr": 0.8446601941747572,
+        "tp": 152,
+        "fp": 88,
+        "fn": 31,
+        "tn": 15,
+        "precision": 0.6333333333333333,
+        "recall": 0.8306010928961749,
+        "f1": 0.718676122931442,
+        "fpr": 0.8543689320388349,
         "combo_risk_recall": 0.9714285714285714,
         "combo_total": 35,
         "combo_flagged": 34,
         "precision_ci95": {
-          "lower": 0.5387,
-          "upper": 0.6668
+          "lower": 0.5707,
+          "upper": 0.6918
         },
         "recall_ci95": {
-          "lower": 0.658,
-          "upper": 0.7862
+          "lower": 0.7696,
+          "upper": 0.878
         },
         "combo_risk_recall_ci95": {
           "lower": 0.8547,
           "upper": 0.9949
+        },
+        "fpr_ci95": {
+          "lower": 0.7735,
+          "upper": 0.9097
         }
       },
       "decision_accuracy": null,
       "utility": {
-        "required_retained_rate": 0.6353591160220995,
-        "required_retained_count": 115,
+        "required_retained_rate": 0.6243093922651933,
+        "required_retained_count": 113,
         "required_total": 181,
-        "sensitive_removed_rate": 0.4881422924901186,
-        "sensitive_removed_count": 247,
+        "sensitive_removed_rate": 0.5434782608695652,
+        "sensitive_removed_count": 275,
         "sensitive_total": 506,
         "note": "Retention rate does not prove an AI would answer identically."
       },
@@ -1930,11 +1942,11 @@
           "n": 52,
           "entity_metrics": {
             "tp": 80,
-            "fp": 122,
+            "fp": 155,
             "fn": 40,
-            "precision": 0.39603960396039606,
+            "precision": 0.3404255319148936,
             "recall": 0.6666666666666666,
-            "f1": 0.49689440993788814,
+            "f1": 0.4507042253521127,
             "per_group": {
               "UK_NHS": {
                 "tp": 0,
@@ -1979,6 +1991,14 @@
               "US_DRIVER_LICENSE": {
                 "tp": 0,
                 "fp": 34,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "GOV_ID": {
+                "tp": 0,
+                "fp": 33,
                 "fn": 0,
                 "precision": 0.0,
                 "recall": 0.0,
@@ -2045,13 +2065,21 @@
         "india_ids": {
           "n": 56,
           "entity_metrics": {
-            "tp": 0,
-            "fp": 52,
-            "fn": 73,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1": 0.0,
+            "tp": 19,
+            "fp": 60,
+            "fn": 54,
+            "precision": 0.24050632911392406,
+            "recall": 0.2602739726027397,
+            "f1": 0.25,
             "per_group": {
+              "GOV_ID": {
+                "tp": 19,
+                "fp": 8,
+                "fn": 15,
+                "precision": 0.7037037037037037,
+                "recall": 0.5588235294117647,
+                "f1": 0.6229508196721312
+              },
               "US_BANK_NUMBER": {
                 "tp": 0,
                 "fp": 20,
@@ -2099,38 +2127,30 @@
                 "precision": 0.0,
                 "recall": 0.0,
                 "f1": 0.0
-              },
-              "GOV_ID": {
-                "tp": 0,
-                "fp": 0,
-                "fn": 34,
-                "precision": 0.0,
-                "recall": 0.0,
-                "f1": 0.0
               }
             }
           },
           "flagged_metrics": {
             "n": 56,
-            "tp": 23,
-            "fp": 1,
-            "fn": 31,
-            "tn": 1,
-            "precision": 0.9583333333333334,
-            "recall": 0.42592592592592593,
-            "f1": 0.5897435897435898,
-            "fpr": 0.5,
+            "tp": 42,
+            "fp": 2,
+            "fn": 12,
+            "tn": 0,
+            "precision": 0.9545454545454546,
+            "recall": 0.7777777777777778,
+            "f1": 0.8571428571428572,
+            "fpr": 1.0,
             "combo_risk_recall": 0.0,
             "combo_total": 0,
             "combo_flagged": 0
           },
           "utility": {
-            "required_retained_count": 19,
+            "required_retained_count": 18,
             "required_total": 20,
-            "required_retained_rate": 0.95,
-            "sensitive_removed_count": 23,
+            "required_retained_rate": 0.9,
+            "sensitive_removed_count": 47,
             "sensitive_total": 73,
-            "sensitive_removed_rate": 0.3150684931506849
+            "sensitive_removed_rate": 0.6438356164383562
           },
           "low_confidence": false
         },
@@ -2138,7 +2158,7 @@
           "n": 30,
           "entity_metrics": {
             "tp": 0,
-            "fp": 60,
+            "fp": 61,
             "fn": 30,
             "precision": 0.0,
             "recall": 0.0,
@@ -2161,6 +2181,14 @@
                 "f1": 0.0
               },
               "LOCATION": {
+                "tp": 0,
+                "fp": 1,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "GOV_ID": {
                 "tp": 0,
                 "fp": 1,
                 "fn": 0,
@@ -2434,7 +2462,7 @@
           "n": 18,
           "entity_metrics": {
             "tp": 0,
-            "fp": 27,
+            "fp": 47,
             "fn": 15,
             "precision": 0.0,
             "recall": 0.0,
@@ -2459,6 +2487,14 @@
               "DATE_TIME": {
                 "tp": 0,
                 "fp": 10,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "GOV_ID": {
+                "tp": 0,
+                "fp": 20,
                 "fn": 0,
                 "precision": 0.0,
                 "recall": 0.0,
@@ -2492,9 +2528,9 @@
             "required_retained_count": 6,
             "required_total": 25,
             "required_retained_rate": 0.24,
-            "sensitive_removed_count": 0,
+            "sensitive_removed_count": 4,
             "sensitive_total": 15,
-            "sensitive_removed_rate": 0.0
+            "sensitive_removed_rate": 0.26666666666666666
           },
           "low_confidence": true
         },
@@ -2502,11 +2538,11 @@
           "n": 34,
           "entity_metrics": {
             "tp": 14,
-            "fp": 50,
+            "fp": 52,
             "fn": 2,
-            "precision": 0.21875,
+            "precision": 0.21212121212121213,
             "recall": 0.875,
-            "f1": 0.35,
+            "f1": 0.3414634146341463,
             "per_group": {
               "PERSON": {
                 "tp": 14,
@@ -2527,6 +2563,14 @@
               "LOCATION": {
                 "tp": 0,
                 "fp": 17,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "GOV_ID": {
+                "tp": 0,
+                "fp": 2,
                 "fn": 0,
                 "precision": 0.0,
                 "recall": 0.0,
@@ -2557,9 +2601,9 @@
             "combo_flagged": 0
           },
           "utility": {
-            "required_retained_count": 21,
+            "required_retained_count": 20,
             "required_total": 65,
-            "required_retained_rate": 0.3230769230769231,
+            "required_retained_rate": 0.3076923076923077,
             "sensitive_removed_count": 14,
             "sensitive_total": 16,
             "sensitive_removed_rate": 0.875
@@ -2568,8 +2612,8 @@
         }
       },
       "latency": {
-        "p50_ms": 6.059899984393269,
-        "p95_ms": 8.712999988347292,
+        "p50_ms": 15.657199954148382,
+        "p95_ms": 23.866700008511543,
         "n_measurements": 858,
         "passes": 3,
         "warmup_calls": 5
@@ -2772,6 +2816,10 @@
         "combo_risk_recall_ci95": {
           "lower": 0.0,
           "upper": 0.0989
+        },
+        "fpr_ci95": {
+          "lower": 0.0,
+          "upper": 0.036
         }
       },
       "decision_accuracy": {
@@ -3337,8 +3385,8 @@
         }
       },
       "latency": {
-        "p50_ms": 6.479900039266795,
-        "p95_ms": 11.919999960809946,
+        "p50_ms": 17.332200019154698,
+        "p95_ms": 35.76560004148632,
         "n_measurements": 858,
         "passes": 3,
         "warmup_calls": 5
@@ -3541,6 +3589,10 @@
         "combo_risk_recall_ci95": {
           "lower": 0.6411,
           "upper": 0.8996
+        },
+        "fpr_ci95": {
+          "lower": 0.0,
+          "upper": 0.036
         }
       },
       "decision_accuracy": {
@@ -4146,8 +4198,8 @@
         }
       },
       "latency": {
-        "p50_ms": 19.287900009658188,
-        "p95_ms": 29.883400013204664,
+        "p50_ms": 42.31510002864525,
+        "p95_ms": 81.3207000028342,
         "n_measurements": 858,
         "passes": 3,
         "warmup_calls": 5
