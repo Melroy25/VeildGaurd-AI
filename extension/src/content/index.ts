@@ -75,10 +75,21 @@ chrome.runtime.onMessage.addListener(
           return;
         }
 
-        // Fallback for mock site or standard composer
+        // Resilient fallback for mock site, custom components, or activeElement
         const composer = adapter.getComposer();
         const target = e.target as Node | null;
-        if (composer && target && (composer === target || composer.contains(target))) {
+        const active = document.activeElement;
+
+        const isInsideComposer = Boolean(composer && target && (composer === target || composer.contains(target)));
+        const isActiveEditable = Boolean(
+          active instanceof HTMLElement &&
+            (active.isContentEditable ||
+              active.tagName === "TEXTAREA" ||
+              active.tagName === "RICH-TEXTAREA" ||
+              active.getAttribute("role") === "textbox")
+        );
+
+        if (isInsideComposer || isActiveEditable) {
           handleInterception(adapter, e, "enter");
         }
       }
