@@ -98,8 +98,26 @@ class PresidioAllStock(_PresidioBase):
     """
 
     def __init__(self) -> None:
+        from presidio_analyzer.predefined_recognizers import (
+            InAadhaarRecognizer,
+            InGstinRecognizer,
+            InPanRecognizer,
+            InPassportRecognizer,
+            InVehicleRegistrationRecognizer,
+            InVoterRecognizer,
+        )
+
         registry = RecognizerRegistry()
         registry.load_predefined_recognizers(languages=["en"])
+        for rec_cls in (
+            InAadhaarRecognizer,
+            InGstinRecognizer,
+            InPanRecognizer,
+            InPassportRecognizer,
+            InVehicleRegistrationRecognizer,
+            InVoterRecognizer,
+        ):
+            registry.add_recognizer(rec_cls())
         engine = AnalyzerEngine(registry=registry)
         super().__init__(engine)
 

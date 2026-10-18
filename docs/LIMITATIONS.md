@@ -109,3 +109,19 @@
 - Claude, Gemini, Copilot, and other AI sites are **not supported** in Phase 4.
 - The extension manifest grants host permissions only for `https://chatgpt.com/*` and `https://*.chatgpt.com/*` (in addition to the mock test site). No other AI sites receive injected scripts.
 - Support for additional sites is scoped to future phase expansion cycles.
+
+## 19. Presidio Email TLD Whitelisting (`.example` Domain Misses)
+- Microsoft Presidio's stock `EmailRecognizer` validates email top-level domains against an internal whitelist of real-world TLDs (`.com`, `.org`, `.net`, `.in`, etc.) and does not recognize RFC 2606 reserved domains (`.example`, `.test`).
+- In synthetic test corpora where email addresses utilize `.example` domains (e.g. `gaurav.rao@startup.example`), Presidio's recognizer fails to extract the email address.
+- Regex-only baselines that match any alphanumeric sequence after `@` catch these domains, leading to higher keyword baseline F1 on synthetic email-only prompts.
+
+## 20. Strict Luhn Checksum Enforcement on Credit Card Numbers
+- VeilGuard relies on Presidio's `CreditCardRecognizer`, which strictly validates the Luhn algorithm checksum.
+- Randomly generated 16-digit synthetic test sequences that do not satisfy the Luhn algorithm (e.g. `4412 8371 5636 9383`) are intentionally rejected as non-card numbers.
+- Unvalidated regex filters flag any 16-digit sequence without checking mathematical validity, outscoring checksum-aware recognizers on synthetic datasets with invalid card numbers.
+
+## 21. Multi-Detector Precision Trade-off in Indian ID Contexts
+- In Indian government ID evaluation prompts (Aadhaar, PAN, GSTIN), VeilGuard detects the identity numbers with 100% recall.
+- However, secondary detectors (spaCy NER and quasi-identifier detectors) frequently extract adjacent context tokens such as `"KYC"` (classified as `QUASI`) or `"Verify Aadhaar"` (spurious `PERSON` tag from spaCy).
+- On benchmark items where ground truth only annotates the identifier itself, these extra extractions count as false positives in token/entity precision calculations, lowering VeilGuard's entity F1 relative to single-pattern keyword matchers that produce zero contextual extractions.
+

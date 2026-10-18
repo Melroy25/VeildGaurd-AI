@@ -38,7 +38,7 @@ All figures below are sourced directly from verified test artifacts in `bench/re
 | **VeilGuard (Type-Based)** | 43.4% | 41.3% | 100.0% | 56.8% | 0.0% | 0.0% | 100.0% |
 | **VeilGuard AI (Full Intelligence)** | **73.2%** | **65.3%** | **100.0%** | **84.2%** | **0.0%** | **80.0%** | **100.0%** |
 
-*See full methodology and per-category breakdowns in [docs/EVIDENCE.md](./docs/EVIDENCE.md) and [bench/results/BENCHMARK.md](./bench/results/BENCHMARK.md).*
+*Note on FPR & Combination Recall:* VeilGuard achieves 0.0% FPR (0 of 103 benign items flagged, 95% Wilson CI [0.0%, 3.6%]) through the combination of deterministic policy rules (`allow_person_alone`, `allow_benign_code`), checksum validation, and task necessity gating (not checksums alone). Stock Presidio's 97.1% combination recall is driven by an 84.5% false positive rate (flagging 87 of 103 benign prompts indiscriminately), whereas VeilGuard achieves 80.0% combination recall with zero false positives. Full methodology in [docs/EVIDENCE.md](./docs/EVIDENCE.md) and [bench/results/BENCHMARK.md](./bench/results/BENCHMARK.md).
 
 ---
 

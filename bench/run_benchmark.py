@@ -160,6 +160,7 @@ _ENTITY_GROUP_MAP = {
     "PERSON": "PERSON", "PHONE_NUMBER": "PHONE", "EMAIL_ADDRESS": "EMAIL",
     "EMAIL": "EMAIL", "IN_MOBILE": "PHONE", "IN_AADHAAR": "GOV_ID",
     "IN_PAN": "GOV_ID", "IN_GSTIN": "GOV_ID", "US_SSN": "GOV_ID",
+    "IN_PASSPORT": "GOV_ID", "IN_VEHICLE_REGISTRATION": "GOV_ID", "IN_VOTER": "GOV_ID",
     "CREDIT_CARD": "FINANCIAL_ACCOUNT", "IN_BANK_ACCOUNT": "FINANCIAL_ACCOUNT",
     "IBAN_CODE": "FINANCIAL_ACCOUNT", "UPI_ID": "FINANCIAL_ACCOUNT",
     "IN_IFSC": "FINANCIAL_ACCOUNT", "API_KEY": "SECRET",
@@ -337,6 +338,7 @@ def run_benchmark(
     split: str,
     system_names: List[str],
     confirm_frozen: bool = False,
+    reason: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Run all systems on the requested split, return results dict."""
     BENCH_RESULTS.mkdir(parents=True, exist_ok=True)
@@ -493,6 +495,9 @@ def run_benchmark(
                 "combo_risk_recall_ci95": _wci(
                     flagged_metrics["combo_flagged"], flagged_metrics["combo_total"]
                 ),
+                "fpr_ci95": _wci(
+                    flagged_metrics["fp"], flagged_metrics["fp"] + flagged_metrics["tn"]
+                ),
             },
             "decision_accuracy": decision_accuracy,
             "utility": utility,
@@ -502,12 +507,12 @@ def run_benchmark(
 
     # ── Log and save ──────────────────────────────────────────────────────────
     if split == "test":
-        _append_test_run_log(results, manifest)
+        _append_test_run_log(results, manifest, reason=reason)
 
     return results
 
 
-def _append_test_run_log(results: Dict[str, Any], manifest: Dict[str, Any]) -> None:
+def _append_test_run_log(results: Dict[str, Any], manifest: Dict[str, Any], reason: Optional[str] = None) -> None:
     """Append one line to bench/results/test_run_log.jsonl."""
     log_path = BENCH_RESULTS / "test_run_log.jsonl"
     # Determine run number
@@ -521,6 +526,7 @@ def _append_test_run_log(results: Dict[str, Any], manifest: Dict[str, Any]) -> N
         "run_number": run_number,
         "timestamp": _now_iso(),
         "git_commit": results["meta"]["commit"],
+        "reason": reason,
         "dev_sha256": results["meta"]["dev_sha256"],
         "test_sha256": results["meta"]["test_sha256"],
         "n_records": results["meta"]["n"],
@@ -632,14 +638,16 @@ def generate_markdown_report(results: Dict[str, Any], split: str) -> str:
     # Flagged-item metrics
     a("## Flagged-Item Metrics")
     a("")
-    a("| System | Precision | Recall | F1 | FPR | P CI95 | R CI95 |")
+    a("| System | Precision | Recall | F1 | FPR (Count / Benign N, 95% CI) | P CI95 | R CI95 |")
     a("|---|---|---|---|---|---|---|")
     for name in sys_names:
         fm = systems[name]["flagged_metrics"]
         p_ci = fm.get("precision_ci95", {})
         r_ci = fm.get("recall_ci95", {})
+        fpr_ci = fm.get("fpr_ci95", {})
+        fpr_str = f"{_pct(fm['fpr'])} ({fm['fp']}/{fm['fp'] + fm['tn']}, up to {_pct(fpr_ci.get('upper'))})"
         a(f"| {name} | {_pct(fm['precision'])} | {_pct(fm['recall'])} "
-          f"| {_pct(fm['f1'])} | {_pct(fm['fpr'])} "
+          f"| {_pct(fm['f1'])} | {fpr_str} "
           f"| {_pct(p_ci.get('lower'))}–{_pct(p_ci.get('upper'))} "
           f"| {_pct(r_ci.get('lower'))}–{_pct(r_ci.get('upper'))} |")
     a("")
@@ -729,7 +737,7 @@ def generate_markdown_report(results: Dict[str, Any], split: str) -> str:
     # Where VeilGuard did not win
     a("## Where VeilGuard Did Not Win")
     a("")
-    a("Categories where a baseline matched or beat VeilGuard Full on Entity F1:")
+    a("Categories and metrics where a baseline matched or beat VeilGuard Full:")
     a("")
     if "veilguard_full" in systems:
         vg_f1_per_cat = {
@@ -747,6 +755,17 @@ def generate_markdown_report(results: Dict[str, Any], split: str) -> str:
                 if bl_f1 >= vg_f1 and (bl_f1 > 0 or vg_f1 > 0):
                     a(f"- **{cat}**: `{name}` F1={_pct(bl_f1)} vs VeilGuard Full F1={_pct(vg_f1)}")
                     any_loss = True
+
+        # Combination-risk recall comparison
+        vg_combo = systems["veilguard_full"]["flagged_metrics"].get("combo_risk_recall", 0.0)
+        vg_fpr = systems["veilguard_full"]["flagged_metrics"].get("fpr", 0.0)
+        for name in [n for n in sys_names if n != "veilguard_full"]:
+            bl_combo = systems[name]["flagged_metrics"].get("combo_risk_recall", 0.0)
+            bl_fpr = systems[name]["flagged_metrics"].get("fpr", 0.0)
+            if bl_combo > vg_combo:
+                a(f"- **combination-risk recall**: `{name}` recall={_pct(bl_combo)} vs VeilGuard Full recall={_pct(vg_combo)} — explained by `{name}`'s {_pct(bl_fpr)} false positive rate on benign prompts (flagging almost all text indiscriminately) versus VeilGuard's {_pct(vg_fpr)} FPR.")
+                any_loss = True
+
         if not any_loss:
             a("- None on this run.")
     else:
@@ -816,6 +835,8 @@ def main() -> None:
                         help="Systems to evaluate. Use 'all' for all five.")
     parser.add_argument("--confirm-frozen", action="store_true",
                         help="Required when --split test: acknowledges sealed dataset.")
+    parser.add_argument("--reason", type=str, default=None,
+                        help="Reason for running test split (logged in test_run_log.jsonl).")
     parser.add_argument("--out", type=Path, default=None,
                         help="Override output JSON path.")
     args = parser.parse_args()
@@ -829,6 +850,7 @@ def main() -> None:
         split=args.split,
         system_names=args.systems,
         confirm_frozen=args.confirm_frozen,
+        reason=args.reason,
     )
 
     # Write JSON

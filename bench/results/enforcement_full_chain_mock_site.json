@@ -1,131 +1,11 @@
 {
-  "timestamp": "2026-10-17T15:36:43.977Z",
+  "timestamp": "2026-10-18T02:53:11.159Z",
   "playwright_version": "1.50.1",
   "chromium_channel": "chromium",
   "trials_per_cell": 20,
   "flagged_prompt_type": "PERSON+PHONE combination (Indian PII)",
   "note": "Phase 3b full-chain: real Python engine at 127.0.0.1:8765. All data synthetic.",
   "cells": [
-    {
-      "name": "textarea/form/click",
-      "status": "pass",
-      "composer": "textarea",
-      "wiring": "form",
-      "path": "click",
-      "state": "dom",
-      "transport": "fetch",
-      "engine_decision_observed": "redact",
-      "flagged_trials": 20,
-      "flagged_leaked": 0,
-      "flagged_blocked": 20,
-      "sanitized_delivered_correctly": 20,
-      "benign_trials": 20,
-      "benign_delivered_correctly": 20,
-      "overlay_latency_ms": {
-        "median": 162,
-        "max": 177
-      }
-    },
-    {
-      "name": "textarea/form/enter",
-      "status": "pass",
-      "composer": "textarea",
-      "wiring": "form",
-      "path": "enter",
-      "state": "dom",
-      "transport": "fetch",
-      "engine_decision_observed": "redact",
-      "flagged_trials": 20,
-      "flagged_leaked": 0,
-      "flagged_blocked": 20,
-      "sanitized_delivered_correctly": 20,
-      "benign_trials": 20,
-      "benign_delivered_correctly": 20,
-      "overlay_latency_ms": {
-        "median": 131,
-        "max": 139
-      }
-    },
-    {
-      "name": "textarea/form/requestSubmit",
-      "status": "pass",
-      "composer": "textarea",
-      "wiring": "form",
-      "path": "requestSubmit",
-      "state": "dom",
-      "transport": "fetch",
-      "engine_decision_observed": "redact",
-      "flagged_trials": 20,
-      "flagged_leaked": 0,
-      "flagged_blocked": 20,
-      "sanitized_delivered_correctly": 20,
-      "benign_trials": 20,
-      "benign_delivered_correctly": 20,
-      "overlay_latency_ms": {
-        "median": 121,
-        "max": 133
-      }
-    },
-    {
-      "name": "textarea/click/click",
-      "status": "pass",
-      "composer": "textarea",
-      "wiring": "click",
-      "path": "click",
-      "state": "dom",
-      "transport": "fetch",
-      "engine_decision_observed": "redact",
-      "flagged_trials": 20,
-      "flagged_leaked": 0,
-      "flagged_blocked": 20,
-      "sanitized_delivered_correctly": 20,
-      "benign_trials": 20,
-      "benign_delivered_correctly": 20,
-      "overlay_latency_ms": {
-        "median": 163,
-        "max": 171
-      }
-    },
-    {
-      "name": "textarea/click/enter",
-      "status": "pass",
-      "composer": "textarea",
-      "wiring": "click",
-      "path": "enter",
-      "state": "dom",
-      "transport": "fetch",
-      "engine_decision_observed": "redact",
-      "flagged_trials": 20,
-      "flagged_leaked": 0,
-      "flagged_blocked": 20,
-      "sanitized_delivered_correctly": 20,
-      "benign_trials": 20,
-      "benign_delivered_correctly": 20,
-      "overlay_latency_ms": {
-        "median": 128,
-        "max": 178
-      }
-    },
-    {
-      "name": "contenteditable/form/click",
-      "status": "pass",
-      "composer": "contenteditable",
-      "wiring": "form",
-      "path": "click",
-      "state": "dom",
-      "transport": "fetch",
-      "engine_decision_observed": "redact",
-      "flagged_trials": 20,
-      "flagged_leaked": 0,
-      "flagged_blocked": 20,
-      "sanitized_delivered_correctly": 20,
-      "benign_trials": 20,
-      "benign_delivered_correctly": 20,
-      "overlay_latency_ms": {
-        "median": 157,
-        "max": 171
-      }
-    },
     {
       "name": "contenteditable/form/enter",
       "status": "pass",
@@ -142,8 +22,8 @@
       "benign_trials": 20,
       "benign_delivered_correctly": 20,
       "overlay_latency_ms": {
-        "median": 124,
-        "max": 455
+        "median": 212,
+        "max": 306
       }
     },
     {
@@ -162,8 +42,8 @@
       "benign_trials": 20,
       "benign_delivered_correctly": 20,
       "overlay_latency_ms": {
-        "median": 124,
-        "max": 125
+        "median": 211,
+        "max": 267
       }
     },
     {
@@ -182,8 +62,8 @@
       "benign_trials": 20,
       "benign_delivered_correctly": 20,
       "overlay_latency_ms": {
-        "median": 142,
-        "max": 157
+        "median": 246,
+        "max": 278
       }
     },
     {
@@ -202,8 +82,8 @@
       "benign_trials": 20,
       "benign_delivered_correctly": 20,
       "overlay_latency_ms": {
-        "median": 125,
-        "max": 180
+        "median": 215,
+        "max": 302
       }
     },
     {
@@ -222,8 +102,8 @@
       "benign_trials": 20,
       "benign_delivered_correctly": 20,
       "overlay_latency_ms": {
-        "median": 151,
-        "max": 169
+        "median": 309,
+        "max": 506
       }
     },
     {
@@ -242,8 +122,8 @@
       "benign_trials": 20,
       "benign_delivered_correctly": 20,
       "overlay_latency_ms": {
-        "median": 156,
-        "max": 173
+        "median": 256,
+        "max": 311
       }
     },
     {
@@ -262,8 +142,8 @@
       "benign_trials": 20,
       "benign_delivered_correctly": 20,
       "overlay_latency_ms": {
-        "median": 82,
-        "max": 101
+        "median": 151,
+        "max": 211
       }
     },
     {
@@ -282,8 +162,8 @@
       "benign_trials": 20,
       "benign_delivered_correctly": 20,
       "overlay_latency_ms": {
-        "median": 83,
-        "max": 98
+        "median": 165,
+        "max": 195
       }
     }
   ]

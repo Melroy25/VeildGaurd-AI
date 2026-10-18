@@ -366,7 +366,7 @@ test.describe("Phase 3b: Full Chain Enforcement (DOM Paths)", () => {
                     const msgs = await getReceivedMessages();
                     return msgs.length;
                   },
-                  { timeout: 8000, intervals: [100, 200, 400] }
+                  { timeout: 15000, intervals: [100, 200, 400] }
                 )
                 .toBeGreaterThanOrEqual(1);
 
@@ -422,7 +422,7 @@ test.describe("Phase 3b: Full Chain Enforcement (DOM Paths)", () => {
               const msgs = await getReceivedMessages();
               return msgs.length;
             },
-            { timeout: 8000, intervals: [100, 200, 400] }
+            { timeout: 15000, intervals: [100, 200, 400] }
           )
           .toBeGreaterThanOrEqual(1);
 

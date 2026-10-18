@@ -85,7 +85,7 @@
 | **Entity F1 (50% IoU)** | 56.3% | 22.6% | **73.2%** | **+50.6% over Presidio** |
 | **Exact Boundary Entity F1** | 51.4% | 22.3% | **65.3%** | **+43.0% over Presidio** |
 | **Quasi-ID Combination Recall** | 17.1% | 97.1% *(with 84.5% FPR)* | **80.0%** | **4.7x over Regex** |
-| **False Positive Rate (Benign Prompts)**| 3.9% | 84.5% *(destroys code)* | **0.0%** | **Zero Benign Destruction** |
+| **False Positive Rate (Benign Prompts)**| 3.9% (4/103) | 84.5% (87/103) *(destroys code)* | **0.0% (0/103, 95% CI ≤3.6%)** | **Policy + Checksum + Necessity** |
 | **Required Token Retention** | 96.7% | 63.5% | **100.0%** | **Full AI Utility Preserved** |
 | **End-to-End Leakage Trials** | N/A | N/A | **0 / 280 Leaks (14/14 Pass)**| **100% Verified Enforcement** |
 

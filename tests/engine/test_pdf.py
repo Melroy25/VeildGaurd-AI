@@ -232,3 +232,30 @@ def test_api_pdf_limit_413_rejection(test_client: TestClient, auth_headers: dict
         headers=auth_headers,
     )
     assert resp.status_code == 413
+
+
+def test_api_pdf_verification_failure_withholds_download(
+    test_client: TestClient,
+    auth_headers: dict[str, str],
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Verify that when dual-extractor verification fails, download is withheld (HTTP 500, no PDF stream)."""
+    import veilguard_engine.pdf
+
+    def fake_redact(*args, **kwargs):
+        raise RedactionVerificationError("Simulated residual leak caught by pypdf extractor")
+
+    monkeypatch.setattr(veilguard_engine.pdf, "redact_pdf", fake_redact)
+
+    sample_text = ["Employee: Rahul Sharma"]
+    pdf_bytes = create_synthetic_pdf(sample_text)
+
+    resp = test_client.post(
+        "/pdf/redact",
+        content=pdf_bytes,
+        headers=auth_headers,
+    )
+    assert resp.status_code == 500
+    assert "Redaction verification failed" in resp.json()["detail"]
+    assert "application/pdf" not in resp.headers.get("content-type", "")
+

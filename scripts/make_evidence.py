@@ -177,6 +177,7 @@ def generate_evidence_markdown(root: Path) -> str:
         )
     lines.append("")
     lines.append("> **Key finding:** VeilGuard AI achieves **80.0% combination recall** through context scoring and quasi-identifier detection, compared to only **17.1%** for keyword rules.")
+    lines.append("> *Note on Baseline Comparison:* Stock Presidio flagged 97.1% of combination prompts, but at the cost of an **84.5% false positive rate** on benign text (flagging 87 of 103 benign prompts indiscriminately). VeilGuard achieves 80.0% combination recall while maintaining **0.0% FPR** on benign prompts.")
     lines.append("")
 
     # Section 5: Utility Preservation
@@ -184,20 +185,26 @@ def generate_evidence_markdown(root: Path) -> str:
     lines.append("")
     lines.append("A security tool that redacts prompt instructions or necessary technical inputs destroys AI utility. VeilGuard infers task intent and necessity to preserve utility:")
     lines.append("")
-    lines.append("| System | Required Tokens Retained | Sensitive Entities Scrubbed | False Positive Rate |")
+    lines.append("| System | Required Tokens Retained | Sensitive Entities Scrubbed | False Positive Rate (Counts, 95% CI) |")
     lines.append("|---|---|---|---|")
     for sys_key in system_names:
         s_data = systems.get(sys_key, {})
         u_metrics = s_data.get("utility", {})
         f_metrics = s_data.get("flagged_metrics", {})
+        fp_cnt = f_metrics.get("fp", 0)
+        tn_cnt = f_metrics.get("tn", 0)
+        benign_total = fp_cnt + tn_cnt
+        fpr_val = f_metrics.get("fpr", 0.0)
+        fpr_ci = f_metrics.get("fpr_ci95", {})
+        ci_str = f", 95% CI up to {format_pct(fpr_ci.get('upper'))}" if fpr_ci else ""
         lines.append(
             f"| {display_names.get(sys_key, sys_key)} | "
             f"{format_pct(u_metrics.get('required_retained_rate'))} ({u_metrics.get('required_retained_count', 0)}/{u_metrics.get('required_total', 0)}) | "
             f"{format_pct(u_metrics.get('sensitive_removed_rate'))} ({u_metrics.get('sensitive_removed_count', 0)}/{u_metrics.get('sensitive_total', 0)}) | "
-            f"{format_pct(f_metrics.get('fpr'))} |"
+            f"{format_pct(fpr_val)} ({fp_cnt}/{benign_total}{ci_str}) |"
         )
     lines.append("")
-    lines.append("> **Key finding:** Stock Presidio exhibits an **84.5% false positive rate** on benign and code prompts, heavily destroying benign tokens. VeilGuard maintains **100.0% required token retention** with **0.0% FPR** on benign items.")
+    lines.append("> **Key finding:** Stock Presidio exhibits an **84.5% false positive rate** (87 of 103 benign items falsely flagged) on benign and code prompts, heavily destroying benign tokens. VeilGuard maintains **100.0% required token retention** with **0 of 103 false positives (0.0% FPR, 95% CI [0.0%, 3.6%])** on benign items through the combination of deterministic policy rules (`allow_person_alone`, `allow_benign_code`), checksum/structural validation, and task necessity gating (not checksum validators alone).")
     lines.append("")
 
     # Section 6: Browser Enforcement Full-Chain Matrix
