@@ -209,9 +209,15 @@ export const Popup: React.FC = () => {
       }
     }
 
-    // Production: query the active tab in the current window
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      sendStatusQuery(tabs?.[0]?.id);
+    // Production: query active tab in the browser window
+    chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+      if (tabs?.[0]?.id != null) {
+        sendStatusQuery(tabs[0].id);
+      } else {
+        chrome.tabs.query({ active: true, currentWindow: true }, (fallbackTabs) => {
+          sendStatusQuery(fallbackTabs?.[0]?.id);
+        });
+      }
     });
   }, []);
 

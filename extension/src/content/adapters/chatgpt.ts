@@ -39,7 +39,10 @@ export const CHATGPT_SELECTORS = {
     "#composer-submit-button",
     "button[aria-label='Send prompt']",
     "button[aria-label='Send message']",
+    "button[aria-label*='Send']",
+    "button[data-testid*='send']",
     "button[data-testid='composer-submit-button']",
+    "button[type='submit']",
   ],
 
   // Secondary (edit message) turn container and buttons
@@ -232,6 +235,20 @@ export class ChatGPTAdapter implements SiteAdapter {
 
     if (isInsideMainComposer || isInsideMainSend || isInsideMainForm) {
       return this.createMainContext();
+    }
+
+    // 3. Resilient fallback: Any contenteditable or textarea on ChatGPT is treated as composer
+    const editable = target.closest<HTMLElement>('[contenteditable="true"], textarea');
+    if (editable) {
+      return {
+        kind: "main",
+        getText: () => {
+          if (editable instanceof HTMLTextAreaElement) return editable.value;
+          return normalizeForCompare(editable.innerText || editable.textContent || "");
+        },
+        setText: (text: string) => this.writeToElement(editable, text),
+        triggerSend: () => this.triggerSend(),
+      };
     }
 
     return null;
