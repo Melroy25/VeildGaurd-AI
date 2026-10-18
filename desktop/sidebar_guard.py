@@ -204,9 +204,9 @@ class VeilGuardSidebar(tk.Tk):
         self._build_ui()
         self._apply_geometry()
 
-        # Auto-boot local privacy firewall engine if not already running
+        # Auto-boot local privacy firewall engine in background thread (non-blocking)
         if not self.client.check_health():
-            self._boot_engine_background()
+            threading.Thread(target=self._boot_engine_background, daemon=True).start()
 
         # Start background polling thread
         self.poll_thread = threading.Thread(target=self._background_watcher, daemon=True)
@@ -656,15 +656,14 @@ class VeilGuardSidebar(tk.Tk):
         if not self.client.check_health():
             self.master_btn.config(text="⏳ STARTING...", bg=ACCENT_AMBER)
             self.update()
-            self._boot_engine_background()
-            time.sleep(1.5)
-            if self.client.check_health():
-                self.guard_active = True
-                self.master_btn.config(text="🟢 GUARD ON", bg=ACCENT_GREEN)
-                self.handle_frame.config(bg=ACCENT_INDIGO)
-                self.context_label.config(text="Guard Active")
-                self._apply_geometry()
-                return
+
+            def _boot_and_update():
+                self._boot_engine_background()
+                # After boot attempt, update UI from main thread
+                self.after(0, self._on_engine_boot_complete)
+
+            threading.Thread(target=_boot_and_update, daemon=True).start()
+            return
 
         self.guard_active = not self.guard_active
         if self.guard_active:
@@ -676,6 +675,18 @@ class VeilGuardSidebar(tk.Tk):
             self.handle_frame.config(bg="#374151")
             self.context_label.config(text="Guard Paused (Off)")
             self.collapse()
+        self._apply_geometry()
+
+    def _on_engine_boot_complete(self):
+        """Called on main thread after engine boot attempt completes."""
+        if self.client.check_health():
+            self.guard_active = True
+            self.master_btn.config(text="🟢 GUARD ON", bg=ACCENT_GREEN)
+            self.handle_frame.config(bg=ACCENT_INDIGO)
+            self.context_label.config(text="Guard Active")
+        else:
+            self.master_btn.config(text="🔴 ENGINE OFF", bg=ACCENT_RED)
+            self.context_label.config(text="Engine failed to start")
         self._apply_geometry()
 
     def _on_handle_hover_enter(self, event):
@@ -709,9 +720,11 @@ class VeilGuardSidebar(tk.Tk):
             pass
 
     def collapse(self):
-        """Collapse into the sleek edge dock sliver."""
+        """Collapse into the sleek edge dock sliver and reset position so next expand returns to right edge."""
         self.is_expanded = False
         self.is_hovered = False
+        # Always clear custom drag position on collapse: expanding will snap cleanly to right edge
+        self.user_custom_x = None
         if hasattr(self, "_focus_check_timer") and self._focus_check_timer:
             try:
                 self.after_cancel(self._focus_check_timer)
@@ -1046,7 +1059,26 @@ class VeilGuardSidebar(tk.Tk):
 
         res = self.client.analyze_prompt(text)
         if not res:
-            self.result_summary.config(text="❌ Engine unreachable at 127.0.0.1:8765", fg=ACCENT_RED)
+            self.result_summary.config(text="⏳ Engine offline — starting... please wait.", fg=ACCENT_AMBER)
+            self.update()
+
+            def _retry_after_boot():
+                self._boot_engine_background()
+                res2 = self.client.analyze_prompt(text)
+
+                def _update():
+                    if not res2:
+                        self.result_summary.config(
+                            text="❌ Engine unreachable — click 🟢 GUARD ON to retry starting.",
+                            fg=ACCENT_RED,
+                        )
+                        return
+                    # Re-run the rest of _do_sanitize with the successful result
+                    self._apply_sanitize_result(text, res2)
+
+                self.after(0, _update)
+
+            threading.Thread(target=_retry_after_boot, daemon=True).start()
             return
 
         sanitization = res.get("sanitization")
@@ -1071,6 +1103,27 @@ class VeilGuardSidebar(tk.Tk):
         self.clipboard_append(clean)
         self.update()
 
+        self.result_summary.config(
+            text=f"✨ Sanitized {entities_count} item(s) & copied to clipboard!",
+            fg=ACCENT_GREEN,
+        )
+
+    def _apply_sanitize_result(self, original_text: str, res: dict):
+        """Apply a successful sanitize API response to the UI — shared by normal and retry paths."""
+        sanitization = res.get("sanitization")
+        if sanitization and sanitization.get("sanitized_text"):
+            clean = sanitization.get("sanitized_text")
+        else:
+            clean = original_text
+
+        entities_count = len(res.get("findings", []))
+        self.output_text.delete("1.0", tk.END)
+        self.output_text.insert("1.0", clean)
+        self.last_sanitized_text = clean
+        self.last_clipboard = clean
+        self.clipboard_clear()
+        self.clipboard_append(clean)
+        self.update()
         self.result_summary.config(
             text=f"✨ Sanitized {entities_count} item(s) & copied to clipboard!",
             fg=ACCENT_GREEN,
