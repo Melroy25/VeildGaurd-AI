@@ -1,6 +1,6 @@
 {
   "dataset_size": 286,
-  "date": "2026-10-18",
+  "date": "2026-10-19",
   "commit": "2701793",
   "run_number": 2,
   "caveat": "Synthetic dataset, relative results. Not a real-world accuracy guarantee.",

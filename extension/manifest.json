@@ -30,7 +30,11 @@
     "https://*.aistudio.google.com/*",
     "https://huggingface.co/chat/*",
     "https://codex.openai.com/*",
-    "https://*.codex.openai.com/*"
+    "https://*.codex.openai.com/*",
+    "https://grok.com/*",
+    "https://*.grok.com/*",
+    "https://x.ai/*",
+    "https://*.x.ai/*"
   ],
   "content_scripts": [
     {
@@ -57,7 +61,14 @@
         "https://*.aistudio.google.com/*",
         "https://huggingface.co/chat/*",
         "https://codex.openai.com/*",
-        "https://*.codex.openai.com/*"
+        "https://*.codex.openai.com/*",
+        "https://grok.com/*",
+        "https://*.grok.com/*",
+        "https://x.ai/*",
+        "https://*.x.ai/*"
+      ],
+      "js": [
+        "page-world.js"
       ],
       "run_at": "document_start",
       "world": "MAIN"
@@ -86,7 +97,11 @@
         "https://*.aistudio.google.com/*",
         "https://huggingface.co/chat/*",
         "https://codex.openai.com/*",
-        "https://*.codex.openai.com/*"
+        "https://*.codex.openai.com/*",
+        "https://grok.com/*",
+        "https://*.grok.com/*",
+        "https://x.ai/*",
+        "https://*.x.ai/*"
       ],
       "js": [
         "content.js"

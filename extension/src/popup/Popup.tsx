@@ -358,13 +358,25 @@ export const Popup: React.FC = () => {
           </svg>
           Re-check
         </button>
-        <button
-          type="button"
-          onClick={() => chrome.runtime.openOptionsPage?.()}
-          className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-xs font-semibold text-slate-950 transition-all shadow-[0_2px_12px_rgba(56,189,248,0.35)] hover:shadow-[0_4px_16px_rgba(56,189,248,0.5)] cursor-pointer"
-        >
-          Open Dashboard
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              chrome.tabs.create({ url: chrome.runtime.getURL("options.html#pdf") });
+            }}
+            className="px-2.5 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-xs font-semibold text-slate-200 hover:text-white transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+            title="Scan and scrub PDF documents"
+          >
+            <span>📄</span> Scrub PDF
+          </button>
+          <button
+            type="button"
+            onClick={() => chrome.runtime.openOptionsPage?.()}
+            className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-xs font-semibold text-slate-950 transition-all shadow-[0_2px_12px_rgba(56,189,248,0.35)] hover:shadow-[0_4px_16px_rgba(56,189,248,0.5)] cursor-pointer"
+          >
+            Dashboard
+          </button>
+        </div>
       </footer>
     </div>
   );

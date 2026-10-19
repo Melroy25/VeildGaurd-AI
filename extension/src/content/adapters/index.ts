@@ -23,7 +23,7 @@ export function getAdapterForLocation(location: Location = window.location): Sit
 
   // Fallback: If on any page that contains an editable composer, universal adapter can protect it
   const host = location.hostname.toLowerCase();
-  const AI_KEYWORDS = ["ai", "chat", "bot", "llm", "claude", "gemini", "gpt", "deepseek", "copilot", "perplexity"];
+  const AI_KEYWORDS = ["ai", "chat", "bot", "llm", "claude", "gemini", "gpt", "deepseek", "copilot", "perplexity", "grok", "x.ai"];
   for (const kw of AI_KEYWORDS) {
     if (host.includes(kw)) {
       return universalAIAdapter;

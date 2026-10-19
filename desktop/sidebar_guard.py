@@ -31,6 +31,16 @@ from tkinter import ttk, messagebox, filedialog
 import urllib.request
 import urllib.error
 
+# Enable Per-Monitor DPI Awareness on Windows for crisp rendering and pixel-perfect edge docking
+if sys.platform == "win32":
+    try:
+        ctypes.windll.shcore.SetProcessDpiAwareness(2)
+    except Exception:
+        try:
+            ctypes.windll.user32.SetProcessDPIAware()
+        except Exception:
+            pass
+
 # Import modular core logic
 try:
     from desktop.guard_core import (
@@ -171,6 +181,7 @@ class VeilGuardSidebar(tk.Tk):
         # State
         self.is_expanded = False
         self.is_pinned = False  # When True, window stays open and never auto-collapses
+        self.dock_side = "left"  # Default to left edge dock per user preference
         self.guard_active = True  # Master On/Off switch
         self.auto_pop_enabled = tk.BooleanVar(value=True)
         self.clipboard_monitor_enabled = tk.BooleanVar(value=True)  # Auto-sanitize on copy
@@ -339,17 +350,17 @@ class VeilGuardSidebar(tk.Tk):
         self.pin_btn.pack(side="right", padx=(0, 6))
         self.pin_btn.bind("<Button-1>", lambda e: self._toggle_pin())
 
-        # Reset Dock Button (↔ resets position back flush to right edge)
-        dock_btn = tk.Label(
+        # Dock Toggle Button (⇥ Right / ⇤ Left)
+        self.dock_btn = tk.Label(
             header,
-            text="↔ Dock",
+            text="⇥ Right" if self.dock_side == "left" else "⇤ Left",
             fg=TEXT_MUTED,
             bg=BG_PANEL,
             font=("Segoe UI", 8),
             cursor="hand2",
         )
-        dock_btn.pack(side="right", padx=(0, 6))
-        dock_btn.bind("<Button-1>", lambda e: self._reset_dock())
+        self.dock_btn.pack(side="right", padx=(0, 6))
+        self.dock_btn.bind("<Button-1>", lambda e: self._toggle_dock_side())
 
         # Drag handle
         drag_handle = tk.Label(
@@ -442,28 +453,44 @@ class VeilGuardSidebar(tk.Tk):
         self.input_text.bind("<<Cut>>", lambda e: self.after(50, self._on_input_changed))
         self.input_text.bind("<Control-Return>", lambda e: (self._do_send_to_app(), "break")[1])
 
-        # Action Buttons Row
-        btn_row = tk.Frame(self.content_frame, bg=BG_PANEL)
-        btn_row.pack(fill="x", padx=12, pady=(0, 6))
+        # Action Buttons Row 1: Grab from App, Inspect, Clear
+        btn_row1 = tk.Frame(self.content_frame, bg=BG_PANEL)
+        btn_row1.pack(fill="x", padx=12, pady=(0, 4))
+
+        self.btn_grab = tk.Button(
+            btn_row1,
+            text="📥 Grab from Codex / App",
+            bg="#1e293b",
+            fg=ACCENT_SKY,
+            activebackground="#334155",
+            activeforeground="#FFFFFF",
+            relief="flat",
+            padx=8,
+            pady=3,
+            font=("Segoe UI", 8, "bold"),
+            cursor="hand2",
+            command=self._do_grab_from_app,
+        )
+        self.btn_grab.pack(side="left")
 
         self.btn_inspect = tk.Button(
-            btn_row,
+            btn_row1,
             text="🔍 Inspect",
             bg=BG_CARD,
             fg=TEXT_PRIMARY,
             activebackground=BORDER_COLOR,
             activeforeground=TEXT_PRIMARY,
             relief="flat",
-            padx=10,
+            padx=8,
             pady=3,
             font=("Segoe UI", 8, "bold"),
             cursor="hand2",
             command=self._do_inspect,
         )
-        self.btn_inspect.pack(side="left")
+        self.btn_inspect.pack(side="left", padx=(6, 0))
 
         self.btn_clear = tk.Button(
-            btn_row,
+            btn_row1,
             text="🗑️ Clear",
             bg=BG_CARD,
             fg=TEXT_MUTED,
@@ -476,26 +503,14 @@ class VeilGuardSidebar(tk.Tk):
             cursor="hand2",
             command=self._do_clear,
         )
-        self.btn_clear.pack(side="left", padx=(6, 0))
+        self.btn_clear.pack(side="right")
 
-        self.btn_send = tk.Button(
-            btn_row,
-            text="🚀 Send to App",
-            bg=ACCENT_GREEN,
-            fg="#060b14",
-            activebackground="#059669",
-            activeforeground="#FFFFFF",
-            relief="flat",
-            padx=10,
-            pady=3,
-            font=("Segoe UI", 8, "bold"),
-            cursor="hand2",
-            command=self._do_send_to_app,
-        )
-        self.btn_send.pack(side="right", padx=(4, 0))
+        # Action Buttons Row 2: Sanitize & Send to App
+        btn_row2 = tk.Frame(self.content_frame, bg=BG_PANEL)
+        btn_row2.pack(fill="x", padx=12, pady=(0, 6))
 
         self.btn_sanitize = tk.Button(
-            btn_row,
+            btn_row2,
             text="✨ Sanitize",
             bg=ACCENT_INDIGO,
             fg="#FFFFFF",
@@ -508,7 +523,23 @@ class VeilGuardSidebar(tk.Tk):
             cursor="hand2",
             command=self._do_sanitize,
         )
-        self.btn_sanitize.pack(side="right")
+        self.btn_sanitize.pack(side="left")
+
+        self.btn_send = tk.Button(
+            btn_row2,
+            text="🚀 Send to App",
+            bg=ACCENT_GREEN,
+            fg="#060b14",
+            activebackground="#059669",
+            activeforeground="#FFFFFF",
+            relief="flat",
+            padx=10,
+            pady=3,
+            font=("Segoe UI", 8, "bold"),
+            cursor="hand2",
+            command=self._do_send_to_app,
+        )
+        self.btn_send.pack(side="right")
 
         # Result Summary Box
         self.results_card = tk.Frame(self.content_frame, bg=BG_CARD, padx=8, pady=5)
@@ -549,7 +580,7 @@ class VeilGuardSidebar(tk.Tk):
         )
         self.output_text.pack(fill="x", padx=12, pady=(0, 6))
 
-        # Bottom Bar: Scrub PDF & Copy
+        # Bottom Bar: Scrub PDF, Send Original & Copy Clean
         bottom_bar = tk.Frame(self.content_frame, bg=BG_PANEL)
         bottom_bar.pack(fill="x", padx=12, pady=(0, 8))
 
@@ -569,6 +600,22 @@ class VeilGuardSidebar(tk.Tk):
         )
         btn_pdf.pack(side="left")
 
+        self.btn_send_orig = tk.Button(
+            bottom_bar,
+            text="⚠️ Send Original",
+            bg=BG_CARD,
+            fg=TEXT_MUTED,
+            activebackground=BORDER_COLOR,
+            activeforeground=ACCENT_AMBER,
+            relief="flat",
+            padx=8,
+            pady=2,
+            font=("Segoe UI", 8),
+            cursor="hand2",
+            command=self._do_send_original_to_app,
+        )
+        self.btn_send_orig.pack(side="left", padx=(6, 0))
+
         self.btn_copy_clean = tk.Button(
             bottom_bar,
             text="📋 Copy Clean",
@@ -577,7 +624,7 @@ class VeilGuardSidebar(tk.Tk):
             activebackground="#059669",
             activeforeground="#FFFFFF",
             relief="flat",
-            padx=12,
+            padx=10,
             pady=2,
             font=("Segoe UI", 8, "bold"),
             cursor="hand2",
@@ -638,8 +685,27 @@ class VeilGuardSidebar(tk.Tk):
             self.pin_btn.config(text="📌 Pin", fg=TEXT_MUTED, font=("Segoe UI", 8))
             self.result_summary.config(text="Sidebar unpinned (auto-hides when leaving AI apps).", fg=TEXT_SECONDARY)
 
+    def _toggle_dock_side(self):
+        """Toggle docking between left and right screen edges."""
+        sw = self.winfo_screenwidth()
+        if getattr(self, "dock_side", "left") == "left":
+            self.dock_side = "right"
+            self.user_custom_x = sw - self.expanded_width - 16
+        else:
+            self.dock_side = "left"
+            self.user_custom_x = 16
+        self._update_dock_button_label()
+        self._apply_geometry()
+
+    def _update_dock_button_label(self):
+        if hasattr(self, "dock_btn"):
+            if getattr(self, "dock_side", "left") == "left":
+                self.dock_btn.config(text="⇥ Right")
+            else:
+                self.dock_btn.config(text="⇤ Left")
+
     def _reset_dock(self):
-        """Reset custom user drag position and re-dock to the right edge."""
+        """Reset custom user drag position and re-dock to the current edge."""
         self.user_custom_x = None
         self._apply_geometry()
 
@@ -647,6 +713,7 @@ class VeilGuardSidebar(tk.Tk):
         """Update window position and geometry, guaranteeing 100% full visibility within screen bounds."""
         sw = self.winfo_screenwidth()
         sh = self.winfo_screenheight()
+        dock_side = getattr(self, "dock_side", "left")
 
         if self.is_expanded:
             w = self.expanded_width
@@ -654,7 +721,7 @@ class VeilGuardSidebar(tk.Tk):
             if hasattr(self, "user_custom_x") and self.user_custom_x is not None:
                 x = self.user_custom_x
             else:
-                x = sw - w - 16
+                x = 16 if dock_side == "left" else (sw - w - 16)
             # Strict clamping: NEVER off-screen on left or right!
             x = max(16, min(sw - w - 16, x))
             y = max(16, min(self.win_y, sh - h - 16))
@@ -665,7 +732,10 @@ class VeilGuardSidebar(tk.Tk):
         else:
             w = self.hover_sliver_width if self.is_hovered else self.thin_sliver_width
             h = min(self.collapsed_height, sh - 60)
-            x = sw - w
+            if dock_side == "left":
+                x = 0
+            else:
+                x = sw - w
             y = max(16, min(self.win_y, sh - h - 16))
             try:
                 # Sleek, visible edge dock (0.92 idle, 1.0 hover)
@@ -771,26 +841,30 @@ class VeilGuardSidebar(tk.Tk):
     def expand(self):
         """Expand the sidebar to full width and focus input."""
         self.is_expanded = True
-        self.user_custom_x = None  # Always snap cleanly to right edge on expand
+        self.user_custom_x = None  # Always snap cleanly to the active dock edge
         self._last_expand_time = time.time()
         self.handle_frame.pack_forget()
         self.content_frame.pack(fill="both", expand=True)
         self._apply_geometry()
         # Bring to top and focus input text so clicking outside triggers FocusOut
         try:
+            self.deiconify()
             self.lift()
             self.attributes("-topmost", True)
             self.focus_force()
             self.input_text.focus_set()
+            if sys.platform == "win32":
+                hwnd = self.winfo_id()
+                ctypes.windll.user32.ShowWindow(hwnd, 5)  # SW_SHOW
+                ctypes.windll.user32.SetForegroundWindow(hwnd)
         except Exception:
             pass
 
     def collapse(self):
-        """Collapse into the sleek edge dock sliver and reset position so next expand returns to right edge."""
+        """Collapse into the sleek edge dock sliver on the active dock side."""
         self.is_expanded = False
         self.is_hovered = False
-        # Always clear custom drag position on collapse: expanding will snap cleanly to right edge
-        self.user_custom_x = None
+        self.user_custom_x = None  # Reset drag position on collapse
         if hasattr(self, "_focus_check_timer") and self._focus_check_timer:
             try:
                 self.after_cancel(self._focus_check_timer)
@@ -855,20 +929,21 @@ class VeilGuardSidebar(tk.Tk):
         if getattr(self, "is_pinned", False):
             return
 
-        # 4. If current active window is an AI tool (Codex, ChatGPT, Claude, Cursor, etc.), NEVER collapse!
+        # 4. If focus is on a VeilGuard dialog or menu, keep open
         try:
-            is_ai, title, hwnd = self.detector.is_ai_tool_focused()
-            if is_ai or "veilguard" in title.lower():
+            hwnd, title, _ = get_foreground_window_info()
+            if title and "veilguard" in title.lower():
                 return
         except Exception:
             pass
 
-        # 5. Focus lost to an external non-AI app or desktop and mouse is outside -> Collapse!
+        # 5. Flyout Drawer: When clicked anywhere outside (Codex, browser, desktop), collapse cleanly!
         self.collapse()
 
     def _on_handle_click(self, event):
-        """Expand on click."""
+        """Expand on handle click, cleanly resetting dock position so it never gets stuck sideways."""
         if not self.is_dragging:
+            self.user_custom_x = None
             self.expand()
 
     def _start_drag(self, event):
@@ -897,12 +972,19 @@ class VeilGuardSidebar(tk.Tk):
         new_y = event.y_root - self.drag_start_y
 
         # Clamp so the window cannot be dragged off-screen
-        new_x = max(10, min(sw - w - 10, new_x))
-        new_y = max(10, min(sh - h - 10, new_y))
+        new_x = max(16, min(sw - w - 16, new_x))
+        new_y = max(16, min(sh - h - 16, new_y))
+
+        # Dynamically track which edge user drags towards
+        if new_x < (sw - w) / 2:
+            self.dock_side = "left"
+        else:
+            self.dock_side = "right"
 
         self.user_custom_x = new_x
         self.win_y = new_y
         self.geometry(f"{w}x{h}+{new_x}+{new_y}")
+        self._update_dock_button_label()
 
     def _end_drag(self, event):
         self.is_dragging = False
@@ -1001,6 +1083,56 @@ class VeilGuardSidebar(tk.Tk):
             self.after_cancel(self._debounce_timer)
         self._debounce_timer = self.after(350, self._live_inspect)
 
+    def _fallback_local_sanitize(self, text: str) -> tuple[str, list[str]]:
+        """Fast offline rule-based fallback sanitizer if local engine is starting or unreachable."""
+        import re
+        findings = []
+        sanitized = text
+
+        # Indian Aadhaar (12 digits with spaces or hyphens: 5857 0839 3474)
+        aadhaar_pattern = r'\b[2-9]\d{3}[\s\-]?\d{4}[\s\-]?\d{4}\b'
+        aadhaars = re.findall(aadhaar_pattern, sanitized)
+        if aadhaars:
+            findings.append(f"{len(aadhaars)} Aadhaar ID(s)")
+            sanitized = re.sub(aadhaar_pattern, "[AADHAAR_1]", sanitized)
+
+        # Phone numbers (+91 or 10 digits starting 6-9)
+        phone_pattern = r'(?:\+?91[\-\s]?)?[6-9]\d{9}\b'
+        phones = re.findall(phone_pattern, sanitized)
+        if phones:
+            findings.append(f"{len(phones)} Phone Number(s)")
+            sanitized = re.sub(phone_pattern, "[PHONE_1]", sanitized)
+
+        # Email
+        email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
+        emails = re.findall(email_pattern, sanitized)
+        if emails:
+            findings.append(f"{len(emails)} Email(s)")
+            sanitized = re.sub(email_pattern, "[EMAIL_1]", sanitized)
+
+        # Patient / Person name heuristic: "Patient <Name>"
+        patient_pattern = r'\b(?:Patient|patient)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b'
+        for m in re.finditer(patient_pattern, sanitized):
+            name_val = m.group(1)
+            findings.append(f"Patient Name: {name_val}")
+            sanitized = sanitized.replace(name_val, "[PATIENT_1]")
+
+        # Credit card (13-19 digits)
+        cc_pattern = r'\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})\b'
+        ccs = re.findall(cc_pattern, sanitized)
+        if ccs:
+            findings.append(f"{len(ccs)} Credit Card(s)")
+            sanitized = re.sub(cc_pattern, "[CREDIT_CARD_1]", sanitized)
+
+        # API keys / Secrets
+        secret_pattern = r'\b(?:sk-[a-zA-Z0-9_-]{20,}|ghp_[a-zA-Z0-9]{30,})\b'
+        secrets = re.findall(secret_pattern, sanitized)
+        if secrets:
+            findings.append(f"{len(secrets)} Secret Key(s)")
+            sanitized = re.sub(secret_pattern, "[SECRET_KEY_1]", sanitized)
+
+        return sanitized, findings
+
     def _live_inspect(self):
         """Run inspection on the current prompt text and update warnings in real-time."""
         text = self.input_text.get("1.0", tk.END).strip()
@@ -1014,6 +1146,20 @@ class VeilGuardSidebar(tk.Tk):
 
         res = self.client.analyze_prompt(text)
         if not res:
+            # Fallback to local rule-based inspection if engine is starting/offline
+            clean_fb, findings_fb = self._fallback_local_sanitize(text)
+            if findings_fb:
+                self.result_summary.config(
+                    text=f"⚠️ {len(findings_fb)} sensitive item(s) detected (Offline Guard)!",
+                    fg=ACCENT_AMBER,
+                )
+                self.output_text.delete("1.0", tk.END)
+                self.output_text.insert("1.0", clean_fb)
+            else:
+                self.result_summary.config(
+                    text="✅ Clean prompt (Offline Check). Safe to submit.",
+                    fg=ACCENT_GREEN,
+                )
             return
 
         findings = res.get("findings", [])
@@ -1180,9 +1326,17 @@ class VeilGuardSidebar(tk.Tk):
                 time.sleep(0.18)
 
                 VK_CONTROL = 0x11
+                VK_A = 0x41
                 VK_V = 0x56
                 VK_RETURN = 0x0D
                 KEYEVENTF_KEYUP = 0x0002
+
+                # Ctrl+A (select all existing text in app input to replace cleanly)
+                user32.keybd_event(VK_CONTROL, 0, 0, 0)
+                user32.keybd_event(VK_A, 0, 0, 0)
+                user32.keybd_event(VK_A, 0, KEYEVENTF_KEYUP, 0)
+                user32.keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0)
+                time.sleep(0.08)
 
                 # Ctrl+V (paste clean text)
                 user32.keybd_event(VK_CONTROL, 0, 0, 0)
@@ -1208,6 +1362,143 @@ class VeilGuardSidebar(tk.Tk):
 
         threading.Thread(target=_inject, daemon=True).start()
 
+    def _do_grab_from_app(self):
+        """Pull the prompt text from the focused AI app (e.g. Codex) into the sidebar for inspection."""
+        hwnd = getattr(self, "last_ai_hwnd", 0)
+        if not hwnd or sys.platform != "win32":
+            try:
+                _, _, detected_hwnd = self.detector.is_ai_tool_focused()
+                if detected_hwnd:
+                    hwnd = detected_hwnd
+                    self.last_ai_hwnd = hwnd
+            except Exception:
+                pass
+
+        if not hwnd or sys.platform != "win32":
+            self.result_summary.config(text="⚠️ No active AI tool window found to grab from.", fg=ACCENT_AMBER)
+            return
+
+        def _grab():
+            try:
+                user32 = ctypes.windll.user32
+                user32.SetForegroundWindow(hwnd)
+                time.sleep(0.18)
+
+                VK_CONTROL = 0x11
+                VK_A = 0x41
+                VK_C = 0x43
+                KEYEVENTF_KEYUP = 0x0002
+
+                # Ctrl+A (Select All in Codex prompt field)
+                user32.keybd_event(VK_CONTROL, 0, 0, 0)
+                user32.keybd_event(VK_A, 0, 0, 0)
+                user32.keybd_event(VK_A, 0, KEYEVENTF_KEYUP, 0)
+                user32.keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0)
+                time.sleep(0.1)
+
+                # Ctrl+C (Copy prompt)
+                user32.keybd_event(VK_CONTROL, 0, 0, 0)
+                user32.keybd_event(VK_C, 0, 0, 0)
+                user32.keybd_event(VK_C, 0, KEYEVENTF_KEYUP, 0)
+                user32.keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0)
+                time.sleep(0.15)
+
+                # Read clipboard
+                clip = self.clipboard_get()
+                if clip:
+                    def _update_ui():
+                        self.input_text.delete("1.0", tk.END)
+                        self.input_text.insert("1.0", clip)
+                        self._live_inspect()
+                        self.expand()
+                        self.lift()
+                        self.focus_force()
+                        app_name = getattr(self, "active_ai_app_name", "AI App") or "Codex"
+                        self.result_summary.config(
+                            text=f"📥 Grabbed from {app_name[:20]}. Review & click '🚀 Send to App'!",
+                            fg=ACCENT_CYAN,
+                        )
+                    self.after(0, _update_ui)
+                else:
+                    self.after(0, lambda: self.result_summary.config(
+                        text="⚠️ No text found in app prompt field.",
+                        fg=ACCENT_AMBER,
+                    ))
+            except Exception as e:
+                self.after(0, lambda: self.result_summary.config(
+                    text=f"⚠️ Could not grab text from app: {e}",
+                    fg=ACCENT_AMBER,
+                ))
+
+        threading.Thread(target=_grab, daemon=True).start()
+
+    def _do_send_original_to_app(self):
+        """Send the original (unsanitized) prompt directly into the active AI application."""
+        text = self.input_text.get("1.0", tk.END).strip()
+        if not text:
+            self.result_summary.config(text="⚠️ Please enter prompt text first.", fg=ACCENT_AMBER)
+            return
+
+        hwnd = getattr(self, "last_ai_hwnd", 0)
+        if not hwnd or sys.platform != "win32":
+            try:
+                self.clipboard_clear()
+                self.clipboard_append(text)
+            except Exception:
+                pass
+            self.result_summary.config(
+                text="⚠️ Copied original prompt to clipboard! (Paste with Ctrl+V)",
+                fg=ACCENT_AMBER,
+            )
+            return
+
+        def _inject_orig():
+            try:
+                self.clipboard_clear()
+                self.clipboard_append(text)
+                time.sleep(0.05)
+
+                user32 = ctypes.windll.user32
+                user32.SetForegroundWindow(hwnd)
+                time.sleep(0.18)
+
+                VK_CONTROL = 0x11
+                VK_A = 0x41
+                VK_V = 0x56
+                VK_RETURN = 0x0D
+                KEYEVENTF_KEYUP = 0x0002
+
+                # Ctrl+A (select all)
+                user32.keybd_event(VK_CONTROL, 0, 0, 0)
+                user32.keybd_event(VK_A, 0, 0, 0)
+                user32.keybd_event(VK_A, 0, KEYEVENTF_KEYUP, 0)
+                user32.keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0)
+                time.sleep(0.08)
+
+                # Ctrl+V
+                user32.keybd_event(VK_CONTROL, 0, 0, 0)
+                user32.keybd_event(VK_V, 0, 0, 0)
+                user32.keybd_event(VK_V, 0, KEYEVENTF_KEYUP, 0)
+                user32.keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0)
+                time.sleep(0.12)
+
+                # Enter
+                user32.keybd_event(VK_RETURN, 0, 0, 0)
+                user32.keybd_event(VK_RETURN, 0, KEYEVENTF_KEYUP, 0)
+
+                app_name = getattr(self, "active_ai_app_name", "AI App") or "Codex"
+                self.after(0, lambda: self.result_summary.config(
+                    text=f"⚠️ Original prompt sent to {app_name[:20]}!",
+                    fg=ACCENT_AMBER,
+                ))
+            except Exception as e:
+                self.after(0, lambda: self.result_summary.config(
+                    text=f"❌ Error sending to app: {e}",
+                    fg=ACCENT_RED,
+                ))
+
+        threading.Thread(target=_inject_orig, daemon=True).start()
+
     def _do_sanitize(self):
         """Sanitize prompt: preserves ORIGINAL PROMPT and writes sanitized text to output."""
         text = self.input_text.get("1.0", tk.END).strip()
@@ -1230,9 +1521,19 @@ class VeilGuardSidebar(tk.Tk):
 
                 def _update():
                     if not res2:
+                        clean_fb, findings_fb = self._fallback_local_sanitize(text)
+                        self.output_text.delete("1.0", tk.END)
+                        self.output_text.insert("1.0", clean_fb)
+                        self.last_sanitized_text = clean_fb
+                        self.last_clipboard = clean_fb
+                        try:
+                            self.clipboard_clear()
+                            self.clipboard_append(clean_fb)
+                        except Exception:
+                            pass
                         self.result_summary.config(
-                            text="❌ Engine unreachable — click 🟢 GUARD ON to retry starting.",
-                            fg=ACCENT_RED,
+                            text=f"✨ Sanitized {len(findings_fb)} item(s) (Offline Guard) & copied!",
+                            fg=ACCENT_GREEN,
                         )
                         return
                     # Re-run the rest of _do_sanitize with the successful result
@@ -1440,7 +1741,17 @@ def ensure_single_instance():
         mutex = ctypes.windll.kernel32.CreateMutexW(None, False, MUTEX_NAME)
         if ctypes.windll.kernel32.GetLastError() == ERROR_ALREADY_EXISTS:
             print("[VeilGuard AI] Another sidebar instance is already active. Signaling it to expand...")
-            signal_existing_instance()
+            signaled = signal_existing_instance()
+            if not signaled or "--force" in sys.argv or "--restart" in sys.argv:
+                print("[VeilGuard AI] Waking failed or restart requested; taking over...")
+                try:
+                    subprocess.run(["taskkill", "/F", "/IM", "VeilGuard.exe"], capture_output=True)
+                except Exception:
+                    pass
+                time.sleep(0.4)
+                mutex = ctypes.windll.kernel32.CreateMutexW(None, False, MUTEX_NAME)
+                _GLOBAL_MUTEX = mutex
+                return mutex
             sys.exit(0)
         _GLOBAL_MUTEX = mutex
         return mutex

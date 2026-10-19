@@ -613,6 +613,12 @@ export function showReviewOverlay(opts: ReviewOverlayOptions): void {
     modal.appendChild(notice);
   }
 
+  // ---- Context Intelligence (Why) ----
+  if (engineResult.context) {
+    const whyEl = buildWhySection(engineResult.context);
+    if (whyEl) modal.appendChild(whyEl);
+  }
+
   // ---- Actions ----
   const actions = document.createElement("div");
   actions.className = "actions";
@@ -751,6 +757,7 @@ export function showEngineErrorOverlay(
   if (overlayHost) overlayHost.style.pointerEvents = "auto";
 
   const isAuthError = errorKind === "auth_error";
+  const isBackstop = errorKind === "backstop";
 
   const backdrop = document.createElement("div");
   backdrop.className = "backdrop";

@@ -1,22 +1,33 @@
-# Node
+# Node & Build artifacts
 node_modules/
 dist/
+build/
 extension/dist/
 web/dist/
 release/
-build/
+*.tsbuildinfo
 
 # Python
 .venv/
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.spec
+*.py[cod]
+*$py.class
 *.egg-info/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Binaries and archives
+*.exe
+*.dll
+*.so
+*.dylib
+*.zip
+*.tar.gz
+*.7z
+
+# PyInstaller spec files (VeilGuard.spec is tracked)
+!VeilGuard.spec
 
 # Environment and secrets
 .env
@@ -26,9 +37,10 @@ htmlcov/
 policies/watchlist.yaml
 !policies/watchlist.example.yaml
 
-# Databases
+# Databases & logs
 *.db
 *.sqlite3
+*.log
 
 # Playwright & Testing
 playwright-report/
@@ -36,7 +48,7 @@ test-results/
 .playwright/
 .playwright-real-profile/
 
-# OS and IDE
+# OS, IDE, Cloud
 .DS_Store
 Thumbs.db
 .vscode/

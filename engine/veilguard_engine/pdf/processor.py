@@ -171,10 +171,11 @@ def redact_pdf(
 ) -> Tuple[bytes, int]:
     """Apply true redactions, scrub metadata, and dual-verify sanitization."""
     doc = validate_pdf_limits(pdf_bytes)
-    targets_to_verify: Set[str] = set()
+    entity_to_placeholder: Dict[str, str] = {}
     type_counters: Dict[str, int] = {}
 
     try:
+        # Pass 1: Discover all sensitive entities across all pages and bind consistent placeholders
         for page in doc:
             page_text = page.get_text("text")
             if not page_text or not page_text.strip():
@@ -185,13 +186,17 @@ def redact_pdf(
                 raw_entity = page_text[f.start:f.end].strip()
                 if not raw_entity:
                     continue
-                targets_to_verify.add(raw_entity)
-                placeholder = _get_placeholder(
-                    f.entity_type,
-                    type_counters,
-                    text=page_text,
-                    start=f.start,
-                )
+                if raw_entity not in entity_to_placeholder:
+                    entity_to_placeholder[raw_entity] = _get_placeholder(
+                        f.entity_type,
+                        type_counters,
+                        text=page_text,
+                        start=f.start,
+                    )
+
+        # Pass 2: Apply redactions across all pages for every discovered entity
+        for page in doc:
+            for raw_entity, placeholder in entity_to_placeholder.items():
                 rects = page.search_for(raw_entity)
                 for r in rects:
                     base_len = fitz.get_text_length(placeholder, fontname="helv", fontsize=9.0)
@@ -233,15 +238,24 @@ def redact_pdf(
     except Exception as exc:
         raise RedactionVerificationError(f"pypdf failed to parse sanitized output: {exc}") from exc
 
+    # Strip bracketed placeholders before verifying residual targets so that substrings
+    # of placeholders (e.g. 'IFSC' in '[IN_IFSC_1]' or 'ORG' in '[QUASI_ORG_1]') don't false-positive.
+    import re
+    clean_pymupdf = re.sub(r"\[[A-Z0-9_]+\]", " ", text_pymupdf)
+    clean_pypdf = re.sub(r"\[[A-Z0-9_]+\]", " ", text_pypdf)
+
     # Assert zero residual target strings in either extractor
-    for target in targets_to_verify:
-        if target in text_pymupdf:
+    for target in entity_to_placeholder.keys():
+        cleaned_target = target.strip()
+        if not cleaned_target or len(cleaned_target) < 2:
+            continue
+        if cleaned_target in clean_pymupdf:
             raise RedactionVerificationError(
                 "PyMuPDF verification failed: residual sensitive target detected in sanitized text"
             )
-        if target in text_pypdf:
+        if cleaned_target in clean_pypdf:
             raise RedactionVerificationError(
                 "pypdf verification failed: residual sensitive target detected in sanitized text"
             )
 
-    return sanitized_bytes, len(targets_to_verify)
+    return sanitized_bytes, len(entity_to_placeholder)

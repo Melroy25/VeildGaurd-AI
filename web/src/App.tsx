@@ -8,20 +8,23 @@
 import React, { useState, useEffect } from "react";
 import { Dashboard } from "./components/Dashboard";
 import { Playground } from "./components/Playground";
+import { PDFRedactor } from "./components/PDFRedactor";
 import { BenchmarkExplorer } from "./components/BenchmarkExplorer";
 import { ArchitectureGuide } from "./components/ArchitectureGuide";
 
-type ActiveTab = "dashboard" | "playground" | "benchmark" | "architecture";
+type ActiveTab = "dashboard" | "playground" | "pdf" | "benchmark" | "architecture";
 
 export const App: React.FC = () => {
   const getInitialTab = (): ActiveTab => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get("tab");
-      if (tabParam === "dashboard" || tabParam === "playground" || tabParam === "benchmark" || tabParam === "architecture") {
+      if (tabParam === "dashboard" || tabParam === "playground" || tabParam === "pdf" || tabParam === "benchmark" || tabParam === "architecture") {
         return tabParam;
       }
       if (window.location.hash === "#dashboard") return "dashboard";
+      if (window.location.hash === "#playground") return "playground";
+      if (window.location.hash === "#pdf") return "pdf";
       if (window.location.hash === "#benchmark") return "benchmark";
       if (window.location.hash === "#architecture") return "architecture";
     }
@@ -34,6 +37,7 @@ export const App: React.FC = () => {
     const handleHash = () => {
       if (window.location.hash === "#dashboard") setActiveTab("dashboard");
       else if (window.location.hash === "#playground") setActiveTab("playground");
+      else if (window.location.hash === "#pdf") setActiveTab("pdf");
       else if (window.location.hash === "#benchmark") setActiveTab("benchmark");
       else if (window.location.hash === "#architecture") setActiveTab("architecture");
     };
@@ -96,6 +100,17 @@ export const App: React.FC = () => {
             </button>
             <button
               type="button"
+              onClick={() => setActiveTab("pdf")}
+              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab === "pdf"
+                  ? "bg-gradient-to-r from-sky-500 to-sky-600 text-slate-950 font-bold shadow-[0_2px_12px_rgba(56,189,248,0.4)]"
+                  : "text-slate-300 hover:text-white hover:bg-white/[0.04]"
+              }`}
+            >
+              <span>📄</span> PDF Sanitizer
+            </button>
+            <button
+              type="button"
               onClick={() => setActiveTab("benchmark")}
               className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "benchmark"
@@ -124,6 +139,7 @@ export const App: React.FC = () => {
       <main className="max-w-7xl mx-auto px-6 lg:px-12 py-8 relative z-10">
         {activeTab === "dashboard" && <Dashboard />}
         {activeTab === "playground" && <Playground />}
+        {activeTab === "pdf" && <PDFRedactor />}
         {activeTab === "benchmark" && <BenchmarkExplorer />}
         {activeTab === "architecture" && <ArchitectureGuide />}
       </main>

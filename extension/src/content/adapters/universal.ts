@@ -27,6 +27,8 @@ const SUPPORTED_AI_HOST_PATTERNS = [
   "gemini.google.com",
   "chatgpt.com",
   "codex.openai.com",
+  "grok.com",
+  "x.ai",
 ];
 
 export const UNIVERSAL_SELECTORS = {
@@ -41,19 +43,25 @@ export const UNIVERSAL_SELECTORS = {
     "textarea[placeholder*='Ask' i]",
     "textarea[placeholder*='Message' i]",
     "textarea[placeholder*='Prompt' i]",
+    "textarea[placeholder*='Grok' i]",
+    "textarea[placeholder*='What' i]",
     "textarea[aria-label*='prompt' i]",
     "textarea[aria-label*='message' i]",
+    "textarea[aria-label*='grok' i]",
     "textarea",
   ],
   mainSendButtons: [
     "button[aria-label*='Send' i]",
     "button[aria-label*='Submit' i]",
+    "button[aria-label*='Ask' i]",
+    "button[aria-label*='Grok' i]",
     "button[data-testid*='send' i]",
     "button[data-testid*='submit' i]",
     "button.send-button",
     "button[type='submit']",
     "[role='button'][aria-label*='Send' i]",
     "[role='button'][aria-label*='Submit' i]",
+    "[role='button'][aria-label*='Grok' i]",
     "button:has(svg)",
     "button:has(mat-icon)",
   ],
@@ -146,8 +154,11 @@ export class UniversalAIAdapter implements SiteAdapter {
         if (
           ariaLabel.includes("send") ||
           ariaLabel.includes("submit") ||
+          ariaLabel.includes("grok") ||
+          ariaLabel.includes("ask") ||
           testId.includes("send") ||
           testId.includes("submit") ||
+          testId.includes("grok") ||
           title.includes("send") ||
           title.includes("submit")
         ) {

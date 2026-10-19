@@ -26,6 +26,17 @@ import webbrowser
 
 VERSION = "0.2.0-glass"
 
+# Enable Per-Monitor DPI Awareness on Windows for crisp rendering and pixel-perfect edge docking
+if sys.platform == "win32":
+    try:
+        import ctypes
+        ctypes.windll.shcore.SetProcessDpiAwareness(2)
+    except Exception:
+        try:
+            ctypes.windll.user32.SetProcessDPIAware()
+        except Exception:
+            pass
+
 # Ensure repository root is on sys.path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
@@ -148,21 +159,18 @@ def run_full_app():
     """Run full application: background engine + system tray + sidebar companion."""
     print(f"[VeilGuard AI] Initializing Desktop App v{VERSION}...")
 
-    # Start local engine if not already running
-    if not ping_engine():
-        print("[VeilGuard AI] Starting local loopback engine at 127.0.0.1:8765...")
-        start_engine_thread()
-        # Wait up to 10 seconds for health (spaCy cold import takes ~7.5s)
-        for _ in range(40):
-            time.sleep(0.25)
-            if ping_engine():
-                break
-
-    # Ensure single instance before starting GUI
+    # 1. Ensure single instance before starting GUI
     from desktop.sidebar_guard import VeilGuardSidebar, ensure_single_instance
     _instance_mutex = ensure_single_instance()
 
+    # 2. Start local loopback engine in background daemon thread (non-blocking)
+    if not ping_engine():
+        print("[VeilGuard AI] Starting local loopback engine at 127.0.0.1:8765...")
+        start_engine_thread()
+
+    # 3. Create and pop open sidebar immediately (<200ms)
     sidebar = VeilGuardSidebar()
+    sidebar.expand()
 
     # Try setting up system tray icon
     tray_icon = None

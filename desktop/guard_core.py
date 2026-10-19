@@ -41,6 +41,8 @@ AI_KEYWORDS = [
     "mistral",
     "ai studio",
     "v0",
+    "grok",
+    "x.ai",
 ]
 
 

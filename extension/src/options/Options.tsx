@@ -1244,11 +1244,35 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ onProfilesLoaded }) => {
 // ─── Root component ───────────────────────────────────────────────────────────
 
 export const Options: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<Tab>("dashboard");
+  const getInitialTab = (): Tab => {
+    if (typeof window !== "undefined") {
+      if (window.location.hash.includes("pdf")) return "pdf";
+      if (window.location.hash.includes("settings")) return "settings";
+    }
+    return "dashboard";
+  };
+  const [activeTab, setActiveTab] = useState<Tab>(getInitialTab);
   const [events, setEvents] = useState<StoredEvent[]>([]);
   const [ruleReasons, setRuleReasons] = useState<Record<string, string>>({});
   const [engineReachable, setEngineReachable] = useState<boolean>(false);
   const [loadTime, setLoadTime] = useState<number>(0);
+
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    if (typeof window !== "undefined") {
+      window.location.hash = tab;
+    }
+  };
+
+  useEffect(() => {
+    const handleHash = () => {
+      if (window.location.hash.includes("pdf")) setActiveTab("pdf");
+      else if (window.location.hash.includes("settings")) setActiveTab("settings");
+      else if (window.location.hash.includes("dashboard")) setActiveTab("dashboard");
+    };
+    window.addEventListener("hashchange", handleHash);
+    return () => window.removeEventListener("hashchange", handleHash);
+  }, []);
 
   const loadEvents = useCallback(() => {
     const t0 = performance.now();
@@ -1326,7 +1350,7 @@ export const Options: React.FC = () => {
               type="button"
               role="tab"
               aria-selected={activeTab === "dashboard"}
-              onClick={() => setActiveTab("dashboard")}
+              onClick={() => handleTabChange("dashboard")}
               className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 cursor-pointer ${
                 activeTab === "dashboard"
                   ? "bg-gradient-to-r from-sky-500 to-sky-600 text-slate-950 shadow-[0_2px_10px_rgba(56,189,248,0.35)]"
@@ -1340,20 +1364,20 @@ export const Options: React.FC = () => {
               role="tab"
               id="tab-pdf"
               aria-selected={activeTab === "pdf"}
-              onClick={() => setActiveTab("pdf")}
+              onClick={() => handleTabChange("pdf")}
               className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 cursor-pointer ${
                 activeTab === "pdf"
                   ? "bg-gradient-to-r from-sky-500 to-sky-600 text-slate-950 shadow-[0_2px_10px_rgba(56,189,248,0.35)]"
                   : "text-slate-300 hover:text-white hover:bg-white/[0.04]"
               }`}
             >
-              Document Scanner
+              📄 PDF &amp; Docs
             </button>
             <button
               type="button"
               role="tab"
               aria-selected={activeTab === "settings"}
-              onClick={() => setActiveTab("settings")}
+              onClick={() => handleTabChange("settings")}
               className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 cursor-pointer ${
                 activeTab === "settings"
                   ? "bg-gradient-to-r from-sky-500 to-sky-600 text-slate-950 shadow-[0_2px_10px_rgba(56,189,248,0.35)]"
