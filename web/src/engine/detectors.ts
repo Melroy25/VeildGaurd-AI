@@ -233,8 +233,8 @@ export function scanTextInBrowser(text: string): Finding[] {
     });
   }
 
-  // 7. Medical Condition Mentions (Task Necessity: retain condition when query is medical inquiry)
-  const isMedicalInquiry = /(?:precaution|diet|treatment|medicine|therapy|cure|symptom|check)/i.test(text);
+  // 7. Medical Condition Mentions (Task Necessity: retain condition when query is medical inquiry or advice seeking)
+  const isMedicalInquiry = /(?:precaution|diet|treatment|medicine|therapy|cure|symptom|check|tip|help|advice|guidance|remedy|prevent|manage|worse|better|what should|how to)/i.test(text);
   if (!isMedicalInquiry) {
     for (const term of MEDICAL_TERMS) {
       const termRegex = new RegExp(`\\b(${term})\\b`, "gi");
