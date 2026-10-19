@@ -138,7 +138,11 @@ export function handleInterception(
   }
   analyzeDebounceTimer = setTimeout(() => {
     analyzeDebounceTimer = null;
-    runAnalysis(context, text, path);
+    runAnalysis(context, text, path).catch((err) => {
+      console.error("[VG_FLOW] Fatal uncaught error in runAnalysis:", err);
+      flowState = "idle";
+      updateBadgeState("error", "Error — please refresh tab");
+    });
   }, DEBOUNCE_MS);
 }
 
@@ -156,82 +160,103 @@ async function runAnalysis(
 
   const destination = window.location.hostname;
 
-  // Retrieve currently stored profile preference
-  let profile = "company";
   try {
-    const profileResult = await chrome.storage.local.get("vg_profile");
-    if (typeof profileResult["vg_profile"] === "string") {
-      profile = profileResult["vg_profile"];
-    }
-  } catch (err) {
-    console.warn("[VG_FLOW] Error getting vg_profile:", err);
-  }
-
-  // Build ANALYZE request — background handles token and vault merging
-  const response = await new Promise<AnalyzeResponse>((resolve) => {
-    let resolved = false;
-    const timeout = setTimeout(() => {
-      if (!resolved) {
-        resolved = true;
-        resolve({
-          ok: false,
-          errorKind: "timeout",
-          errorMessage: "Engine analysis timed out. Ensure the VeilGuard engine is running at 127.0.0.1:8765.",
-        });
+    // Retrieve currently stored profile preference
+    let profile = "company";
+    try {
+      if (chrome.runtime?.id) {
+        const profileResult = await chrome.storage.local.get("vg_profile");
+        if (typeof profileResult["vg_profile"] === "string") {
+          profile = profileResult["vg_profile"];
+        }
       }
-    }, 4500);
+    } catch (err) {
+      console.warn("[VG_FLOW] Error getting vg_profile:", err);
+    }
 
-    chrome.runtime.sendMessage(
-      {
-        type: "ANALYZE",
-        text,
-        destination,
-        profile,
-        // knownPlaceholders: background auto-merges via vault on ANALYZE
-      },
-      (msg: unknown) => {
+    // Build ANALYZE request — background handles token and vault merging
+    const response = await new Promise<AnalyzeResponse>((resolve) => {
+      let resolved = false;
+      const timeout = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          resolve({
+            ok: false,
+            errorKind: "timeout",
+            errorMessage: "Engine analysis timed out. Ensure the VeilGuard engine is running at 127.0.0.1:8765.",
+          });
+        }
+      }, 10000);
+
+      try {
+        if (!chrome.runtime?.id) {
+          throw new Error("Extension context invalidated. Please refresh this tab.");
+        }
+
+        chrome.runtime.sendMessage(
+          {
+            type: "ANALYZE",
+            text,
+            destination,
+            profile,
+            // knownPlaceholders: background auto-merges via vault on ANALYZE
+          },
+          (msg: unknown) => {
+            if (!resolved) {
+              resolved = true;
+              clearTimeout(timeout);
+              if (chrome.runtime.lastError || !msg) {
+                resolve({
+                  ok: false,
+                  errorKind: "unreachable",
+                  errorMessage: chrome.runtime.lastError?.message ?? "No response from background",
+                });
+              } else {
+                resolve(msg as AnalyzeResponse);
+              }
+            }
+          }
+        );
+      } catch (err) {
         if (!resolved) {
           resolved = true;
           clearTimeout(timeout);
-          if (chrome.runtime.lastError || !msg) {
-            resolve({
-              ok: false,
-              errorKind: "unreachable",
-              errorMessage: chrome.runtime.lastError?.message ?? "No response from background",
-            });
-          } else {
-            resolve(msg as AnalyzeResponse);
-          }
+          resolve({
+            ok: false,
+            errorKind: "unreachable",
+            errorMessage: err instanceof Error ? err.message : String(err),
+          });
         }
       }
-    );
-  });
-
-  // Handle engine failure — fail closed
-  if (!response.ok) {
-    flowState = "blocked";
-    updateBadgeState("error");
-    showEngineErrorOverlay(response.errorKind, response.errorMessage, () => {
-      hideOverlay();
-      flowState = "idle";
-      updateBadgeState("active");
     });
-    recordEvent({
-      timestamp: new Date().toISOString(),
-      category: "ENGINE_UNREACHABLE",
-      entityCount: 0,
-      riskScore: 0,
-      decision: "block",
-      ruleIds: [],
-      outcome: "engine_unreachable",
-      destination,
-    });
-    return;
-  }
 
-  const engineResult = response.result;
+    // Handle engine failure — fail closed
+    if (!response.ok) {
+      flowState = "blocked";
+      updateBadgeState("error");
+      showEngineErrorOverlay(response.errorKind, response.errorMessage, () => {
+        hideOverlay();
+        flowState = "idle";
+        updateBadgeState("active");
+      });
+      try {
+        recordEvent({
+          timestamp: new Date().toISOString(),
+          category: "ENGINE_UNREACHABLE",
+          entityCount: 0,
+          riskScore: 0,
+          decision: "block",
+          ruleIds: [],
+          outcome: "engine_unreachable",
+          destination,
+        });
+      } catch {}
+      return;
+    }
 
-  // Route based on engine decision
+    const engineResult = response.result;
+
+    // Route based on engine decision
   switch (engineResult.decision) {
     case "allow":
       // Clean — allow the original submission through
@@ -315,6 +340,11 @@ async function runAnalysis(
       });
       break;
   }
+  } catch (fatalErr) {
+    console.error("[VG_FLOW] Unexpected error in runAnalysis:", fatalErr);
+    flowState = "idle";
+    updateBadgeState("error", "Error — please refresh tab");
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -381,8 +411,13 @@ async function handleSendSanitized(
 // ---------------------------------------------------------------------------
 
 function recordEvent(event: AuditEventMetadata): void {
-  // Fire-and-forget — do not await
-  chrome.runtime.sendMessage({ type: "RECORD_EVENT", event });
+  try {
+    if (chrome.runtime?.id) {
+      chrome.runtime.sendMessage({ type: "RECORD_EVENT", event });
+    }
+  } catch (err) {
+    console.warn("[VG_FLOW] Could not record event:", err);
+  }
 }
 
 // ---------------------------------------------------------------------------

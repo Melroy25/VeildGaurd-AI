@@ -180,7 +180,7 @@ class VeilGuardSidebar(tk.Tk):
 
         # State
         self.is_expanded = False
-        self.is_pinned = False  # When True, window stays open and never auto-collapses
+        self.is_pinned = True  # Pinned by default on launch so user can immediately see and test the companion
         self.dock_side = "left"  # Default to left edge dock per user preference
         self.guard_active = True  # Master On/Off switch
         self.auto_pop_enabled = tk.BooleanVar(value=True)
@@ -341,10 +341,10 @@ class VeilGuardSidebar(tk.Tk):
         # Pin Toggle Button (📌 locks window open so it never auto-collapses)
         self.pin_btn = tk.Label(
             header,
-            text="📌 Pin",
-            fg=TEXT_MUTED,
+            text="📌 Pinned" if self.is_pinned else "📌 Pin",
+            fg=ACCENT_CYAN if self.is_pinned else TEXT_MUTED,
             bg=BG_PANEL,
-            font=("Segoe UI", 8),
+            font=("Segoe UI", 8, "bold" if self.is_pinned else "normal"),
             cursor="hand2",
         )
         self.pin_btn.pack(side="right", padx=(0, 6))
@@ -1763,6 +1763,7 @@ def launch():
     """Launch the VeilGuard sidebar desktop application."""
     _mutex = ensure_single_instance()
     app = VeilGuardSidebar()
+    app.expand()
     app.mainloop()
 
 
