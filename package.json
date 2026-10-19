@@ -14,22 +14,22 @@
     "build:web": "vite build web",
     "dev:web": "vite web"
   },
-  "devDependencies": {
-    "@playwright/test": "^1.50.1",
+  "dependencies": {
     "@tailwindcss/vite": "^4.0.6",
-    "@types/chrome": "^0.0.307",
-    "@types/node": "^22.13.4",
-    "@types/react": "^19.0.10",
-    "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
+    "fflate": "^0.8.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwindcss": "^4.0.6",
     "typescript": "^5.7.3",
-    "vite": "^6.1.0",
-    "vitest": "^5.0.5"
+    "vite": "^6.1.0"
   },
-  "dependencies": {
-    "fflate": "^0.8.3"
+  "devDependencies": {
+    "@playwright/test": "^1.50.1",
+    "@types/chrome": "^0.0.307",
+    "@types/node": "^22.13.4",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "vitest": "^5.0.5"
   }
 }

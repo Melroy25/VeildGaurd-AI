@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "name": "veilguard-ai",
   "buildCommand": "npm run build:web",
   "outputDirectory": "web/dist",
+  "installCommand": "npm install --include=dev",
   "framework": "vite",
   "cleanUrls": true,
   "rewrites": [
