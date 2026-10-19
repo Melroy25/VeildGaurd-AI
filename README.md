@@ -58,37 +58,7 @@ flowchart TD
     end
 ```
 
-### Request Flow
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User
-    participant Web as Target AI Webpage
-    participant Ext as VeilGuard Extension
-    participant Engine as Local Python Engine (127.0.0.1:8765)
-    participant AI as AI Cloud Endpoint
-
-    User->>Web: Submits prompt containing sensitive entities
-    Ext->>Web: Intercepts submission (stopImmediatePropagation)
-    Ext->>Engine: POST /v1/inspect (Bearer Token)
-    Engine->>Engine: Detect PII, evaluate policy & generate pseudonyms
-    Engine-->>Ext: Returns InspectionResult (Risk Score, Entities, Sanitized Text)
-    alt Action: Allow
-        Ext->>Web: Injects prompt & triggers synthetic submission
-        Web->>AI: Sends unredacted query
-    else Action: Redact / Require Approval
-        Ext->>Ext: Renders In-Context Review Modal (Diff View)
-        User->>Ext: Confirms sanitized prompt
-        Ext->>Web: Injects pseudonymized text into form
-        Web->>AI: Sends sanitized query
-    else Action: Block
-        Ext->>Ext: Displays Block Notification (Critical Violation)
-        Ext->>Web: Halts submission; preserves prompt for user editing
-    end
-```
-
----
 
 ## Empirical Evidence & Verification
 
